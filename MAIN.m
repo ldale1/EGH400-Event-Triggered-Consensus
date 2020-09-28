@@ -13,19 +13,17 @@ X0 = randi(SIZE*2, 1, SIZE) - SIZE*2/2;
 
 %% TOY
 SIZE = 6;
-A = [0 1.5 0 0 0 0;
-    2 0 0 0 0 0;
-    0.9 0 0 0 1.9 0;
-    0 1.2 0 0 0 1.3;
-    0 0 1.4 1.8 0 0;
-    0 0 0 0 0.7 0];
+A = [0 1.5 0 0 0 0; 2 0 0 0 0 0; 0.9 0 0 0 1.9 0;
+        0 1.2 0 0 0 1.3; 0 0 1.4 1.8 0 0; 0 0 0 0 0.7 0];
 X0 = 0.2*(1:SIZE) - 0.1;
 
 %% Simulation
 import ConsensusMAS.*;
 
-% Create the finite time netwol
+% Create the finite time network
 network = NetworkFT(A, X0);
-network.Simulate('timestep', 1, 'mintime', 10);
+network.Simulate('timestep', 0.1, 'mintime', 10);
 network.PlotGraph;
-network.PlotStates;
+network.PlotEigs;
+network.PlotStates("plottype", "plot");
+network.PlotInputs("plottype", "plot");

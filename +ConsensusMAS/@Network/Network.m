@@ -61,15 +61,63 @@ classdef Network < ConsensusMAS.RefClass
             title('Graph')
         end
         
-        function PlotStates(obj)
+        function PlotStates(obj,varargin)
+            plottype = "plot";
+            for k = 1:length(varargin)
+                if (strcmp(varargin{k},"plottype"))
+                    k = k + 1;
+                    plottype = varargin{k};
+                end
+            end
+            
             figure();
             hold on;
             for n = 1:obj.SIZE
-                plot(obj.T, obj.agents(n).X, 'DisplayName', obj.agents(n).name)
+                if strcmp(plottype, "plot")
+                    plot(obj.T, obj.agents(n).X, 'DisplayName', obj.agents(n).name)
+                elseif strcmp(plottype, "stairs")
+                    stairs(obj.T, obj.agents(n).X, 'DisplayName', obj.agents(n).name)
+                else
+                    error("Plot type not recognised");
+                end
             end
             xlim([obj.T(1) obj.T(end)]);
             title('Agents')
             legend()
+        end
+        
+        function PlotInputs(obj, varargin)
+            plottype = "plot";
+            for k = 1:length(varargin)
+                if (strcmp(varargin{k},"plottype"))
+                    k = k + 1;
+                    plottype = varargin{k};
+                end
+            end
+            
+            figure();
+            hold on;
+            for n = 1:obj.SIZE
+                if strcmp(plottype, "plot")
+                    plot(obj.T(2:end), obj.agents(n).U, 'DisplayName', obj.agents(n).name)
+                elseif strcmp(plottype, "stairs")
+                    stairs(obj.T(2:end), obj.agents(n).U, 'DisplayName', obj.agents(n).name)
+                else
+                    error("Plot type not recognised");
+                end
+                
+            end
+            xlim([obj.T(1) obj.T(end)]);
+            title('Inputs')
+            legend()
+        end
+        
+        function PlotEigs(obj, varargin)
+            figure()
+            hold on;
+            th = 0:pi/50:2*pi;
+            plot(cos(th), sin(th), 'k--');
+            plot(eig(obj.F), '*');
         end
     end
     

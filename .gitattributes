@@ -2,4 +2,4 @@
 * text=auto
 
 # Ignore the ignore directory
-/ignore
+ignore/
