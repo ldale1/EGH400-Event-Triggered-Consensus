@@ -11,6 +11,7 @@ classdef Network < ConsensusMAS.RefClass
     properties (Dependent)
         SIZE; % network size
         t; % current time instant
+        X; % states matrix
         x; % current states
         x0; % initial states
         consensus; % consensus boolean
@@ -57,17 +58,17 @@ classdef Network < ConsensusMAS.RefClass
         % Getters and Setters
         function set.t(obj, t); obj.T = [obj.T t]; end
         function t = get.t(obj); t = obj.T(end); end
-        function x0 = get.x0(obj)
-            x0 = zeros(obj.SIZE, 1);
-            for i = 1:obj.SIZE
-                x0(i) = obj.agents(i).X(1);
+        function X = get.X(obj)
+            X = zeros(obj.SIZE, length(obj.T));
+            for agent = obj.agents
+                X(agent.id,:) = agent.X;
             end
         end
+        function x0 = get.x0(obj)
+            x0 = obj.X(:,1);
+        end
         function x = get.x(obj)
-            x = zeros(obj.SIZE, 1);
-            for i = 1:obj.SIZE
-                x(i) = obj.agents(i).X(end);
-            end
+            x = obj.X(:,end);
         end
         function SIZE = get.SIZE(obj); SIZE = length(obj.agents); end
         function consensus = get.consensus(obj)
@@ -140,14 +141,20 @@ classdef Network < ConsensusMAS.RefClass
         end
         
         % Basic Figures
-        PlotEigs(obj,varargin);
-        PlotGraph(obj,varargin);
-        PlotInputs(obj,varargin);
-        PlotStates(obj,varargin);
-        PlotTriggers(obj,varargin);
+        PlotEigs(obj, varargin);
+        PlotGraph(obj, varargin);
+        PlotInputs(obj, varargin);
+        PlotStates(obj, varargin);
+        PlotTriggers(obj, varargin);
         
         % Complex Subplot Figures
         PlotGraphStates(obj,varargin);
         PlotTriggersStates(obj,varargin);
+        
+        %
+        function obj = Animate(obj)
+            import ConsensusMAS.Utils.*;
+            MovieMaker(obj.T, obj.X, obj.X)
+        end
     end
 end
