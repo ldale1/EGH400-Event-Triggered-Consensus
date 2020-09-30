@@ -4,8 +4,9 @@ classdef Agent < ConsensusMAS.RefClass
     
     properties
         id; % Agent ID number
-        weights; % Neighbouring weights
-        neighbours; % Neighbouring agents
+        leaders;
+        followers; % Neighbouring agents
+        xhat; % Most recent transmission
         X; % State array
         U; % Control input array
     end
@@ -13,6 +14,7 @@ classdef Agent < ConsensusMAS.RefClass
         name; % Agent name
         x; % Current state
         u; % Current control input
+        error; % Deviation from last broadcast
     end
     
     methods
@@ -20,52 +22,52 @@ classdef Agent < ConsensusMAS.RefClass
             % Class constructor
             obj.id = id;
             obj.x = x0;
+            obj.xhat = x0;
         end
         
+        % Getters
         function name = get.name(obj); name = sprintf("Agent %d", obj.id); end
-        
         function set.x(obj, x); obj.X = [obj.X x]; end
         function x = get.x(obj); x = obj.X(end); end
-        
         function set.u(obj, u); obj.U = [obj.U u]; end
         function u = get.u(obj); u = obj.U(end); end
+        function error = get.error(obj); error = abs(obj.x - obj.xhat); end
+       
         
-        function obj = addReceiver(obj, weight, neighbour)
-            % Attach a neighbour to this object
-            obj.weights = [obj.weights, weight];
-            obj.neighbours = [obj.neighbours, neighbour];
+        function obj = addReceiver(obj, weight, reciever)
+            % Attach a reciever to this object
+            obj.followers = [obj.followers, struct('agent', reciever, 'weight', weight)];
+            reciever.leaders = [reciever.leaders, struct('agent', obj, 'weight', weight)];
         end
         
         function obj = broadcast(obj)
             % Broadcast this object to all its neighbours
-            for neighbour = obj.neighbours
-                neighbour.recieve(obj);
+            obj.xhat = obj.x;
+            for follower = obj.followers
+                follower.agent.receive;
             end
         end
         
-        function obj = recieve(obj, neighbour)
-            % Recieve a broadcast from a neighbour notify call
-            for  i = 1:length(obj.neighbours)
-                if obj.neighbours(i).id == neighbour.id
-                    obj.neighbours(i) = neighbour;
-                end
-            end 
+        function obj = receive(obj)
+            obj.setinput;
         end
         
-        function obj = calculate(obj)
+        function obj = setinput(obj)
             % Calculate the next control input
-            u = 0;
-            for n = 1:length(obj.neighbours)
-                u = u - obj.weights(n)*(obj.x - obj.neighbours(n).x);
+            input = 0;
+            for leader = obj.leaders
+                input = input - leader.weight*(obj.xhat - leader.agent.xhat);
             end
-            obj.u = u;
+            obj.u = input;
         end
         
         function obj = step(obj, ts)
-            % Step the agent
-            import ConsensusMAS.*
+            % Step the agent, first order dynamics
             obj.x = obj.x + obj.u * ts;
         end
-        
+    end
+    
+    methods (Abstract)
+        result = trigger(obj)
     end
 end

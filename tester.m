@@ -1,8 +1,12 @@
-%{
-Class based approach to agents
--- contain lastest broadcast information
--- current error measurement
--- ETC variables
--- neighbours information
--- don't hardcode the state sizes :: matlab size, len
-%}
+% Cleanup
+clc; close all; clear all;
+
+%%
+import ConsensusMAS.*;
+import ConsensusMAS.Utils.*
+
+import matlab.unittest.selectors.HasParameter
+
+suite = matlab.unittest.TestSuite.fromClass(?ConsensusMAS.TestRand)
+selector = HasParameter('property', 'implementations', 'Name', 'FixedTrigger');
+suite.selectIf(selector).run;

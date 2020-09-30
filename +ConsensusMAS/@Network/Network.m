@@ -3,42 +3,58 @@ classdef Network < ConsensusMAS.RefClass
     % Inherits from superclass handle so that it is passed by reference
     
     properties
-        F;
-        agents;
-        T;
+        agents; % network agents
+        F; % network matrix
+        T; % times vector
+        TRIGGERS; % triggers vectors
     end
     properties (Dependent)
-        SIZE;
-        t;
-        x;
-        x0;
+        SIZE; % network size
+        t; % current time instant
+        x; % current states
+        x0; % initial states
+        consensus; % consensus boolean
+        final_value; % consensus value
+        eigenvalues; % network eigenvalues
     end
     
     methods
-        function obj = Network(A, X0)
+        function obj = Network(type, A, X0)
             import ConsensusMAS.*;
             % Create the matrices
             SIZE = length(X0);
             obj.F = (eye(SIZE) + diag(sum(A, 2)))^-1 * (eye(SIZE) * A);
             
             % Create the agents
-            agents = Agent.empty(SIZE, 0);
-            for n = 1:SIZE
-                agents(n) = Agent(n, X0(n));
+            switch type
+                case Implementations.FixedTrigger
+                    agents = AgentFixedTrigger.empty(SIZE, 0);
+                    for n = 1:SIZE
+                        agents(n) = AgentFixedTrigger(n, X0(n));
+                    end
+                case Implementations.GlobalEventTrigger
+                    agents = AgentGlobalEventTrigger.empty(SIZE, 0);
+                    for n = 1:SIZE
+                        agents(n) = AgentGlobalEventTrigger(n, X0(n));
+                    end
+                otherwise
+                    error("Unrecognised type");
             end
+            
             
             % Create the network
             for i = 1:SIZE % row-wise
                 for j = 1:SIZE %column-wise
                     weight = obj.F(i, j);
                     if (i~=j && weight ~= 0)
-                        agents(i) = agents(i).addReceiver(weight, agents(j));
+                        agents(j).addReceiver(weight, agents(i));
                     end
                 end
             end
             obj.agents = agents;
         end
         
+        % Getters and Setters
         function set.t(obj, t); obj.T = [obj.T t]; end
         function t = get.t(obj); t = obj.T(end); end
         function x0 = get.x0(obj)
@@ -54,74 +70,84 @@ classdef Network < ConsensusMAS.RefClass
             end
         end
         function SIZE = get.SIZE(obj); SIZE = length(obj.agents); end
-        
-        function PlotGraph(obj)
-            figure();
-            plot(digraph(obj.F'));
-            title('Graph')
+        function consensus = get.consensus(obj)
+            import ConsensusMAS.Utils.*;
+            consensus = ConsensusReached(obj.x0, obj.x); 
         end
+        function final_value = get.final_value(obj)
+            if ~obj.consensus
+                error("This network has not reached consensus.");
+            else
+                final_value = mean(obj.x); 
+            end
+        end
+        function eigenvalues = get.eigenvalues(obj); eigenvalues = eig(obj.F); end
+       
         
-        function PlotStates(obj,varargin)
-            plottype = "plot";
+        function obj = Simulate(obj, varargin)
+            import ConsensusMAS.Utils.*;
+            import ConsensusMAS.EventTrigger.*;
+            
+            % Parse the args
+            ts = 1;
+            mintime = 0;
+            maxsteps = 1e5-1;
             for k = 1:length(varargin)
-                if (strcmp(varargin{k},"plottype"))
+                if (strcmp(varargin{k},"timestep"))
                     k = k + 1;
-                    plottype = varargin{k};
+                    ts = varargin{k};
+                end
+                if (strcmp(varargin{k},"mintime"))
+                    k = k + 1;
+                    mintime = varargin{k};
+                end
+                if (strcmp(varargin{k},"maxsteps"))
+                    k = k + 1;
+                    maxsteps = varargin{k};
                 end
             end
             
-            figure();
-            hold on;
-            for n = 1:obj.SIZE
-                if strcmp(plottype, "plot")
-                    plot(obj.T, obj.agents(n).X, 'DisplayName', obj.agents(n).name)
-                elseif strcmp(plottype, "stairs")
-                    stairs(obj.T, obj.agents(n).X, 'DisplayName', obj.agents(n).name)
-                else
-                    error("Plot type not recognised");
-                end
-            end
-            xlim([obj.T(1) obj.T(end)]);
-            title('Agents')
-            legend()
-        end
-        
-        function PlotInputs(obj, varargin)
-            plottype = "plot";
-            for k = 1:length(varargin)
-                if (strcmp(varargin{k},"plottype"))
-                    k = k + 1;
-                    plottype = varargin{k};
-                end
+            % Begin
+            obj.t = 0;
+            steps = 0;
+            
+            % Calculate all inptus
+            for agent = obj.agents
+                agent.setinput;
             end
             
-            figure();
-            hold on;
-            for n = 1:obj.SIZE
-                if strcmp(plottype, "plot")
-                    plot(obj.T(2:end), obj.agents(n).U, 'DisplayName', obj.agents(n).name)
-                elseif strcmp(plottype, "stairs")
-                    stairs(obj.T(2:end), obj.agents(n).U, 'DisplayName', obj.agents(n).name)
-                else
-                    error("Plot type not recognised");
-                end
+            % Simulate
+            while (true)               
+                % Step accordingly
+                for agent = obj.agents
+                    agent.step(ts);
+                end 
                 
+                for agent = obj.agents
+                    if (agent.trigger)
+                        obj.TRIGGERS = [obj.TRIGGERS struct('id', agent.id, 't', obj.t)];
+                        agent.broadcast;
+                    end
+                end
+                obj.t = obj.t + ts;
+                
+                % Check the exit conditions
+                steps = steps + 1;
+                if (round(obj.t - mintime, 6) >= 0 && (steps >= maxsteps || obj.consensus))
+                    break;
+                end
             end
-            xlim([obj.T(1) obj.T(end)]);
-            title('Inputs')
-            legend()
         end
         
-        function PlotEigs(obj, varargin)
-            figure()
-            hold on;
-            th = 0:pi/50:2*pi;
-            plot(cos(th), sin(th), 'k--');
-            plot(eig(obj.F), '*');
-        end
-    end
-    
-    methods (Abstract)
-        Simulate(obj, varargin)
+        % Basic Figures
+        PlotEigs(obj,varargin);
+        PlotGraph(obj,varargin);
+        PlotInputs(obj,varargin);
+        PlotStates(obj,varargin);
+        PlotTriggers(obj,varargin);
+        
+        % Complex Subplot Figures
+        PlotGraphStates(obj,varargin);
+        PlotTriggersStates(obj,varargin);
     end
 end

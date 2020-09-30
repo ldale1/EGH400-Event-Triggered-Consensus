@@ -15,7 +15,7 @@ https://au.mathworks.com/help/matlab/ref/testsuite.html
 Documentation
 https://au.mathworks.com/help/matlab/matlab_oop/scoping-classes-with-packages.html
 
-PUBLISHIGN <----------- THIS
+PUBLISHIGN <----------- THIS 
 https://au.mathworks.com/help/matlab/ref/publish.html#:~:text=To%20publish%20a%20shared%20file,instead%20of%20the%20html%20subfolder.
 https://au.mathworks.com/help/matlab/matlab_prog/publishing-matlab-code.html
 
