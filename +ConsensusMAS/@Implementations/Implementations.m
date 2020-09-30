@@ -1,6 +1,6 @@
 classdef Implementations
    enumeration
        FixedTrigger,
-       GlobalEventTrigger
+       GlobalEventTrigger,
    end
 end

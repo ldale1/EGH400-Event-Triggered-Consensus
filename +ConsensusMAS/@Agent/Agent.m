@@ -26,30 +26,49 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         % Getters
-        function name = get.name(obj); name = sprintf("Agent %d", obj.id); end
-        function set.x(obj, x); obj.X = [obj.X x]; end
-        function x = get.x(obj); x = obj.X(end); end
-        function set.u(obj, u); obj.U = [obj.U u]; end
-        function u = get.u(obj); u = obj.U(end); end
-        function error = get.error(obj); error = abs(obj.x - obj.xhat); end
+        function name = get.name(obj)
+            name = sprintf("Agent %d", obj.id);
+        end
+        function set.x(obj, x)
+            obj.X = [obj.X, x]; 
+        end
+        function x = get.x(obj)
+            x = obj.X(:,end); 
+        end
+        function set.u(obj, u)
+            obj.U = [obj.U, u]; 
+        end
+        function u = get.u(obj)
+            u = obj.U(:,end); 
+        end
+        function error = get.error(obj) 
+            error = abs(obj.x - obj.xhat); 
+        end
        
         
-        function obj = addReceiver(obj, weight, reciever)
+        function obj = addReceiver(obj, reciever, weight)
             % Attach a reciever to this object
             obj.followers = [obj.followers, struct('agent', reciever, 'weight', weight)];
             reciever.leaders = [reciever.leaders, struct('agent', obj, 'weight', weight)];
         end
         
-        function obj = broadcast(obj)
+        function triggers = checktrigger(obj)
+            triggers = obj.trigger;
+            obj.broadcast(triggers);
+        end
+        
+        function obj = broadcast(obj, triggers)
             % Broadcast this object to all its neighbours
-            obj.xhat = obj.x;
-            for follower = obj.followers
-                follower.agent.receive;
+            obj.xhat = obj.x .* triggers + obj.xhat .* ~triggers;
+            if any(reshape(squeeze(triggers), [], 1))
+                for follower = obj.followers
+                    follower.agent.receive;
+                end
             end
         end
         
         function obj = receive(obj)
-            obj.setinput;
+            obj.setinput();
         end
         
         function obj = setinput(obj)
@@ -58,7 +77,7 @@ classdef Agent < ConsensusMAS.RefClass
             for leader = obj.leaders
                 input = input - leader.weight*(obj.xhat - leader.agent.xhat);
             end
-            obj.u = input;
+            obj.u = input;% .* triggers + obj.u .* ~triggers;
         end
         
         function obj = step(obj, ts)

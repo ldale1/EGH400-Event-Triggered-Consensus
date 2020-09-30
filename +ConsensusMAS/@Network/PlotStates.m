@@ -7,19 +7,21 @@ function PlotStates(obj,varargin)
             plottype = varargin{k};
         end
     end
-
+    
     figure();
-    hold on;
-    for agent = obj.agents
-        if strcmp(plottype, "plot")
-            plot(obj.T, agent.X, 'DisplayName', agent.name)
-        elseif strcmp(plottype, "stairs")
-            stairs(obj.T, agent.X, 'DisplayName', agent.name)
-        else
-            error("Plot type not recognised");
+    for i = 1:obj.agentstates
+        subplot(obj.agentstates, 1, i), hold on;
+        for agent = obj.agents
+            if strcmp(plottype, "plot")
+                plot(obj.T, agent.X(i,:), 'DisplayName', agent.name)
+            elseif strcmp(plottype, "stairs")
+                stairs(obj.T, agent.X(i,:), 'DisplayName', agent.name)
+            else
+                error("Plot type not recognised");
+            end
         end
-    end
-    xlim([obj.T(1) obj.T(end)]);
-    title('Agents')
-    legend()
+        xlim([obj.T(1) obj.T(end)]);
+        title('Agents')
+        legend()
+    end  
 end

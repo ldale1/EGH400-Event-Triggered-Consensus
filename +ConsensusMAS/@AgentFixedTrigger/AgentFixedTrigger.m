@@ -7,9 +7,8 @@ classdef AgentFixedTrigger < ConsensusMAS.Agent
             obj@ConsensusMAS.Agent(id, x0);
         end
         
-        
         function result = trigger(obj)
-            result = true;
+            result = [1; 1];
         end
     end
 end

@@ -1,9 +1,12 @@
+A = [0; 1]
 
 
+A(:,:,2) = [0; 0]
 
 
 
 %{
+
 % First, create 4  figures with four different graphs (each with  a 
 % colorbar):
 figure(1)
