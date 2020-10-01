@@ -3,44 +3,46 @@ classdef Network < ConsensusMAS.RefClass
     % Inherits from superclass handle so that it is passed by reference
     
     properties
+        ADJ; % adjacency matrix
         agents; % network agents
-        agentstates;
+        agentstates; % number of states
+        A; % adjacency matrix
         F; % network matrix
         T; % times vector
         TX; % Transmissions matrix
-        TRIGGERS; % triggers vectors
     end
     properties (Dependent)
         SIZE; % network size
         t; % current time instant
         tx; % latest transmission
-        X; % states matrix
-        x; % current states
         x0; % initial states
+        x; % current states
+        X; % states matrix
         consensus; % consensus boolean
         final_value; % consensus value
-        eigenvalues; % network eigenvalues
     end
     
     methods
-        function obj = Network(type, A, X0)
+        function obj = Network(type, A, B, C, D, X0, ADJ)
             import ConsensusMAS.*;
             % Create the matrices
-            SIZE = length(X0);
+            SIZE = size(X0, 2);
             obj.agentstates = size(X0, 1);
-            obj.F = (eye(SIZE) + diag(sum(A, 2)))^-1 * (eye(SIZE) * A);
+            
+            obj.ADJ = ADJ;
+            obj.F = (eye(SIZE) + diag(sum(ADJ, 2)))^-1 * (eye(SIZE) * ADJ);
             
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
                     agents = AgentFixedTrigger.empty(SIZE, 0);
                     for n = 1:SIZE
-                        agents(n) = AgentFixedTrigger(n, X0(:,n));
+                        agents(n) = AgentFixedTrigger(n, A, B, C, D, X0(:,n));
                     end
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(SIZE, 0);
                     for n = 1:SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, X0(:,n));
+                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), ADJ);
                     end
                 otherwise
                     error("Unrecognised type");
@@ -95,7 +97,6 @@ classdef Network < ConsensusMAS.RefClass
                 final_value = mean(obj.x); 
             end
         end
-        function eigenvalues = get.eigenvalues(obj); eigenvalues = eig(obj.F); end
        
         
         function obj = Simulate(obj, varargin)
@@ -105,7 +106,7 @@ classdef Network < ConsensusMAS.RefClass
             % Parse the args
             ts = 1;
             mintime = 0;
-            maxsteps = 1e5-1;
+            maxtime = 100;
             for k = 1:length(varargin)
                 if (strcmp(varargin{k},"timestep"))
                     k = k + 1;
@@ -115,24 +116,20 @@ classdef Network < ConsensusMAS.RefClass
                     k = k + 1;
                     mintime = varargin{k};
                 end
-                if (strcmp(varargin{k},"maxsteps"))
+                if (strcmp(varargin{k},"maxtime"))
                     k = k + 1;
-                    maxsteps = varargin{k};
+                    maxtime = varargin{k};
                 end
             end
             
             % Begin
+            % Agents are initialised with
+            % x = x0, u = 0, xhat = 0
             obj.t = 0;
-            steps = 0;
-            
-            % Calculate all inptus
             obj.tx = zeros(obj.agentstates, 1, obj.SIZE);
-            for agent = obj.agents
-                agent.setinput;
-            end
             
             % Simulate
-            while (true)               
+            while (true)           
                 % Step accordingly
                 for agent = obj.agents
                     agent.step(ts);
@@ -148,9 +145,9 @@ classdef Network < ConsensusMAS.RefClass
                 % Update time
                 obj.t = obj.t + ts;
                 
-                % Check the exit conditions
-                steps = steps + 1;
-                if (round(obj.t - mintime, 6) >= 0 && (steps >= maxsteps || obj.consensus))
+                % Check the exit conditions                
+                finished = (round(obj.t - mintime, 4) >= 0) && obj.consensus;
+                if (finished || obj.t > maxtime)
                     break;
                 end
             end

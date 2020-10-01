@@ -1,0 +1,4 @@
+Moving Forwards, to make extensible
+
+1. Transmission time delay
+2. Switching networks

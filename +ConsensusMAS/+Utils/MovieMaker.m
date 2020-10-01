@@ -29,16 +29,19 @@ function MovieMaker(time, x, y, x_tx, y_tx)
         text(xmax, ymax, sprintf('Time %0.2f sec', time(k)), 'FontSize',18,'VerticalAlignment','top', 'HorizontalAlignment', 'right')
         hold on;
 
+        
         % Draw the states
+        %history = max(k - ceil(length(time)/5), 1);
+        history = 1;%max(k - 100, 1);
         for i = 1:SIZE
             % States 
-            x_vals = x(i, 1:k);
-            y_vals = y(i, 1:k);
+            x_vals = x(i, history:k);
+            y_vals = y(i, history:k);
             plot(x_vals, y_vals, 'color', colors(i,:));
             
             % Transmissions
-            x_txs = x_tx(i, 1:k);
-            y_txs = x_tx(i, 1:k);
+            x_txs = x_tx(i, history:k);
+            y_txs = x_tx(i, history:k);
             txs = logical(x_txs + y_txs);
             plot(x_vals(txs), y_vals(txs), 'o', 'color', colors(i,:));
             
@@ -54,7 +57,7 @@ function MovieMaker(time, x, y, x_tx, y_tx)
     end
 
     vidObj = VideoWriter('ConsensusAnimation.avi');
-    vidObj.FrameRate = 100;
+    vidObj.FrameRate = 1/(time(2) - time(1));
     open(vidObj);
     writeVideo(vidObj, mov);
     close(vidObj)

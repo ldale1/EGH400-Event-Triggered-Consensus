@@ -3,12 +3,12 @@ classdef AgentFixedTrigger < ConsensusMAS.Agent
     % Inherits from superclass handle so that it is passed by reference
     
     methods
-        function obj = AgentFixedTrigger(id, x0)
-            obj@ConsensusMAS.Agent(id, x0);
+        function obj = AgentFixedTrigger(id, A, B, C, D, x0)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
         end
         
         function result = trigger(obj)
-            result = [1; 1];
+            result = ones(size(obj.x));
         end
     end
 end

@@ -4,5 +4,5 @@ function PlotEigs(obj)
     hold on;
     th = 0:pi/50:2*pi;
     plot(cos(th), sin(th), 'k--');
-    plot(obj.eigenvalues, '*');
+    plot(eigs(obj.F), '*');
 end

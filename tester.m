@@ -1,8 +1,9 @@
-A = [0; 1]
+A
+D = diag(sum(A, 2)); %Degree Matrix
+L = D - A; %Graph Laplacian
+A = RandAdjacency(SIZE, 'directed', false, 'weighted', true, 'strong', true);
 
-
-A(:,:,2) = [0; 0]
-
+eig(L)
 
 
 %{
@@ -46,3 +47,11 @@ end
 figure(5)
 
 %}
+
+%%
+
+figure
+tspan = [0 1e-2];
+y0 = 1;
+[t,y] = ode45(@(t,y) 2, tspan, y0);
+plot(t,y,'-o')

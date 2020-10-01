@@ -4,11 +4,17 @@ classdef Agent < ConsensusMAS.RefClass
     
     properties
         id; % Agent ID number
+        A;
+        B;
+        C;
+        D;
+        K;
         leaders;
         followers; % Neighbouring agents
         xhat; % Most recent transmission
         X; % State array
         U; % Control input array
+        tx;
     end
     properties (Dependent)
         name; % Agent name
@@ -18,11 +24,18 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, x0)
+        function obj = Agent(id, A, B, C, D, x0)
             % Class constructor
             obj.id = id;
             obj.x = x0;
-            obj.xhat = x0;
+            obj.xhat = zeros(size(x0));
+            obj.u = zeros(size(x0));
+            obj.A = A;
+            obj.B = B;
+            obj.C = C;
+            obj.D = D;
+            obj.K = [1/7 -3/7; 2/7 1/7]%; lqr(A,B,1,1, eye(size(B)));
+            obj.tx = false;
         end
         
         % Getters
@@ -54,35 +67,46 @@ classdef Agent < ConsensusMAS.RefClass
         
         function triggers = checktrigger(obj)
             triggers = obj.trigger;
-            obj.broadcast(triggers);
+            if any(reshape(squeeze(triggers), [], 1))
+                obj.broadcast(triggers);
+            end
         end
         
         function obj = broadcast(obj, triggers)
             % Broadcast this object to all its neighbours
+            obj.tx = true;
+            obj.setinput;
             obj.xhat = obj.x .* triggers + obj.xhat .* ~triggers;
-            if any(reshape(squeeze(triggers), [], 1))
-                for follower = obj.followers
-                    follower.agent.receive;
-                end
+            for follower = obj.followers
+                follower.agent.receive;
             end
         end
         
         function obj = receive(obj)
             obj.setinput();
+            %if ~obj.tx
+            %    obj.setinput();
+            %end
         end
         
         function obj = setinput(obj)
             % Calculate the next control input
-            input = 0;
+            input = zeros(size(obj.x));
             for leader = obj.leaders
-                input = input - leader.weight*(obj.xhat - leader.agent.xhat);
+                sp = 0;
+                %sp = [-(obj.id - leader.agent.id); 0];
+                input = input - leader.weight*((obj.xhat - leader.agent.xhat) + sp);
             end
-            obj.u = input;% .* triggers + obj.u .* ~triggers;
+            obj.u = obj.K * input;% .* triggers + obj.u .* ~triggers;
         end
         
         function obj = step(obj, ts)
-            % Step the agent, first order dynamics
-            obj.x = obj.x + obj.u * ts;
+            % Step the agent
+            xdot = obj.A * obj.x + obj.B * obj.u;
+
+            % Simulate
+            [t, y] = ode45(@(t,y) xdot, [0 ts], obj.x);
+            obj.x = y(end,:)'; 
         end
     end
     

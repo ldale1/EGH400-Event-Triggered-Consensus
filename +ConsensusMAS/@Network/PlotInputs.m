@@ -9,18 +9,19 @@ function PlotInputs(obj, varargin)
     end
 
     figure();
-    hold on;
-    for agent = network.agents
-        if strcmp(plottype, "plot")
-            plot(obj.T(2:end), agent.U, 'DisplayName', agent.name)
-        elseif strcmp(plottype, "stairs")
-            stairs(obj.T(2:end), agent.U, 'DisplayName', agent.name)
-        else
-            error("Plot type not recognised");
+    for i = 1:obj.agentstates
+        subplot(obj.agentstates, 1, i), hold on;
+        for agent = obj.agents
+            if strcmp(plottype, "plot")
+                plot(agent.U(i,:), 'DisplayName', agent.name)
+            elseif strcmp(plottype, "stairs")
+                stairs(agent.U(i,:), 'DisplayName', agent.name)
+            else
+                error("Plot type not recognised");
+            end
         end
-
-    end
-    xlim([obj.T(1) obj.T(end)]);
-    title('Inputs')
-    legend()
+        %xlim([obj.T(1) obj.T(end)]);
+        title('Agents')
+        legend()
+    end  
 end
