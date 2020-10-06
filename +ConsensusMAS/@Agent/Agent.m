@@ -30,7 +30,7 @@ classdef Agent < ConsensusMAS.RefClass
             obj.B = B;
             obj.C = C;
             obj.D = D;
-            %obj.K = lqr(A, B, 1, 1);
+            %obj.K = lqr(A, B, 1, 3);
             obj.K = [1/7 -3/7; 2/7 1/7];
             obj.x = x0;
             obj.xhat = zeros(size(x0));
@@ -56,7 +56,7 @@ classdef Agent < ConsensusMAS.RefClass
         function triggers = checkbroadcast(obj)
             triggers = obj.trigger;
             %if any(reshape(squeeze(triggers), [], 1))
-            if any(reshape(triggers, [], 1))
+            if any(triggers)
                 obj.broadcast(triggers);
             end
         end
@@ -82,26 +82,24 @@ classdef Agent < ConsensusMAS.RefClass
             % Calculate the next control input
             F = zeros(size(obj.u));
             for leader = obj.leaders
-                sp = 0;
-                %sp = [-(obj.id - leader.agent.id); 0];
-                F = F - leader.weight*((obj.xhat - leader.agent.xhat) + sp);
+                F = F - leader.weight*(obj.xhat - leader.agent.xhat);
             end
             obj.u = obj.K * F;% .* triggers + obj.u .* ~triggers;
+            
         end
         
         function obj = step(obj, ts)
             % Step the agent
-            %xdot = obj.A * obj.x + obj.B * obj.u;
+            xdot = obj.A * obj.x + obj.B * obj.u;
 
             % Simulate
-            %[t, y] = ode45(@(t,y) xdot, [0 ts], obj.x);
+            [t, y] = ode45(@(t,y) xdot, [0 ts], obj.x);
+            obj.x = y(end,:)'; 
             
-            %obj.x = y(end,:)'; 
-            
+            %{
             [G, H] = c2d(obj.A, obj.B, ts);
-            %G = expm(obj.A.*ts);
-            %H = inv(obj.A)*(G-eye(size(G)))*obj.B;
             obj.x = G * obj.x + H * obj.u;
+            %}
         end
     end
     

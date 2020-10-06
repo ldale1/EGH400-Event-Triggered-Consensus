@@ -28,8 +28,6 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             for leader = obj.leaders
                 sp = 0;
                 %sp = [-(obj.id - leader.agent.id); 0];
-                
-                
                 %z = z - leader.weight*(obj.xhat - leader.agent.xhat + sp);
                 z = z + leader.weight*(obj.x - leader.agent.x + sp);
             end
@@ -40,7 +38,9 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function result = trigger(obj)
             result = obj.error > obj.error_threshold;
             if any(result)
-                %result = [1; 1];
+                % TODO: need to determine if all states are broadcast
+                %       on a single state trigger
+                result = ones(size(obj.x));
             end
         end
     end
