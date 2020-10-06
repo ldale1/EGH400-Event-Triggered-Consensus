@@ -1,57 +1,24 @@
-A
-D = diag(sum(A, 2)); %Degree Matrix
-L = D - A; %Graph Laplacian
-A = RandAdjacency(SIZE, 'directed', false, 'weighted', true, 'strong', true);
+% Cleanup
+clc; 
 
-eig(L)
+ts = 0.1;
+
+% The agent dynamics
+A = [-4 1; 
+     4 -2];
+B = [1 3; -2 1];
+%B = [1; 1];
 
 
-%{
+[G, H] = c2d(A, B, ts)
+C = eye(size(A));
+D = zeros(size(B));
 
-% First, create 4  figures with four different graphs (each with  a 
-% colorbar):
-figure(1)
-surf(peaks(10))
-colorbar
-figure(2)
-mesh(peaks(10))
-colorbar
-figure(3)
-contour(peaks(10))
-colorbar
-figure(4)
-pcolor(peaks(10))
-colorbar
+% Initial conditions
+X0 = [-6; 2];
+sys = ss(G, H, C, D, ts);
+K = lqr(A, B, 1, 1);
+sysFeedback = feedback(sys, K);
 
-% Now create destination graph
-figure(5)
-ax = zeros(4,1);
-for i = 1:4
-    ax(i)=subplot(4,1,i);
-end
 
-% Now copy contents of each figure over to destination figure
-% Modify position of each axes as it is transferred
-for i = 1:4
-    figure(i)
-    h = get(gcf,'Children');
-    newh = copyobj(h,5)
-    for j = 1:length(newh)
-posnewh = get(newh(j),'Position');
-possub  = get(ax(i),'Position');
-set(newh(j),'Position',...
-[posnewh(1) possub(2) posnewh(3) possub(4)])
-    end
-    delete(ax(i));
-end
-figure(5)
-
-%}
-
-%%
-
-figure
-tspan = [0 1e-2];
-y0 = 1;
-[t,y] = ode45(@(t,y) 2, tspan, y0);
-plot(t,y,'-o')
+step(sysFeedback)

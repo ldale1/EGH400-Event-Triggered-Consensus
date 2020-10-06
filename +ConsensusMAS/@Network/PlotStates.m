@@ -13,9 +13,9 @@ function PlotStates(obj,varargin)
         subplot(obj.agentstates, 1, i), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
-                plot(obj.T, agent.X(i,:), 'DisplayName', agent.name)
+                plot(obj.T, obj.X(:,:,agent.id), 'DisplayName', agent.name)
             elseif strcmp(plottype, "stairs")
-                stairs(obj.T, agent.X(i,:), 'DisplayName', agent.name)
+                stairs(obj.T, obj.X(:,:,agent.id), 'DisplayName', agent.name)
             else
                 error("Plot type not recognised");
             end

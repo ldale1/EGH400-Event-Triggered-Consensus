@@ -9,18 +9,20 @@ function PlotInputs(obj, varargin)
     end
 
     figure();
-    for i = 1:obj.agentstates
-        subplot(obj.agentstates, 1, i), hold on;
+    for i = 1:size(obj.U, 1)
+        subplot(obj.agentinputs, 1, i), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
-                plot(agent.U(i,:), 'DisplayName', agent.name)
+                plot(obj.T, obj.U(:,:,agent.id), 'DisplayName', agent.name)
             elseif strcmp(plottype, "stairs")
-                stairs(agent.U(i,:), 'DisplayName', agent.name)
+                stairs(obj.T, obj.U(:,:,agent.id), 'DisplayName', agent.name)
             else
                 error("Plot type not recognised");
             end
         end
-        %xlim([obj.T(1) obj.T(end)]);
+        
+        
+        xlim([obj.T(1) obj.T(end)]);
         title('Agents')
         legend()
     end  
