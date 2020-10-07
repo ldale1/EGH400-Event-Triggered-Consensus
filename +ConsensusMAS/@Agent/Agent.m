@@ -2,6 +2,8 @@ classdef Agent < ConsensusMAS.RefClass
     % This class represents a network agent
     % Inherits from superclass handle so that it is passed by reference
     
+    % What about tx and rx in same step
+    
     properties
         id; % Agent ID number
         A;
@@ -9,12 +11,18 @@ classdef Agent < ConsensusMAS.RefClass
         C;
         D;
         K;
-        sys;
         leaders;
         followers; % Neighbouring agents
-        xhat; % Most recent transmission
+        
+        
         x; % Current state
-        u; % Current control input
+        xhat; % Most recent transmission
+        X;
+        u;
+        U;
+        tx;
+        TX;
+        ERROR;
         %tx;
     end
     properties (Dependent)
@@ -35,7 +43,7 @@ classdef Agent < ConsensusMAS.RefClass
             obj.x = x0;
             obj.xhat = zeros(size(x0));
             obj.u = zeros(size(B, 2), 1);
-            %obj.tx = false;
+            obj.tx = zeros(size(x0));
         end
         
         % Getters
@@ -45,7 +53,15 @@ classdef Agent < ConsensusMAS.RefClass
         function error = get.error(obj) 
             error = abs(obj.x - obj.xhat); 
         end
-       
+        
+        %{
+        function set.u(obj, x)          
+            obj.U = [obj.X x];
+        end
+        function u = get.u(obj)
+            u = obj.U(:,end); 
+        end
+        %}
         
         function obj = addReceiver(obj, reciever, weight)
             % Attach a reciever to this object
@@ -55,51 +71,55 @@ classdef Agent < ConsensusMAS.RefClass
         
         function triggers = checkbroadcast(obj)
             triggers = obj.trigger;
-            %if any(reshape(squeeze(triggers), [], 1))
-            if any(triggers)
-                obj.broadcast(triggers);
-            end
+            
+            obj.tx = triggers;
+            obj.xhat = obj.x .* triggers + obj.xhat .* ~triggers;
+            %if any(obj.tx)
+            %    obj.broadcast(obj.tx);
+            %end
         end
         
         function obj = broadcast(obj, triggers)
             % Broadcast this object to all its neighbours
-            %obj.tx = true;
-            obj.setinput;
-            obj.xhat = obj.x .* triggers + obj.xhat .* ~triggers;
-            for follower = obj.followers
-                follower.agent.receive;
-            end
+            
+            %obj.setinput(triggers);
+            %for follower = obj.followers
+            %    follower.agent.receive(triggers);
+            %end
         end
         
-        function obj = receive(obj)
-            obj.setinput();
-            %if ~obj.tx
-            %    obj.setinput();
-            %end
+        function obj = receive(obj, triggers)
+            obj.setinput(triggers);
         end
         
         function obj = setinput(obj)
             % Calculate the next control input
-            F = zeros(size(obj.u));
+            z = zeros(size(obj.u));
             for leader = obj.leaders
-                F = F - leader.weight*(obj.xhat - leader.agent.xhat);
+                z = z + leader.weight*(obj.xhat - leader.agent.xhat);
             end
-            obj.u = obj.K * F;% .* triggers + obj.u .* ~triggers;
-            
+            obj.u = -obj.K * z;
+            %obj.u = F .* + obj.u .* ~triggers;
         end
         
         function obj = step(obj, ts)
+            %{
             % Step the agent
             xdot = obj.A * obj.x + obj.B * obj.u;
 
             % Simulate
             [t, y] = ode45(@(t,y) xdot, [0 ts], obj.x);
-            obj.x = y(end,:)'; 
-            
-            %{
+            obj.x = y(end,:)';
+            %}
             [G, H] = c2d(obj.A, obj.B, ts);
             obj.x = G * obj.x + H * obj.u;
-            %}
+        end
+        
+        function track(obj)      
+            obj.X = [obj.X obj.x];
+            obj.U = [obj.U obj.u];
+            obj.ERROR = [obj.ERROR, obj.error];
+            obj.TX = [obj.TX, obj.tx];
         end
     end
     

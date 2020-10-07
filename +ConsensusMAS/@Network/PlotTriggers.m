@@ -11,7 +11,7 @@ function PlotTriggers(obj)
                 text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
             end
         end
-        xlim([0 0.8])
+        %xlim([0 0.8])
         ylim([0 agent.id + 1])
     end
 end   

@@ -3,11 +3,9 @@ clc; close all;
 
 %% Setup
 % The network
-ADJ = [0 1 1 0 0;
-       1 0 1 0 0;
-       1 1 0 1 0;
-       0 0 1 0 1;
-       0 0 0 1 0];
+ADJ = [0 1 1;
+       1 0 1;
+       1 1 0];
 
 % The agent dynamics
 A = [-4 1; 
@@ -19,8 +17,8 @@ C = eye(size(A));
 D = zeros(size(B));
 
 % Initial conditions
-X0 = [-6 3 10 -10 0;
-      2 -5 -3 7 2];
+X0 = [-6 3 10;
+      2 -5 -3];
 %X0 = [-1 3 10 -10 0; 2 -5 -3 7 2];4
 
 
@@ -30,32 +28,36 @@ import ConsensusMAS.Utils.*;
 
 % Create the network and simulate
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ADJ);
-network.Simulate('timestep', 1/100, 'mintime', 10, 'maxtime', 50);
+network.Simulate('timestep', 1/100, 'mintime', 1, 'maxtime', 50);
 
-network.PlotGraph
-network.PlotInputs;
-network.PlotStates;
-network.Plot3;
-network.PlotTriggers;
+%network.PlotGraph
+%network.PlotInputs;
+%network.PlotStates;
+%network.Plot3;
+%network.PlotTriggers;
 network.PlotTriggersStates;
+network.PlotTriggersInputs;
 %network.Animate;
 
 
 figure(); hold on;
+agent = 3;
 %tx = network.Triggers(2,:,5);
 t = network.T;
-triggers = network.TX(2,:,5);
-err = network.ERROR(2,:,5);
+triggers = network.TX(1,:,agent);
+err = network.ERROR(1,:,agent);
+thresh = network.ERROR_THRESHOLD(1,:,agent);
+    
 
-plot(t, abs(network.X(2,:,5)-network.X(2,:,4)) * network.agents(1).k)
-plot(t, err)
+stairs(t, thresh * network.agents(1).k)
+stairs(t, err)
 plot(t(logical(triggers)), err(logical(triggers)), '*');
 
 legend('thresh', 'error')
 
 %{
 
-
+'
 %
 
 %A = [0 1.5 0 0 0 0; 2 0 0 0 0 0; 0.9 0 0 0 1.9 0; 0 1.2 0 0 0 1.3; 0 0 1.4 1.8 0 0; 0 0 0 0 0.7 0];

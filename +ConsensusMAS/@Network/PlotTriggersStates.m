@@ -1,20 +1,26 @@
 function PlotTriggersStates(obj)
+    % Plot the state trajectories
+  
     figure();
-    hold on;
-    for agent = obj.agents
-        plot(obj.T, agent.X, 'DisplayName', agent.name)
+    for i = 1:obj.agentstates
+        subplot(obj.agentstates, 1, i), hold on;
+        for agent = obj.agents
+            time = obj.T;
+            states = obj.X(i,:,agent.id);
+            plot(obj.T, states, 'DisplayName', agent.name)
 
-        % When is it triggering
-        triggers = obj.TRIGGERS([obj.TRIGGERS.id] == agent.id);
-        triggers_time = [triggers.t];
 
-        % These indeces in time array
-        [a, b] = ismember(triggers_time, obj.T);
+            triggers = obj.TX(i,:,agent.id);
+            tx_vals = states(logical(triggers));
+            tx_time = time(logical(triggers));
 
-        % Plot
-        plot(triggers_time, agent.X(b), '*', 'HandleVisibility', 'off')
-    end
-    xlim([obj.T(1) obj.T(end)]);
-    title('Agents')
-    legend()
+            plot(tx_time, tx_vals, '*', 'HandleVisibility', 'off')
+            if length(tx_time) >= 1
+                text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
+            end
+        end
+        xlim([obj.T(1) obj.T(end)]);
+        title('Agents')
+        legend()
+    end  
 end

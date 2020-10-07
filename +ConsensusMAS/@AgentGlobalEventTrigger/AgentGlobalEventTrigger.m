@@ -4,6 +4,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     
     properties
         k;
+        ERROR_THRESHOLD;
     end
     
     properties (Dependent)
@@ -20,18 +21,15 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             I = eye(size(ADJ, 1));
             Ln = (I + D)^-1*L;
             F = (I + D)^-1 * (I * ADJ);
-            obj.k = max(eig(L));
+            obj.k = 1/max(eig(L));
         end
         
         function error_threshold = get.error_threshold(obj)
             z = 0; 
             for leader = obj.leaders
-                sp = 0;
-                %sp = [-(obj.id - leader.agent.id); 0];
-                %z = z - leader.weight*(obj.xhat - leader.agent.xhat + sp);
-                z = z + leader.weight*(obj.x - leader.agent.x + sp);
+                z = z + leader.weight*(obj.x - leader.agent.x);
             end
-            error_threshold = 1/obj.k * abs(z);
+            error_threshold = obj.k * abs(z);
         end
         
         
@@ -42,6 +40,11 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
                 %       on a single state trigger
                 result = ones(size(obj.x));
             end
+        end
+        
+        function track(obj)  
+            track@ConsensusMAS.Agent(obj);
+            obj.ERROR_THRESHOLD = [obj.ERROR_THRESHOLD, obj.error_threshold];
         end
     end
 end
