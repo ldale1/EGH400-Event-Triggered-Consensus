@@ -33,7 +33,11 @@ classdef Network < ConsensusMAS.RefClass
             obj.agentstates = size(X0, 1);
             obj.agentinputs = size(B, 2);
             obj.ADJ = ADJ;
-            obj.F = (eye(obj.SIZE) + diag(sum(ADJ, 2)))^-1 * (eye(obj.SIZE) * ADJ);
+            
+            I = eye(obj.SIZE);
+            D = diag(sum(ADJ, 2));
+            L = D - ADJ;
+            F = (I + D)^-1 * (I * ADJ);
             
             % Create the agents
             switch type
@@ -45,12 +49,12 @@ classdef Network < ConsensusMAS.RefClass
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), ADJ);
+                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), L);
                     end
                 case Implementations.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), ADJ);
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), L, 1, 1);
                     end
                 otherwise
                     error("Unrecognised type");
@@ -60,7 +64,8 @@ classdef Network < ConsensusMAS.RefClass
             % Create the network
             for i = 1:obj.SIZE % row-wise
                 for j = 1:obj.SIZE %column-wise
-                    weight = obj.ADJ(i, j);
+                    %weight = obj.A(i, j);
+                    weight = F(i, j);
                     if (i~=j && weight ~= 0)
                         agents(j).addReceiver(agents(i), weight);
                     end
@@ -181,13 +186,13 @@ classdef Network < ConsensusMAS.RefClass
                     fprintf("\n")
                 end
                 %}
-                
      
                 % Check the exit conditions                
                 finished = (round(obj.t - mintime, 4) >= 0) && obj.consensus;
                 if (finished || obj.t > maxtime)
                     break;
                 end
+                
                 obj.t = obj.t + ts;
             end
         end

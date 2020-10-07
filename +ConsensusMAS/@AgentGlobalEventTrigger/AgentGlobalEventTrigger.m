@@ -12,12 +12,10 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, A, B, C, D, x0, ADJ)
+        function obj = AgentGlobalEventTrigger(id, A, B, C, D, x0, L)
             obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
             
             % Event triggering constant
-            D = diag(sum(ADJ, 2));
-            L = D - ADJ;
             obj.k = 1/max(eig(L));
         end
         
@@ -32,11 +30,6 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         
         function triggers = triggers(obj)
             triggers = obj.error > obj.error_threshold;
-            if any(triggers)
-                % TODO: need to determine if all states are broadcast
-                %       on a single state trigger
-                %triggers = ones(size(obj.x));
-            end
         end
         
         function save(obj)  

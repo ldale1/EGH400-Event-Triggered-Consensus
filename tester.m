@@ -1,24 +1,28 @@
 % Cleanup
-clc; 
+clc; clear all;
 
-ts = 0.1;
+ts = 0.001;
 
 % The agent dynamics
 A = [-4 1; 
      4 -2];
-B = [1 3; -2 1];
-%B = [1; 1];
+B = [1 3;
+     -2 1];
+K = [1/7 -3/7; 
+    2/7 1/7];
 
 
-[G, H] = c2d(A, B, ts)
+[G, H] = c2d(A, B, ts);
 C = eye(size(A));
 D = zeros(size(B));
 
 % Initial conditions
 X0 = [-6; 2];
 sys = ss(G, H, C, D, ts);
-K = lqr(A, B, 1, 1);
 sysFeedback = feedback(sys, K);
 
 
-step(sysFeedback)
+[y, t] = initial(sysFeedback, X0)
+
+figure()
+plot(t, y)

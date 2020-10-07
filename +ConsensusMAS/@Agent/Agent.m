@@ -39,9 +39,9 @@ classdef Agent < ConsensusMAS.RefClass
             obj.C = C;
             obj.D = D;
 
-            %obj.K = lqr(A, B, 1, 3);
-            %obj.K = 1;
-            obj.K = [1/7 -3/7; 2/7 1/7];
+            %obj.K = lqr(A, B, 1, 1);
+            obj.K = 1;
+            %obj.K = [1/7 -3/7; 2/7 1/7];
             
             obj.x = x0;
             obj.xhat = zeros(size(x0));
@@ -68,10 +68,10 @@ classdef Agent < ConsensusMAS.RefClass
         function obj = check_trigger(obj)
             % Act on error threshold
             obj.tx = obj.triggers;
-            obj.sample;
             if any(obj.tx)
-                obj.setinput(obj.tx);
-                obj.broadcast(obj.tx);
+                obj.sample;
+                obj.setinput;
+                obj.broadcast;
             end
         end
         
@@ -80,18 +80,18 @@ classdef Agent < ConsensusMAS.RefClass
             obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
         end
         
-        function obj = broadcast(obj, tx)
+        function obj = broadcast(obj)
             % Broadcast this object to all its neighbours
             for follower = obj.followers
-                follower.agent.receive(tx);
+                follower.agent.receive;
             end
         end
         
-        function obj = receive(obj, tx)
-            obj.setinput(tx);
+        function obj = receive(obj)
+            obj.setinput;
         end
         
-        function obj = setinput(obj, tx)
+        function obj = setinput(obj)
             % Calculate the next control input
             z = zeros(size(obj.u));
             for leader = obj.leaders

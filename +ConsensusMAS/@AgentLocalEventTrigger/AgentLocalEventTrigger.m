@@ -3,7 +3,9 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
     % Inherits from superclass handle so that it is passed by reference
     
     properties
-        k;
+        c0;
+        c1;
+        alpha;
         ERROR_THRESHOLD;
     end
     
@@ -12,34 +14,26 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentLocalEventTrigger(id, A, B, C, D, x0, ADJ)
+        function obj = AgentLocalEventTrigger(id, A, B, C, D, x0, L, c0, c1)
             obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
             
             % Event triggering constant
-            D = diag(sum(ADJ, 2));
-            L = D - ADJ;
-            %I = eye(size(ADJ, 1));
-            %Ln = (I + D)^-1*L;
-            %F = (I + D)^-1 * (I * ADJ);
-            obj.k = 1/max(eig(L));
+            obj.c0 = c0;
+            obj.c1 = c1;
+            obj.alpha = 1/max(eig(L));
         end
         
         function error_threshold = get.error_threshold(obj)
             z = zeros(size(obj.x)); 
             for leader = obj.leaders
-                z = z + leader.weight*(obj.xhat - leader.agent.xhat);
+                z = z + leader.weight*(obj.x - leader.agent.x);
             end
-            error_threshold = [0 0];
+            error_threshold = obj.alpha * abs(z);
         end
         
         
         function triggers = triggers(obj)
             triggers = obj.error > obj.error_threshold;
-            if any(triggers)
-                % TODO: need to determine if all states are broadcast
-                %       on a single state trigger
-                %triggers = ones(size(obj.x));
-            end
         end
         
         function save(obj)  
