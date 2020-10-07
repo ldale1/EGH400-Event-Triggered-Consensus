@@ -9,16 +9,17 @@ classdef Agent < ConsensusMAS.RefClass
         C;
         D;
         K;
-        sys;
         leaders;
         followers; % Neighbouring agents
         xhat; % Most recent transmission
-        x; % Current state
-        u; % Current control input
-        %tx;
+        X; % State array
+        U; % Control input array
+        tx;
     end
     properties (Dependent)
         name; % Agent name
+        x; % Current state
+        u; % Current control input
         error; % Deviation from last broadcast
     end
     
@@ -26,21 +27,32 @@ classdef Agent < ConsensusMAS.RefClass
         function obj = Agent(id, A, B, C, D, x0)
             % Class constructor
             obj.id = id;
+            obj.x = x0;
+            obj.xhat = zeros(size(x0));
+            obj.u = zeros(size(x0));
             obj.A = A;
             obj.B = B;
             obj.C = C;
             obj.D = D;
-            %obj.K = lqr(A, B, 1, 1);
-            obj.K = [1/7 -3/7; 2/7 1/7];
-            obj.x = x0;
-            obj.xhat = zeros(size(x0));
-            obj.u = zeros(size(B, 2), 1);
-            %obj.tx = false;
+            obj.K = [1/7 -3/7; 2/7 1/7]%; lqr(A,B,1,1, eye(size(B)));
+            obj.tx = false;
         end
         
         % Getters
         function name = get.name(obj)
             name = sprintf("Agent %d", obj.id);
+        end
+        function set.x(obj, x)
+            obj.X = [obj.X, x]; 
+        end
+        function x = get.x(obj)
+            x = obj.X(:,end); 
+        end
+        function set.u(obj, u)
+            obj.U = [obj.U, u]; 
+        end
+        function u = get.u(obj)
+            u = obj.U(:,end); 
         end
         function error = get.error(obj) 
             error = abs(obj.x - obj.xhat); 
@@ -53,17 +65,16 @@ classdef Agent < ConsensusMAS.RefClass
             reciever.leaders = [reciever.leaders, struct('agent', obj, 'weight', weight)];
         end
         
-        function triggers = checkbroadcast(obj)
+        function triggers = checktrigger(obj)
             triggers = obj.trigger;
-            %if any(reshape(squeeze(triggers), [], 1))
-            if any(reshape(triggers, [], 1))
+            if any(reshape(squeeze(triggers), [], 1))
                 obj.broadcast(triggers);
             end
         end
         
         function obj = broadcast(obj, triggers)
             % Broadcast this object to all its neighbours
-            %obj.tx = true;
+            obj.tx = true;
             obj.setinput;
             obj.xhat = obj.x .* triggers + obj.xhat .* ~triggers;
             for follower = obj.followers
@@ -80,28 +91,22 @@ classdef Agent < ConsensusMAS.RefClass
         
         function obj = setinput(obj)
             % Calculate the next control input
-            F = zeros(size(obj.u));
+            input = zeros(size(obj.x));
             for leader = obj.leaders
                 sp = 0;
                 %sp = [-(obj.id - leader.agent.id); 0];
-                F = F - leader.weight*((obj.xhat - leader.agent.xhat) + sp);
+                input = input - leader.weight*((obj.xhat - leader.agent.xhat) + sp);
             end
-            obj.u = obj.K * F;% .* triggers + obj.u .* ~triggers;
+            obj.u = obj.K * input;% .* triggers + obj.u .* ~triggers;
         end
         
         function obj = step(obj, ts)
             % Step the agent
-            %xdot = obj.A * obj.x + obj.B * obj.u;
+            xdot = obj.A * obj.x + obj.B * obj.u;
 
             % Simulate
-            %[t, y] = ode45(@(t,y) xdot, [0 ts], obj.x);
-            
-            %obj.x = y(end,:)'; 
-            
-            [G, H] = c2d(obj.A, obj.B, ts);
-            %G = expm(obj.A.*ts);
-            %H = inv(obj.A)*(G-eye(size(G)))*obj.B;
-            obj.x = G * obj.x + H * obj.u;
+            [t, y] = ode45(@(t,y) xdot, [0 ts], obj.x);
+            obj.x = y(end,:)'; 
         end
     end
     

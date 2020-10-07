@@ -6,21 +6,18 @@ classdef Network < ConsensusMAS.RefClass
         ADJ; % adjacency matrix
         agents; % network agents
         agentstates; % number of states
-        agentinputs; % number of inputs
         A; % adjacency matrix
         F; % network matrix
         T; % times vector
         TX; % Transmissions matrix
-        x0; % initial states
-        X; % states matrix
-        U;
-        SIZE; % network size
     end
     properties (Dependent)
+        SIZE; % network size
         t; % current time instant
         tx; % latest transmission
+        x0; % initial states
         x; % current states
-        u; 
+        X; % states matrix
         consensus; % consensus boolean
         final_value; % consensus value
     end
@@ -29,23 +26,22 @@ classdef Network < ConsensusMAS.RefClass
         function obj = Network(type, A, B, C, D, X0, ADJ)
             import ConsensusMAS.*;
             % Create the matrices
-            obj.SIZE = size(X0, 2);
-            obj.x0 = X0;
+            SIZE = size(X0, 2);
             obj.agentstates = size(X0, 1);
-            obj.agentinputs = size(B, 2);
+            
             obj.ADJ = ADJ;
-            obj.F = (eye(obj.SIZE) + diag(sum(ADJ, 2)))^-1 * (eye(obj.SIZE) * ADJ);
+            obj.F = (eye(SIZE) + diag(sum(ADJ, 2)))^-1 * (eye(SIZE) * ADJ);
             
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
-                    agents = AgentFixedTrigger.empty(obj.SIZE, 0);
-                    for n = 1:obj.SIZE
+                    agents = AgentFixedTrigger.empty(SIZE, 0);
+                    for n = 1:SIZE
                         agents(n) = AgentFixedTrigger(n, A, B, C, D, X0(:,n));
                     end
                 case Implementations.GlobalEventTrigger
-                    agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
-                    for n = 1:obj.SIZE
+                    agents = AgentGlobalEventTrigger.empty(SIZE, 0);
+                    for n = 1:SIZE
                         agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), ADJ);
                     end
                 otherwise
@@ -54,8 +50,8 @@ classdef Network < ConsensusMAS.RefClass
             
             
             % Create the network
-            for i = 1:obj.SIZE % row-wise
-                for j = 1:obj.SIZE %column-wise
+            for i = 1:SIZE % row-wise
+                for j = 1:SIZE %column-wise
                     weight = obj.F(i, j);
                     if (i~=j && weight ~= 0)
                         agents(j).addReceiver(agents(i), weight);
@@ -66,26 +62,16 @@ classdef Network < ConsensusMAS.RefClass
         end
         
         % Getters and Setters
-        function set.t(obj, t)
-            obj.T = [obj.T t]; 
-        end
-        function t = get.t(obj)
-            t = obj.T(end); 
-        end
+        function set.t(obj, t); obj.T = [obj.T t]; end
+        function t = get.t(obj); t = obj.T(end); end
+        
         function set.tx(obj, tx)          
             obj.TX = [obj.TX tx];
         end
         function tx = get.tx(obj)
             tx = obj.TX(end); 
         end
-        function x = get.x(obj)
-            x = [obj.agents.x];
-        end
-        function u = get.u(obj)
-            u = [obj.agents.u];
-        end
         
-        %{
         function X = get.X(obj)
             % State array getter, there is one z dimension for each agent
             X = zeros(obj.agentstates, length(obj.T), obj.SIZE);
@@ -93,15 +79,18 @@ classdef Network < ConsensusMAS.RefClass
                 X(:,:,agent.id) = agent.X;
             end
         end
-        %}
-        
+        function x0 = get.x0(obj)
+            x0 = obj.X(:,1,:);
+        end
+        function x = get.x(obj)
+            x = obj.X(:,end,:);
+        end
+        function SIZE = get.SIZE(obj); SIZE = length(obj.agents); end
         function consensus = get.consensus(obj)
-            % Checks whether the network has reached consensus
             import ConsensusMAS.Utils.*;
             consensus = ConsensusReached(obj.x0, obj.x); 
         end
         function final_value = get.final_value(obj)
-            % Gets teh current average of current states
             if ~obj.consensus
                 error("This network has not reached consensus.");
             else
@@ -136,11 +125,8 @@ classdef Network < ConsensusMAS.RefClass
             % Begin
             % Agents are initialised with
             % x = x0, u = 0, xhat = 0
-            
             obj.t = 0;
-            obj.X(:,end+1,:) = reshape([obj.agents.x], [obj.agentstates, 1, obj.SIZE]);
-            obj.U(:,end+1,:) = reshape([obj.agents.u], [obj.agentinputs, 1, obj.SIZE]);
-            obj.TX(:,end+1,:) = zeros(obj.agentstates, 1, obj.SIZE);
+            obj.tx = zeros(obj.agentstates, 1, obj.SIZE);
             
             % Simulate
             while (true)           
@@ -149,18 +135,16 @@ classdef Network < ConsensusMAS.RefClass
                     agent.step(ts);
                 end 
                 
-                % Update time, and histories
-                obj.t = obj.t + ts;
-                obj.X(:,end+1,:) = reshape([obj.agents.x], [obj.agentstates, 1, obj.SIZE]);
-                obj.U(:,end+1,:) = reshape([obj.agents.u], [obj.agentinputs, 1, obj.SIZE]);
-               
-                % Broadcast agents if needed
+                % Update triggers
                 triggers = zeros(obj.agentstates, 1, obj.SIZE);
                 for agent = obj.agents
-                    triggers(:,:,agent.id) = agent.checkbroadcast;
+                    triggers(:,:,agent.id) = agent.checktrigger;
                 end
-                obj.TX(:,end+1,:) = triggers;
-     
+                obj.tx = triggers;
+                
+                % Update time
+                obj.t = obj.t + ts;
+                
                 % Check the exit conditions                
                 finished = (round(obj.t - mintime, 4) >= 0) && obj.consensus;
                 if (finished || obj.t > maxtime)
