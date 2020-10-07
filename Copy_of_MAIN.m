@@ -18,14 +18,14 @@ ADJ = [0 1 1 0 0;
        0 0 0 1 0];
 
 % The agent dynamics
-m = 0.1;
-A = [0 1/m 0 0;
-     0 0 0 0;
-     0 0 0 1/m;
-     0 0 0 0];
-B = -[0 0 0 0; 2 0 0 0; 0 0 0 0; 2 0 0 0];
-C = ones(size(A));
-D = zeros(size(A));
+A = [-4 1; 
+     4 -2];
+B = [1 3;
+     -2 1];
+K = [1/7 -3/7; 
+    2/7 1/7];
+C = eye(size(A));
+D = zeros(size(B));
 
 % Initial conditions
 X0 = [-1 3 10 -10 0;

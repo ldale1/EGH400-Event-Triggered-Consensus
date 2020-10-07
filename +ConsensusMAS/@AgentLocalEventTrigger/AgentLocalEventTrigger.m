@@ -1,9 +1,11 @@
-classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
+classdef AgentLocalEventTrigger < ConsensusMAS.Agent
     % This class represents a network agent
     % Inherits from superclass handle so that it is passed by reference
     
     properties
-        k;
+        c0;
+        c1;
+        alpha;
         ERROR_THRESHOLD;
     end
     
@@ -12,11 +14,13 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, A, B, C, D, x0, L)
+        function obj = AgentLocalEventTrigger(id, A, B, C, D, x0, L, c0, c1)
             obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
             
             % Event triggering constant
-            obj.k = 1/max(eig(L));
+            obj.c0 = c0;
+            obj.c1 = c1;
+            obj.alpha = 1/max(eig(L));
         end
         
         function error_threshold = get.error_threshold(obj)
@@ -24,7 +28,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             for leader = obj.leaders
                 z = z + leader.weight*(obj.x - leader.agent.x);
             end
-            error_threshold = obj.k * abs(z);
+            error_threshold = obj.alpha * abs(z);
         end
         
         
