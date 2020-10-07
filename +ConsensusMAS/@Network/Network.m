@@ -20,7 +20,6 @@ classdef Network < ConsensusMAS.RefClass
     end
     properties (Dependent)
         t; % current time instant
-        tx; % latest transmission
         consensus; % consensus boolean
         final_value; % consensus value
     end
@@ -48,6 +47,11 @@ classdef Network < ConsensusMAS.RefClass
                     for n = 1:obj.SIZE
                         agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), ADJ);
                     end
+                case Implementations.LocalEventTrigger
+                    agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
+                    for n = 1:obj.SIZE
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), ADJ);
+                    end
                 otherwise
                     error("Unrecognised type");
             end
@@ -72,12 +76,6 @@ classdef Network < ConsensusMAS.RefClass
         function t = get.t(obj)
             t = obj.T(end); 
         end
-        function set.tx(obj, tx)          
-            obj.TX = [obj.TX tx];
-        end
-        function tx = get.tx(obj)
-            tx = obj.TX(end); 
-        end
 
         function X = get.X(obj)
            X = zeros(obj.agentstates, length(obj.T), obj.SIZE);
@@ -86,7 +84,7 @@ classdef Network < ConsensusMAS.RefClass
            end
         end
         function U = get.U(obj)
-           U = zeros(obj.agentstates, length(obj.T), obj.SIZE);
+           U = zeros(obj.agentinputs, length(obj.T), obj.SIZE);
            for agent = obj.agents
                U(:,:,agent.id) = agent.U;
            end
@@ -110,15 +108,7 @@ classdef Network < ConsensusMAS.RefClass
            end
         end
         
-        %{
-        function X = get.X(obj)
-            % State array getter, there is one z dimension for each agent
-            X = zeros(obj.agentstates, length(obj.T), obj.SIZE);
-            for agent = obj.agents
-                X(:,:,agent.id) = agent.X;
-            end
-        end
-        %}
+        
         
         function consensus = get.consensus(obj)
             % Checks whether the network has reached consensus
@@ -126,7 +116,7 @@ classdef Network < ConsensusMAS.RefClass
             consensus = ConsensusReached(obj.x0, [obj.agents.x]); 
         end
         function final_value = get.final_value(obj)
-            % Gets teh current average of current states
+            % Gets the current average of current states
             if ~obj.consensus
                 error("This network has not reached consensus.");
             else
@@ -160,54 +150,33 @@ classdef Network < ConsensusMAS.RefClass
             
             % Begin
             % Agents are initialised with
-            % x = x0, u = 0, xhat = 0
-            
-            
-            
-            %obj.ERROR(:,end+1,:) = reshape([obj.agents.error], [obj.agentstates, 1, obj.SIZE]);
-            %obj.U(:,end+1,:) = reshape([obj.agents.u], [obj.agentinputs, 1, obj.SIZE]);
-            %obj.TX(:,end+1,:) = zeros(obj.agentstates, 1, obj.SIZE);
-            
+            % x = x0, u = 0, xhat = 0            
             obj.t = 0;
             
             % Simulate
             while (true)
                 
                 % Broadcast agents if needed
-                %triggers = zeros(obj.agentstates, 1, obj.SIZE);
                 for agent = obj.agents
-                    %triggers(:,:,agent.id) = agent.checkbroadcast;
-                    agent.checkbroadcast;
-                end
-                
-                for agent = obj.agents
-                    %triggers(:,:,agent.id) = agent.checkbroadcast;
-                    agent.setinput;
+                    agent.check_trigger;
                 end
                 
                 % Have agents save their data
                 for agent = obj.agents
-                    agent.track
+                    agent.save
                 end
-                
                 
                 % Step accordingly
                 for agent = obj.agents
                     agent.step(ts);
                 end 
                 
-                
-                
-                
-                %if any(reshape(squeeze(triggers), [], 1)) 
-                %    disp(squeeze(triggers))
-                %end
-                
                 %{
                 if obj.t > 0.2 && obj.t < 0.3
                     fprintf("STEP:\n")
                     disp(obj.t)
-                    disp(squeeze(triggers))
+                    disp(squeeze([obj.agents.tx]))
+                    disp(squeeze([obj.agents.xhat]))
                     disp(squeeze([obj.agents.u]))
                     fprintf("\n")
                 end
@@ -230,33 +199,14 @@ classdef Network < ConsensusMAS.RefClass
         PlotInputs(obj, varargin);
         PlotStates(obj, varargin);
         PlotTriggers(obj, varargin);
+        PlotErrors(obj, varargin);
         Plot3(obj, vargargin)
         
         % Complex Subplot Figures
         PlotTriggersStates(obj,varargin);
         PlotTriggersInputs(obj, varargin);
         
-        
-        function obj = Animate(obj)
-            % Create a figure animation and save
-            import ConsensusMAS.Utils.*;
-            
-            % So far this is only two dimensional
-            % inputs: agent x rows, steps x columns
-            
-            % inputs
-            x = squeeze(obj.X(1,:,:))';
-            y = ones(obj.SIZE, length(obj.T)) .* (1:obj.SIZE)';
-            tx = squeeze(obj.TX(1,:,:))';
-            
-            % Update if there was more than a single state
-            if (obj.agentstates > 1)
-                y = squeeze(obj.X(2,:,:))';
-                tx = logical(squeeze(any(obj.TX(1:2,:,:))))';
-            end
-            
-            % Create movie
-            MovieMaker(obj.T, x, y, tx);
-        end
+        % Animation
+        Animate(obj, varargin);
     end
 end

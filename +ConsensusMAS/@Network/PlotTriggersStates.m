@@ -15,9 +15,6 @@ function PlotTriggersStates(obj)
             tx_time = time(logical(triggers));
 
             plot(tx_time, tx_vals, '*', 'HandleVisibility', 'off')
-            if length(tx_time) >= 1
-                text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
-            end
         end
         xlim([obj.T(1) obj.T(end)]);
         title('Agents')

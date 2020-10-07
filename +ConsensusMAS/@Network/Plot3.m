@@ -4,8 +4,18 @@ function Plot3(obj)
     
     figure(), hold on, grid on;
     for agent = obj.agents
-        plot3(obj.X(1,:,agent.id)', obj.X(2,:,agent.id)', obj.T')
+        t = obj.T;
+        x1 = agent.X(1, :);
+        x2 = agent.X(2, :);
+        
+        triggers = any(agent.TX);
+        
+        plot3(x1, x2, t);
     end
+    
+    %for agent = obj.agents
+    %    plot3(obj.X(1,:,agent.id)', obj.X(2,:,agent.id)', obj.T')
+    %end
     xlabel('x_1')
     ylabel('x_2')
     zlabel('t')
