@@ -12,8 +12,7 @@ ADJ = [0 1 1 0 0;
 % The agent dynamics
 A = [-4 1; 
      4 -2];
-B = [1 3; 
-    -2 1];
+B = [1 3; -2 1];
 %B = [1; 0];
 C = eye(size(A));
 D = zeros(size(B));
@@ -21,7 +20,7 @@ D = zeros(size(B));
 % Initial conditions
 X0 = [-6 3 10 -10 0;
       2 -5 -3 7 2];
-%X0 = [-1 3 10 -10 0; 2 -5 -3 7 2];4
+%X0 = [-1 3 10 -10 0; 2 -5 -3 7 2];
 
 
 %% Simulate
@@ -30,14 +29,22 @@ import ConsensusMAS.Utils.*;
 
 % Create the network and simulate
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ADJ);
-network.Simulate('timestep', 1/100, 'mintime', 10, 'maxtime', 50);
-
-
-%network.PlotInputs;
-%network.PlotStates;
-network.Plot3;
+network.Simulate('timestep', 10e-3, 'mintime', 1, 'maxtime', 50);
+network.PlotInputs;
+network.PlotStates;
 network.PlotTriggers;
-%network.Animate;
+
+
+figure(), hold on, grid on;
+for agent = network.agents
+    plot3(network.X(1,:,agent.id)', network.X(2,:,agent.id)', network.T')
+end
+xlabel('X')
+ylabel('Y')
+zlabel('T')
+view(-70,30)
+
+network.Animate;
 
 
 %{

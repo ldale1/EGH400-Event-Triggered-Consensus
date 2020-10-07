@@ -143,7 +143,7 @@ classdef Network < ConsensusMAS.RefClass
             obj.TX(:,end+1,:) = zeros(obj.agentstates, 1, obj.SIZE);
             
             % Simulate
-            while (true)          
+            while (true)           
                 % Step accordingly
                 for agent = obj.agents
                     agent.step(ts);
@@ -160,8 +160,6 @@ classdef Network < ConsensusMAS.RefClass
                     triggers(:,:,agent.id) = agent.checkbroadcast;
                 end
                 obj.TX(:,end+1,:) = triggers;
-                
-                
      
                 % Check the exit conditions                
                 finished = (round(obj.t - mintime, 4) >= 0) && obj.consensus;
@@ -177,7 +175,6 @@ classdef Network < ConsensusMAS.RefClass
         PlotInputs(obj, varargin);
         PlotStates(obj, varargin);
         PlotTriggers(obj, varargin);
-        Plot3(obj, vargargin)
         
         % Complex Subplot Figures
         PlotTriggersStates(obj,varargin);
@@ -193,16 +190,17 @@ classdef Network < ConsensusMAS.RefClass
             % inputs
             x = squeeze(obj.X(1,:,:))';
             y = ones(obj.SIZE, length(obj.T)) .* (1:obj.SIZE)';
-            tx = squeeze(obj.TX(1,:,:))';
+            x_tx = squeeze(obj.TX(1,:,:))';
+            y_tx = ones(obj.SIZE, length(obj.T)) .* (1:obj.SIZE)';
             
             % Update if there was more than a single state
             if (obj.agentstates > 1)
                 y = squeeze(obj.X(2,:,:))';
-                tx = logical(squeeze(any(obj.TX(1:2,:,:))))';
+                y_tx = squeeze(obj.TX(2,:,:))';
             end
             
             % Create movie
-            MovieMaker(obj.T, x, y, tx);
+            MovieMaker(obj.T, x, y, x_tx, y_tx);
         end
     end
 end

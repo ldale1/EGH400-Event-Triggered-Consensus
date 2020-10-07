@@ -1,5 +1,8 @@
-function MovieMaker(time, x, y, tx)
+function MovieMaker(time, x, y, x_tx, y_tx)
     mov(1:length(time)) = struct('cdata',[],'colormap',[]);
+
+    % Auxiliar variables
+
     scrsz = get(0,'ScreenSize');
     figmovie=figure('Name','Movie: Consensus', 'Position',[0, 0, scrsz(4)*0.75, scrsz(4)*0.75]);
         
@@ -37,7 +40,9 @@ function MovieMaker(time, x, y, tx)
             plot(x_vals, y_vals, 'color', colors(i,:));
             
             % Transmissions
-            txs = tx(i, history:k);
+            x_txs = x_tx(i, history:k);
+            y_txs = x_tx(i, history:k);
+            txs = logical(x_txs + y_txs);
             plot(x_vals(txs), y_vals(txs), 'o', 'color', colors(i,:));
             
             % Current pos
