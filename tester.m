@@ -21,8 +21,12 @@ X0 = [-6; 2];
 sys = ss(G, H, C, D, ts);
 sysFeedback = feedback(sys, K);
 
+%t = 0:ts:4
+%[y, t] = initial(sysFeedback, X0, t)
 
-[y, t] = initial(sysFeedback, X0)
+
+y = initial(sysFeedback, X0)
+
 
 figure()
-plot(t, y)
+plot(y)

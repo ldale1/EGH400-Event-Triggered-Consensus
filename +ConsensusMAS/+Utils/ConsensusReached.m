@@ -5,6 +5,6 @@ function consensus = ConsensusReached(X0, X)
         Xi = squeeze(X(i,:,:));
         range_x0 = max(X0i) - min(X0i);
         range_x = max(Xi) - min(Xi);
-        consensus = consensus & range_x / range_x0 < 1/100;
+        consensus = consensus & range_x / range_x0 < 1/50;
     end
 end

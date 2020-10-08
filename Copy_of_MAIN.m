@@ -22,18 +22,12 @@ A = [-4 1;
      4 -2];
 B = [1 3;
      -2 1];
-K = [1/7 -3/7; 
-    2/7 1/7];
 C = eye(size(A));
 D = zeros(size(B));
 
 % Initial conditions
-X0 = [-1 3 10 -10 0;
+X0 = [-6 3 10 -10 0;
       2 -5 -3 7 2];
-
-SIZE = 5;
-ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 1, 'strong', 1) * 0.1;
-X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
 
 
 %% Simulate
@@ -42,21 +36,14 @@ import ConsensusMAS.Utils.*;
 
 % Create the network and simulate
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ADJ);
-network.Simulate('timestep', 10e-3, 'mintime', 1, 'maxtime', 50);
+network.Simulate('timestep', 1/1e3, 'mintime', 6, 'maxtime', 15);
+
+
 %network.PlotGraph;
-network.PlotInputs;
-network.PlotStates;
+%network.PlotInputs;
+%network.PlotStates;
+network.PlotTriggersStates;
+network.Plot3;
 network.PlotTriggers;
+network.PlotErrors;
 %network.Animate;
-
-%{
-
-figure(); hold on; grid on;
-for agent = network.agents
-    plot3(agent.X(1,:)', agent.X(2,:)', network.T')
-end
-xlabel('X')
-ylabel('Y')
-zlabel('T')
-view(-70,30)
-%}

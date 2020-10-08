@@ -1,6 +1,7 @@
 function PlotTriggers(obj)
     % Plot the trigger times
     figure(), hold on;
+    t = obj.T;
     for i = 1:obj.agentstates
         subplot(obj.agentstates+1, 1, i), hold on;
         for agent = obj.agents
@@ -11,7 +12,7 @@ function PlotTriggers(obj)
                 text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
             end
         end
-        %xlim([0 0.8])
+        xlim([t(1) t(end)])
         ylim([0 agent.id + 1])
     end
     
@@ -26,7 +27,7 @@ function PlotTriggers(obj)
             text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
         end
     end
-    %xlim([0 0.8])
+    xlim([t(1) t(end)])
     ylim([0 agent.id + 1])
     
 end   

@@ -40,22 +40,23 @@ classdef Agent < ConsensusMAS.RefClass
             obj.D = D;
 
             %obj.K = lqr(A, B, 1, 1);
-            obj.K = 1;
-            %obj.K = [1/7 -3/7; 2/7 1/7];
+            %obj.K = 1;
+            obj.K = [1/7 -3/7; 2/7 1/7];
             
             obj.x = x0;
-            obj.xhat = zeros(size(x0));
+            obj.xhat = x0;
             obj.u = zeros(size(B, 2), 1);
-            obj.tx = zeros(size(x0));
+            obj.tx = ones(size(x0));
         end
         
-        % Getters
+        
         function name = get.name(obj)
+            % Agent display name
             name = sprintf("Agent %d", obj.id);
         end
         function error = get.error(obj) 
             % Difference from last broadcast
-            error = abs(obj.x - obj.xhat); 
+            error = abs(obj.xhat - obj.x); 
         end
         
         
@@ -69,15 +70,15 @@ classdef Agent < ConsensusMAS.RefClass
             % Act on error threshold
             obj.tx = obj.triggers;
             if any(obj.tx)
-                obj.sample;
+                obj.sample(obj.tx);
                 obj.setinput;
                 obj.broadcast;
             end
         end
         
-        function obj = sample(obj)
+        function obj = sample(obj, tx)
             % Set the broadcast
-            obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
+            obj.xhat = obj.x .* tx + obj.xhat .* ~tx;
         end
         
         function obj = broadcast(obj)
@@ -95,16 +96,22 @@ classdef Agent < ConsensusMAS.RefClass
             % Calculate the next control input
             z = zeros(size(obj.u));
             for leader = obj.leaders
-                z = z + leader.weight*(obj.xhat - leader.agent.xhat);
+                sp = 0;
+                %sp = [-(obj.id - leader.agent.id); 0];
+                z = z + leader.weight*(obj.xhat - leader.agent.xhat + sp);
+                %z = z + (obj.xhat - leader.agent.xhat + sp);
+                %z = z - (leader.weight*(obj.x - leader.agent.x)-(obj.x - 1));
             end
-            %obj.u = -obj.K * z .* tx + obj.u .* ~tx;
             obj.u = -obj.K * z;
         end
         
         function obj = step(obj, ts)
             % Discrete Time Step
-            [G, H] = c2d(obj.A, obj.B, ts);           
-            obj.x = G * obj.x + H * obj.u;
+            CLK = ts/10;
+            [G, H] = c2d(obj.A, obj.B, CLK);
+            for t = 0:CLK:ts
+                obj.x = G * obj.x + H * obj.u;
+            end
         end
         
         function save(obj)     

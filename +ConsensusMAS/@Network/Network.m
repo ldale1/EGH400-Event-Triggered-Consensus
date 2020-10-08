@@ -35,9 +35,9 @@ classdef Network < ConsensusMAS.RefClass
             obj.ADJ = ADJ;
             
             I = eye(obj.SIZE);
-            D = diag(sum(ADJ, 2));
-            L = D - ADJ;
-            F = (I + D)^-1 * (I * ADJ);
+            DEG = diag(sum(ADJ, 2));
+            L = DEG - ADJ;
+            F = (I + DEG)^-1 * (I * ADJ);
             
             % Create the agents
             switch type
@@ -54,7 +54,7 @@ classdef Network < ConsensusMAS.RefClass
                 case Implementations.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), L, 1, 1);
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), L);
                     end
                 otherwise
                     error("Unrecognised type");
@@ -64,7 +64,7 @@ classdef Network < ConsensusMAS.RefClass
             % Create the network
             for i = 1:obj.SIZE % row-wise
                 for j = 1:obj.SIZE %column-wise
-                    %weight = obj.A(i, j);
+                    %weight = ADJ(i, j);
                     weight = F(i, j);
                     if (i~=j && weight ~= 0)
                         agents(j).addReceiver(agents(i), weight);
@@ -137,7 +137,7 @@ classdef Network < ConsensusMAS.RefClass
             % Parse the args
             ts = 1;
             mintime = 0;
-            maxtime = 100;
+            maxtime = 1e5;
             for k = 1:length(varargin)
                 if (strcmp(varargin{k},"timestep"))
                     k = k + 1;
@@ -158,8 +158,23 @@ classdef Network < ConsensusMAS.RefClass
             % x = x0, u = 0, xhat = 0            
             obj.t = 0;
             
+            for agent = obj.agents
+                agent.setinput;
+            end
+            
+            % Have agents save their data
+            for agent = obj.agents
+                agent.save
+            end
+            
+            % Step accordingly
+            for agent = obj.agents
+                agent.step(ts);
+            end 
+            
             % Simulate
             while (true)
+                obj.t = obj.t + ts;
                 
                 % Broadcast agents if needed
                 for agent = obj.agents
@@ -192,8 +207,6 @@ classdef Network < ConsensusMAS.RefClass
                 if (finished || obj.t > maxtime)
                     break;
                 end
-                
-                obj.t = obj.t + ts;
             end
         end
         
