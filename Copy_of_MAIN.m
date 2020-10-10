@@ -3,13 +3,6 @@ clc; close all;
 
 %% Setup
 
-%
-
-%A = [0 1.5 0 0 0 0; 2 0 0 0 0 0; 0.9 0 0 0 1.9 0; 0 1.2 0 0 0 1.3; 0 0 1.4 1.8 0 0; 0 0 0 0 0.7 0];
-%A = [0 1 1 0; 0 0 1 0; 1 0 0 1;  0 0 1 0]%; .* randi(SIZE, SIZE, SIZE);
-
-
-
 % The network
 ADJ = [0 1 1 0 0;
        1 0 1 0 0;
@@ -36,7 +29,7 @@ import ConsensusMAS.Utils.*;
 
 % Create the network and simulate
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ADJ);
-network.Simulate('timestep', 1/1e3, 'mintime', 6, 'maxtime', 15);
+network.Simulate('timestep', 1/1e3, 'mintime', 6, 'maxtime', 30);
 
 
 %network.PlotGraph;
@@ -45,5 +38,5 @@ network.Simulate('timestep', 1/1e3, 'mintime', 6, 'maxtime', 15);
 network.PlotTriggersStates;
 network.Plot3;
 network.PlotTriggers;
-network.PlotErrors;
+%network.PlotErrors;
 %network.Animate;

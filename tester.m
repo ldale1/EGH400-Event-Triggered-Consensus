@@ -1,32 +1,13 @@
-% Cleanup
-clc; clear all;
-
-ts = 0.001;
-
-% The agent dynamics
-A = [-4 1; 
-     4 -2];
-B = [1 3;
-     -2 1];
-K = [1/7 -3/7; 
-    2/7 1/7];
-
-
-[G, H] = c2d(A, B, ts);
-C = eye(size(A));
-D = zeros(size(B));
-
-% Initial conditions
-X0 = [-6; 2];
-sys = ss(G, H, C, D, ts);
-sysFeedback = feedback(sys, K);
-
-%t = 0:ts:4
-%[y, t] = initial(sysFeedback, X0, t)
-
-
-y = initial(sysFeedback, X0)
-
-
-figure()
-plot(y)
+% The network
+SIZE = size(ADJ,2);
+ADJ = [0 0 0 1 1 1;
+       1 0 0 0 0 0;
+       1 1 0 1 0 0;
+       1 0 0 0 0 0;
+       0 0 0 2 0 1;
+       0 0 0 0 1 0];
+   
+I = eye(SIZE);
+DEG = diag(sum(ADJ, 2));
+L = DEG - ADJ;
+F = (I + DEG)^-1 * (I + ADJ)

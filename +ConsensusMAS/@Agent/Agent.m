@@ -24,6 +24,8 @@ classdef Agent < ConsensusMAS.RefClass
         U;
         TX;
         ERROR;
+        
+        txt; % time since recent transmission
     end
     properties (Dependent)
         name; % Agent name
@@ -40,13 +42,14 @@ classdef Agent < ConsensusMAS.RefClass
             obj.D = D;
 
             %obj.K = lqr(A, B, 1, 1);
-            %obj.K = 1;
+            %obj.K = ones(size(B'));
             obj.K = [1/7 -3/7; 2/7 1/7];
             
             obj.x = x0;
             obj.xhat = x0;
             obj.u = zeros(size(B, 2), 1);
             obj.tx = ones(size(x0));
+            obj.txt = 0;
         end
         
         
@@ -58,60 +61,83 @@ classdef Agent < ConsensusMAS.RefClass
             % Difference from last broadcast
             error = abs(obj.xhat - obj.x); 
         end
-        
-        
-        function obj = addReceiver(obj, reciever, weight)
+    end
+    
+    
+    methods
+        function addReceiver(obj, reciever, weight)
             % Attach a reciever to this object
             obj.followers = [obj.followers, struct('agent', reciever, 'weight', weight)];
             reciever.leaders = [reciever.leaders, struct('agent', obj, 'weight', weight)];
         end
         
-        function obj = check_trigger(obj)
+        function check_trigger(obj)
             % Act on error threshold
-            obj.tx = obj.triggers;
+            obj.tx = obj.triggers();
             if any(obj.tx)
-                obj.sample(obj.tx);
-                obj.setinput;
-                obj.broadcast;
+                obj.sample();
+                obj.setinput();
+                obj.broadcast();
             end
         end
         
-        function obj = sample(obj, tx)
+        function sample(obj)
             % Set the broadcast
-            obj.xhat = obj.x .* tx + obj.xhat .* ~tx;
+            obj.txt = 0;
+            obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
         end
         
-        function obj = broadcast(obj)
+        function broadcast(obj)
             % Broadcast this object to all its neighbours
             for follower = obj.followers
-                follower.agent.receive;
+                follower.agent.receive();
             end
         end
         
-        function obj = receive(obj)
-            obj.setinput;
+        function receive(obj)
+            % Leader broadcast notification
+            obj.setinput();
         end
         
-        function obj = setinput(obj)
+        function setinput(obj)
             % Calculate the next control input
             z = zeros(size(obj.u));
             for leader = obj.leaders
-                sp = 0;
-                %sp = [-(obj.id - leader.agent.id); 0];
-                z = z + leader.weight*(obj.xhat - leader.agent.xhat + sp);
-                %z = z + (obj.xhat - leader.agent.xhat + sp);
-                %z = z - (leader.weight*(obj.x - leader.agent.x)-(obj.x - 1));
+                xj = leader.agent;
+                
+                % Consensus summation
+                z = z + leader.weight*(...
+                        obj.xhat - ...
+                        xj.xhat);
+                
+                %{
+                z = z + leader.weight*(...
+                        obj.A^obj.txt * obj.xhat - ...
+                        xj.A^xj.txt * xj.xhat);
+                %}
             end
             obj.u = -obj.K * z;
         end
         
-        function obj = step(obj, ts)
+        function step(obj, ts)
             % Discrete Time Step
+            obj.txt = obj.txt + ts;
+            
+           
+            %{
+            
+            % Simulation where the internal clock of agents is faster than
+            % the simulation to make more accurate and speed up runtime
             CLK = ts/10;
             [G, H] = c2d(obj.A, obj.B, CLK);
             for t = 0:CLK:ts
                 obj.x = G * obj.x + H * obj.u;
             end
+            
+            %}
+            
+            %[G, H] = c2d(obj.A, obj.B, ts);
+            %obj.x = G * obj.x + H * obj.u;
         end
         
         function save(obj)     

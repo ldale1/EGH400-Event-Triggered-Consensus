@@ -37,8 +37,8 @@ classdef Network < ConsensusMAS.RefClass
             I = eye(obj.SIZE);
             DEG = diag(sum(ADJ, 2));
             L = DEG - ADJ;
-            F = (I + DEG)^-1 * (I * ADJ);
-            
+            F = (I + DEG)^-1 * (I + ADJ);
+
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
@@ -59,8 +59,7 @@ classdef Network < ConsensusMAS.RefClass
                 otherwise
                     error("Unrecognised type");
             end
-            
-            
+
             % Create the network
             for i = 1:obj.SIZE % row-wise
                 for j = 1:obj.SIZE %column-wise
@@ -159,7 +158,7 @@ classdef Network < ConsensusMAS.RefClass
             obj.t = 0;
             
             for agent = obj.agents
-                agent.setinput;
+                agent.setinput();
             end
             
             % Have agents save their data
@@ -178,12 +177,12 @@ classdef Network < ConsensusMAS.RefClass
                 
                 % Broadcast agents if needed
                 for agent = obj.agents
-                    agent.check_trigger;
+                    agent.check_trigger();
                 end
                 
                 % Have agents save their data
                 for agent = obj.agents
-                    agent.save
+                    agent.save();
                 end
                 
                 % Step accordingly
