@@ -1,4 +1,5 @@
 function consensus = ConsensusReached(X0, X)
+    % DON'T USE
     consensus = true;
     for i = 1:size(X, 1)
         X0i = squeeze(X0(i,:,:));

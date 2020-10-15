@@ -7,40 +7,45 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
         ERROR_THRESHOLD;
     end
     
-    properties (Dependent)
-        error_threshold;
-    end
     
     methods
-        function obj = AgentLocalEventTrigger(id, A, B, C, D, x0, L)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
+        function obj = AgentLocalEventTrigger(id, A, B, C, D, CLK, x0, L)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, CLK, x0);
             
             % Event triggering constant
             obj.k = 1/max(eig(L));
-            
-            % FOR LOOP
         end
         
-        function error_threshold = get.error_threshold(obj)
+        function error_threshold = error_threshold(obj)
             % Calculate the error threhsold
             z = zeros(size(obj.x)); 
             for leader = obj.leaders
-                sp = 0;
-                %sp = [-(obj.id - leader.agent.id); 0];
-                %z = z + leader.weight*(obj.x - leader.agent.x + sp);
-                z = z + (obj.xhat - leader.agent.xhat + sp);
+                xj = leader.agent;
+                
+                % Consensus summation
+                z = z + leader.weight*(...
+                        obj.x - xj.x);
+                    
+                % need a way to describe z1 in terms of z2
+                % set [1; 1]
+                
             end
+            
+            % Consensus
             error_threshold = obj.k * abs(z);
-            error_threshold = ceil(error_threshold * 2^8)/2^8;
         end
         
         
         function triggers = triggers(obj)
-            % Return states crossing the error threshold
-            triggers = obj.error > obj.error_threshold;%; .* [0; 1];
+            % Return vector where states cross the error threshold
+            triggers = (obj.error > obj.error_threshold);
+            if any(triggers)
+                triggers = [1;1];
+            end
         end
         
         function save(obj)
+            % Record current properties
             save@ConsensusMAS.Agent(obj);
             obj.ERROR_THRESHOLD = [obj.ERROR_THRESHOLD, obj.error_threshold];
         end

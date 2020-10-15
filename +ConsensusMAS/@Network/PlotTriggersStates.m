@@ -6,11 +6,11 @@ function PlotTriggersStates(obj)
         subplot(obj.agentstates, 1, i), hold on;
         for agent = obj.agents
             time = obj.T;
-            states = obj.X(i,:,agent.id);
+            states = agent.X(i,:);
             plot(obj.T, states, 'DisplayName', agent.name)
 
 
-            triggers = obj.TX(i,:,agent.id);
+            triggers = agent.TX(i,:);
             tx_vals = states(logical(triggers));
             tx_time = time(logical(triggers));
 

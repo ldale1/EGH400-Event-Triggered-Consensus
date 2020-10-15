@@ -2,28 +2,29 @@ classdef Agent < ConsensusMAS.RefClass
     % This class represents a network agent
     % Inherits from superclass handle so that it is passed by reference
     
-    % What about tx and rx in same step
+    % What about tx and rx in same step ?
     
     properties
         id; % Agent ID number
-        A;
-        B;
-        C;
-        D;
-        K;
+        CLK; % Sampling rate
+        G; % Discrete time state matrix
+        H; % Discrete time input matrix
+        C; % Output matrix
+        D; % 
+        K; % Gain matrix
         
         leaders; % Leading agents
         followers; % Following agents
         
-        x; % Current state
+        x; % Current state vector
         xhat; % Most recent transmission
-        u;
-        tx;
+        u; % Current input vector
+        tx; % Current trigger vector
         
-        X;
-        U;
-        TX;
-        ERROR;
+        X; % States matrix
+        U; % Inputs matix
+        TX; % Trigger matrix
+        ERROR; % Error matrix
         
         txt; % time since recent transmission
     end
@@ -33,11 +34,12 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, A, B, C, D, x0)
+        function obj = Agent(id, A, B, C, D, CLK, x0)
             % Class constructor
             obj.id = id;
-            obj.A = A;
-            obj.B = B;
+            obj.CLK = CLK;
+            
+            [obj.G, obj.H] = c2d(A, B, CLK);
             obj.C = C;
             obj.D = D;
 
@@ -46,10 +48,9 @@ classdef Agent < ConsensusMAS.RefClass
             obj.K = [1/7 -3/7; 2/7 1/7];
             
             obj.x = x0;
-            obj.xhat = x0;
+            obj.xhat = zeros(size(x0));
             obj.u = zeros(size(B, 2), 1);
             obj.tx = ones(size(x0));
-            obj.txt = 0;
         end
         
         
@@ -59,7 +60,9 @@ classdef Agent < ConsensusMAS.RefClass
         end
         function error = get.error(obj) 
             % Difference from last broadcast
-            error = abs(obj.xhat - obj.x); 
+            error = obj.xhat - obj.x;
+            %error = (obj.G^obj.txt)*obj.xhat - obj.x;
+            error = floor(abs(error)*1000)/1000;
         end
     end
     
@@ -83,7 +86,6 @@ classdef Agent < ConsensusMAS.RefClass
         
         function sample(obj)
             % Set the broadcast
-            obj.txt = 0;
             obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
         end
         
@@ -107,37 +109,20 @@ classdef Agent < ConsensusMAS.RefClass
                 
                 % Consensus summation
                 z = z + leader.weight*(...
-                        obj.xhat - ...
-                        xj.xhat);
-                
-                %{
-                z = z + leader.weight*(...
-                        obj.A^obj.txt * obj.xhat - ...
-                        xj.A^xj.txt * xj.xhat);
-                %}
+                        obj.xhat - xj.xhat);
             end
             obj.u = -obj.K * z;
         end
         
-        function step(obj, ts)
+        function step(obj)
             % Discrete Time Step
-            obj.txt = obj.txt + ts;
+            obj.txt = obj.txt + 1;
+               
+            % Move
+            obj.x = obj.G * obj.x + obj.H * obj.u;
             
-           
-            %{
-            
-            % Simulation where the internal clock of agents is faster than
-            % the simulation to make more accurate and speed up runtime
-            CLK = ts/10;
-            [G, H] = c2d(obj.A, obj.B, CLK);
-            for t = 0:CLK:ts
-                obj.x = G * obj.x + H * obj.u;
-            end
-            
-            %}
-            
-            %[G, H] = c2d(obj.A, obj.B, ts);
-            %obj.x = G * obj.x + H * obj.u;
+            % Project forwards (may require [1;1] tx)
+            obj.xhat = (obj.G) * obj.xhat;
         end
         
         function save(obj)     
