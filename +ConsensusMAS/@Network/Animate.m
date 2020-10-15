@@ -1,21 +1,22 @@
 function obj = Animate(obj)
-    % Create a figure animation and save
-    import ConsensusMAS.Utils.*;
+    % Create a figure animation and save    
+    import ConsensusMAS.Utils.*
+    assert(obj.agentstates == 2, "Wrong number of states");
 
-    % So far this is only two dimensional
+    % This is two dimensional
     % inputs: agent x rows, steps x columns
-
-    % inputs
-    x = squeeze(obj.X(1,:,:))';
-    y = ones(obj.SIZE, length(obj.T)) .* (1:obj.SIZE)';
-    tx = squeeze(obj.TX(1,:,:))';
-
-    % Update if there was more than a single state
-    if (obj.agentstates > 1)
-        y = squeeze(obj.X(2,:,:))';
-        tx = logical(squeeze(any(obj.TX(1:2,:,:))))';
+    
+    T = obj.T;
+    X1 = zeros(obj.SIZE, length(T));
+    X2 = zeros(obj.SIZE, length(T));
+    TX = zeros(obj.SIZE, length(T));
+    
+    for agent = obj.agents
+        X1(agent.id,:) = agent.X(1,:);
+        X2(agent.id,:) = agent.X(2,:);
+        TX(agent.id,:) = any(agent.TX);
     end
 
     % Create movie
-    MovieMaker(obj.T, x, y, tx);
+    MovieMaker(T, X1, X2, TX);
 end

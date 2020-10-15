@@ -1,16 +1,19 @@
-function MovieMaker(time, x, y, x_tx, y_tx)
+function MovieMaker(time, x, y, tx)
+
+    % Setup
     mov(1:length(time)) = struct('cdata',[],'colormap',[]);
-
-    % Auxiliar variables
-
     scrsz = get(0,'ScreenSize');
     figmovie=figure('Name','Movie: Consensus', 'Position',[0, 0, scrsz(4)*0.75, scrsz(4)*0.75]);
         
-    scale = 1.1;
-    xmin = min(reshape(x, [], 1)) * scale;
-    xmax = max(reshape(x, [], 1)) * scale;
-    ymin = min(reshape(y, [], 1)) * scale;
-    ymax = max(reshape(y, [], 1)) * scale;
+    % Axis minmax
+    xmin = min(reshape(x, [], 1)); xmax = max(reshape(x, [], 1));
+    ymin = min(reshape(y, [], 1)); ymax = max(reshape(y, [], 1));
+    
+    % Scale out
+    scale = 0.1;
+    xmin = xmin - (xmax - xmin) * scale; xmax = xmax + (xmax - xmin) * scale;
+    ymin = ymin - (ymax - ymin) * scale; ymax = ymax + (ymax - ymin) * scale;
+
     
     SIZE = size(x, 1);
     colors = get(gca,'colororder');
@@ -23,11 +26,14 @@ function MovieMaker(time, x, y, x_tx, y_tx)
        
     for k=1:length(time)
         % Set the labels for each frame of the animation
-        figmovie; clf;
+        figmovie; clf; hold on;
         xlabel('x [m]', 'FontSize', 18)
         ylabel('y [m]', 'FontSize', 18)
-        text(xmax, ymax, sprintf('Time %0.2f sec', time(k)), 'FontSize',18,'VerticalAlignment','top', 'HorizontalAlignment', 'right')
-        hold on;
+        text(xmax, ymax, sprintf('Time %0.2f sec', time(k)), ...
+            'FontSize',18, ...
+            'VerticalAlignment','top', ...
+            'HorizontalAlignment', 'right')
+        
 
         
         % Draw the states
@@ -40,10 +46,8 @@ function MovieMaker(time, x, y, x_tx, y_tx)
             plot(x_vals, y_vals, 'color', colors(i,:));
             
             % Transmissions
-            x_txs = x_tx(i, history:k);
-            y_txs = x_tx(i, history:k);
-            txs = logical(x_txs + y_txs);
-            plot(x_vals(txs), y_vals(txs), 'o', 'color', colors(i,:));
+            txs = logical(tx(i, history:k));
+            plot(x_vals(txs), y_vals(txs), '*', 'color', colors(i,:), 'Markersize', 3);
             
             % Current pos
             text(x(i, k), y(i, k), sprintf("%d", i), 'HorizontalAlignment', 'center')

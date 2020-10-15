@@ -1,6 +1,6 @@
 classdef AgentFixedTrigger < ConsensusMAS.Agent
-    % This class represents a network agent
-    % Inherits from superclass handle so that it is passed by reference
+    % This class represents a fixed-triggered agent
+    
     properties
         ERROR_THRESHOLD;
     end
@@ -10,8 +10,8 @@ classdef AgentFixedTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentFixedTrigger(id, A, B, C, D, x0)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
+        function obj = AgentFixedTrigger(id, A, B, C, D, CLK, x0)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, CLK, x0);
         end
         
         function triggers = triggers(obj)

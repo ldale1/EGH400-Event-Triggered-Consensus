@@ -1,6 +1,5 @@
 classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
-    % This class represents a network agent
-    % Inherits from superclass handle so that it is passed by reference
+    % This class represents an event-triggered agent
     
     properties
         k;
@@ -9,13 +8,11 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     
     
     methods
-        function obj = AgentGlobalEventTrigger(id, A, B, C, D, x0, L)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, x0);
+        function obj = AgentGlobalEventTrigger(id, A, B, C, D, CLK, x0, L)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, CLK, x0);
             
             % Event triggering constant
             obj.k = 1/max(eig(L));
-            
-            % Could iterate to find more exact eigenvalue
         end
         
         function error_threshold = error_threshold(obj)
@@ -26,27 +23,24 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
                 
                 % Consensus summation
                 z = z + leader.weight*(...
-                        obj.x - ...
-                        xj.x);
+                        obj.x - xj.x);
+                    
+                % need a way to describe z1 in terms of z2
+                % set [1; 1]
                 
-                %{
-                z = z + leader.weight*(...
-                        obj.A^obj.txt * obj.x - ...
-                        xj.A^xj.txt * xj.x);
-                %}
             end
             
-            % Exact consensus
+            % Consensus
             error_threshold = obj.k * abs(z);
-            
-            % Quantised representation (bounded consensus)
-            error_threshold = ceil(error_threshold * 1e2)/1e2;
         end
         
         
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
-            triggers = (obj.error > obj.error_threshold);% .* [0; 1];
+            triggers = (obj.error > obj.error_threshold);
+            if any(triggers)
+                triggers = [1;1];
+            end
         end
         
         function save(obj)
