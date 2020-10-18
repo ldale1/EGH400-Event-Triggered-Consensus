@@ -3,83 +3,63 @@ classdef Network < ConsensusMAS.RefClass
     % Inherits from superclass handle so that it is passed by reference
     
     properties
-        ADJ; % adjacency matrix
+        TOPS; % Network topologies
         SIZE; % network size
         agents; % network agents
         agentstates; % number of states
         agentinputs; % number of inputs
         
-        A; % adjacency matrix
-        F; % network matrix
-        
-        ts;
         T; % times vector
-        TX; % Transmissions matrix
-        
-        x0; % initial states
-        X; % states matrix
-        U; % inputs matrix
-        
-        ERROR; % error matrix
-        ERROR_THRESHOLD % error threshold matrix
+        ts; % time steps
     end
     properties (Dependent)
+        ADJ; % adjacency matrix
+        
         t; % current time instant
-        consensus; % consensus boolean
-        final_value; % consensus value
     end
     
     methods
-        function obj = Network(type, A, B, C, D, X0, ADJ, T)
+        function obj = Network(type, A, B, C, D, X0, ts)
             % Network constructor
             import ConsensusMAS.*;
+            import ConsensusMAS.Utils.*;
+            
             % Create the matrices
             obj.SIZE = size(X0, 2);
-            obj.x0 = X0;
-            obj.agentstates = size(X0, 1);
+            obj.t = 0;
+            obj.ts = ts;
+            obj.agentstates = size(A, 1);
             obj.agentinputs = size(B, 2);
-            obj.ADJ = ADJ;
-            obj.ts = T;
             
-            % Frobenius discrete time RS matrix
-            I = eye(obj.SIZE);
-            DEG = diag(sum(ADJ, 2));
-            L = DEG - ADJ;
-            F = (I + DEG)^-1 * (I + ADJ);
 
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
                     agents = AgentFixedTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentFixedTrigger(n, A, B, C, D, T, X0(:,n), T);
+                        agents(n) = AgentFixedTrigger(n, A, B, C, D, ts, X0(:,n));
                     end
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, T, X0(:,n), L);
+                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, ts, X0(:,n));
                     end
                 case Implementations.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, T, X0(:,n), L);
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, ts, X0(:,n));
                     end
                 otherwise
                     error("Unrecognised type");
             end
-
-            % Create the network
-            for i = 1:obj.SIZE % row-wise
-                for j = 1:obj.SIZE %column-wise
-                    weight = F(i, j);
-                    if (i~=j && weight ~= 0)
-                        agents(j).addReceiver(agents(i), weight);
-                    end
-                end
-            end
             
+            % Save their initial values
+            for agent = agents
+                agent.save()
+            end
             obj.agents = agents;
         end
+        
         
         function set.t(obj, t)
             % Setting time udpates times vector
@@ -90,7 +70,49 @@ classdef Network < ConsensusMAS.RefClass
             t = obj.T(end); 
         end
         
-        function consensus = get.consensus(obj)
+        function set.ADJ(obj, ADJ)
+            % Create the network
+            import ConsensusMAS.Utils.*;
+
+            % Frobenius discrete time RS matrix
+            L = GraphLaplacian(ADJ);
+            
+            % Cleanse connectoisn
+            for agent = obj.agents
+                agent.leaders = [];
+                agent.followers = [];
+                %agent.xhat = zeros(size(agent.xhat));
+                %agent.u = zeros(size(agent.u));
+                agent.L = L;
+            end
+            
+            % Create new ones
+            F = GraphFrobenius(ADJ);
+            for i = 1:obj.SIZE % row-wise
+                for j = 1:obj.SIZE %column-wise
+                    weight = F(i, j);
+                    if (i~=j && weight ~= 0)
+                        obj.agents(j).addReceiver(obj.agents(i), weight);
+                    end
+                end
+            end
+            
+            % This isn't saved !
+            for agent = obj.agents
+                agent.setinput;
+            end
+            
+            % Storing topology
+            top.t = obj.t;
+            top.ADJ = ADJ;
+            obj.TOPS = [obj.TOPS top]; 
+        end
+        %function ADJ = get.ADJ(obj)
+        %    % Get latest topology
+        %    ADJ = obj.TOPS(end).ADJ; 
+        %end
+        
+        function consensus = consensus(obj)
             % Checks whether the network has reached consensus
             u = ones(obj.agentinputs, 1, obj.SIZE);
             for agent = obj.agents
@@ -98,7 +120,7 @@ classdef Network < ConsensusMAS.RefClass
             end
             consensus = all(all(abs(u) < 1e-2));
         end
-        function final_value = get.final_value(obj)
+        function final_value = final_value(obj)
             % Gets the current average of current states
             if ~obj.consensus
                 error("This network has not reached consensus.");
@@ -107,104 +129,29 @@ classdef Network < ConsensusMAS.RefClass
             end
         end
        
+        % Simulate network
+        Simulate(obj, varargin);
         
-        function obj = Simulate(obj, varargin)
-            % Parse the args
-            mintime = 0;
-            maxtime = 1e5;
-            for k = 1:length(varargin)
-                if (strcmp(varargin{k},"mintime"))
-                    k = k + 1;
-                    mintime = varargin{k};
-                end
-                if (strcmp(varargin{k},"maxtime"))
-                    k = k + 1;
-                    maxtime = varargin{k};
-                end
-            end
-            
-            % Begin
-            % Agents are initialised with
-            % x = x0, u = 0, xhat = 0            
-            obj.t = 0;
-            
-            for agent = obj.agents
-                agent.sample();
-            end
-            
-            for agent = obj.agents
-                agent.broadcast();
-            end
-            
-            for agent = obj.agents
-                agent.setinput();
-            end
-            
-            % Have agents save their data
-            for agent = obj.agents
-                agent.save();
-            end
-            
-            % Step accordingly
-            for agent = obj.agents
-                agent.step();
-            end 
-            
-            % Simulate
-            while (true) 
-                obj.t = obj.t + obj.ts;
-                
-                % Broadcast agents if needed
-                for agent = obj.agents
-                    agent.check_trigger();
-                end
-                
-                % Have agents save their data
-                for agent = obj.agents
-                    agent.save();
-                end
-                
-                % Step accordingly
-                for agent = obj.agents
-                    agent.step();
-                end 
-                
-                
-                %{
-                if obj.t > 150 && obj.t < 160
-                    fprintf("STEP:\n")
-                    disp(obj.t)
-                    disp(squeeze([obj.agents.tx]))
-                    disp(squeeze([obj.agents.xhat]))
-                    disp(squeeze([obj.agents.u]))
-                    fprintf("\n")
-                end
-                %}
-                
-     
-                % Check the exit conditions                
-                finished = (round(obj.t - mintime, 4) >= 0) && obj.consensus;
-                if (finished || obj.t > maxtime)
-                    break;
-                end
-            end
-        end
-        
-        
-        % Basic Figures
+        % Graph Figures
         PlotEigs(obj, varargin);
         PlotGraph(obj, varargin);
+        
+        % Basic Figures
         PlotInputs(obj, varargin);
         PlotStates(obj, varargin);
         PlotTriggers(obj, varargin);
-        PlotErrors(obj, varargin);
-        Plot3(obj, vargargin)
         
         % Complex Subplot Figures
+        PlotErrors(obj, varargin);
+        Plot3(obj, vargargin)
         PlotTriggersStates(obj,varargin);
         PlotTriggersInputs(obj, varargin);
         
         % Animation
         Animate(obj, varargin);
     end
+    
+    methods(Static)
+       colors = GetColors(ncolors);
+   end
 end

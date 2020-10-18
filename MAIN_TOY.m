@@ -25,21 +25,30 @@ X0 = [-6 3 10 -10 0;
 
 %% Simulate
 import ConsensusMAS.*;
-import ConsensusMAS.Utils.*;
 
 % Create the network and simulate
 ts = 1/50;
-network = Network(Implementations.LocalEventTrigger, A, B, C, D, X0, ADJ, ts);
-network.Simulate('mintime', 6, 'maxtime', 61);
+network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ts);
+
+network.ADJ = ADJ;
+network.Simulate('mintime', 6, 'maxtime', 2);
+
+network.ADJ = zeros(size(ADJ));
+network.Simulate('mintime', 6, 'maxtime', 5);
 
 
-%network.PlotGraph;
-%network.PlotStates;
-%network.PlotInputs;
+network.PlotGraph;
 
+network.PlotStates;
+network.PlotInputs;
 network.PlotTriggers;
+
 network.PlotTriggersStates;
 network.PlotTriggersInputs;
+
+
+
 network.Plot3;
 network.PlotErrors;
-network.Animate;
+
+network.Animate("test");

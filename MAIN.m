@@ -14,33 +14,53 @@ D = zeros(size(B));
 %ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 1, 'strong', 0) * 0.1;
 %X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
 SIZE = 4;
-ADJ = [0 1 1 1;
-       1 0 1 1;
-       1 1 0 1;
-       1 1 1 0];
 %X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
-X0 = [4 1 2 3; 1 2 3 4];
+X0 = [4 1 2 3; 
+      1 2 3 4];
 
 %% Simulate
 import ConsensusMAS.*;
-import ConsensusMAS.Utils.*;
-
-% sim settings
-ts = 1/10;
-mintime = 50;
 
 % Create the network and simulate
-network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ADJ, ts);
-network.Simulate('timestep', 1/100, 'mintime', mintime, 'maxtime', mintime + 1);
+ts = 1/1e3;
+network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ts);
 
-%network.PlotGraph
+% First adjacency
+network.ADJ = [0 1 1 1;
+               1 0 1 1;
+               1 1 0 1;         
+               1 1 1 0];
+network.Simulate('Fixed', 'time', 2.5);
+
+% Second adjacency
+network.ADJ = [0 0 0 0;
+               0 0 1 0;
+               0 1 0 0;
+               0 0 0 0];
+network.Simulate('Fixed', 'time', 30);
+
+% Third adjacency
+network.ADJ = [0 1 1 1;
+               1 0 1 1;
+               1 1 0 1;         
+               1 1 1 0];
+network.Simulate('Dynamic', 'mintime', 30);
+
+
+%network.Simulate('Dynamic', 'mintime', 500, 'maxtime', 50);
+%network.Simulate('Style', 'FixedTime', 'mintime', 6, 'maxtime', 100);
+
+
+
+
+%network.PlotEigs;
+%network.PlotGraph;
 %network.PlotStates;
 %network.PlotInputs;
-
 network.PlotTriggers;
 network.PlotTriggersStates;
 %network.PlotTriggersInputs;
-network.PlotErrors;
-
-%network.Animate;
 %network.Plot3;
+network.PlotErrors;
+%network.Animate("test");
+

@@ -45,12 +45,13 @@ classdef Agent < ConsensusMAS.RefClass
 
             %obj.K = lqr(A, B, 1, 1);
             %obj.K = ones(size(B'));
-            obj.K = [1/7 -3/7; 2/7 1/7];
+            %obj.K = [1/7 -3/7; 2/7 1/7];
+            obj.K = [1 0; 0 1];
             
             obj.x = x0;
             obj.xhat = zeros(size(x0));
             obj.u = zeros(size(B, 2), 1);
-            obj.tx = ones(size(x0));
+            obj.tx = zeros(size(x0));
         end
         
         
@@ -61,7 +62,6 @@ classdef Agent < ConsensusMAS.RefClass
         function error = get.error(obj) 
             % Difference from last broadcast
             error = obj.xhat - obj.x;
-            %error = (obj.G^obj.txt)*obj.xhat - obj.x;
             error = floor(abs(error)*1000)/1000;
         end
     end
@@ -104,12 +104,9 @@ classdef Agent < ConsensusMAS.RefClass
         function setinput(obj)
             % Calculate the next control input
             z = zeros(size(obj.u));
-            for leader = obj.leaders
-                xj = leader.agent;
-                
+            for leader = obj.leaders                
                 % Consensus summation
-                z = z + leader.weight*(...
-                        obj.xhat - xj.xhat);
+                z = z + leader.weight*(obj.xhat - leader.agent.xhat);
             end
             obj.u = -obj.K * z;
         end
@@ -118,11 +115,11 @@ classdef Agent < ConsensusMAS.RefClass
             % Discrete Time Step
             obj.txt = obj.txt + 1;
                
-            % Move
+            % Move, with input
             obj.x = obj.G * obj.x + obj.H * obj.u;
             
-            % Project forwards (may require [1;1] tx)
-            obj.xhat = (obj.G) * obj.xhat;
+            % Project forwards, without input
+            obj.xhat = obj.G * obj.xhat;
         end
         
         function save(obj)     

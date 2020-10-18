@@ -1,7 +1,9 @@
 classdef Implementations
-   enumeration
-       FixedTrigger,
-       GlobalEventTrigger,
-       LocalEventTrigger
-   end
+    % Enumeration for agent implementations
+    
+    enumeration
+        FixedTrigger,
+        GlobalEventTrigger,
+        LocalEventTrigger
+    end
 end
