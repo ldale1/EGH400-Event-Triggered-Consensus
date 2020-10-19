@@ -18,6 +18,7 @@ classdef Agent < ConsensusMAS.RefClass
         
         x; % Current state vector
         xhat; % Most recent transmission
+        delta;
         u; % Current input vector
         tx; % Current trigger vector
         
@@ -25,8 +26,6 @@ classdef Agent < ConsensusMAS.RefClass
         U; % Inputs matix
         TX; % Trigger matrix
         ERROR; % Error matrix
-        
-        txt; % time since recent transmission
     end
     properties (Dependent)
         name; % Agent name
@@ -34,7 +33,7 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, A, B, C, D, CLK, x0)
+        function obj = Agent(id, A, B, C, D, x0, delta, CLK)
             % Class constructor
             obj.id = id;
             obj.CLK = CLK;
@@ -43,12 +42,13 @@ classdef Agent < ConsensusMAS.RefClass
             obj.C = C;
             obj.D = D;
 
-            %obj.K = lqr(A, B, 1, 1);
+            obj.K = lqr(A, B, 1, 1);
             %obj.K = ones(size(B'));
             %obj.K = [1/7 -3/7; 2/7 1/7];
-            obj.K = [1 0; 0 1];
+            %obj.K = [1 0; 0 1];
             
             obj.x = x0;
+            obj.delta = delta;
             obj.xhat = zeros(size(x0));
             obj.u = zeros(size(B, 2), 1);
             obj.tx = zeros(size(x0));
@@ -103,18 +103,20 @@ classdef Agent < ConsensusMAS.RefClass
         
         function setinput(obj)
             % Calculate the next control input
-            z = zeros(size(obj.u));
-            for leader = obj.leaders                
+            z = zeros(size(obj.H, 1),1);
+            for leader = obj.leaders     
+                xj = leader.agent;
+                
                 % Consensus summation
-                z = z + leader.weight*(obj.xhat - leader.agent.xhat);
+                z = z + leader.weight*(...
+                    (obj.xhat - xj.xhat) + ...
+                    (obj.delta - xj.delta) ...
+                    );
             end
             obj.u = -obj.K * z;
         end
         
-        function step(obj)
-            % Discrete Time Step
-            obj.txt = obj.txt + 1;
-               
+        function step(obj)               
             % Move, with input
             obj.x = obj.G * obj.x + obj.H * obj.u;
             

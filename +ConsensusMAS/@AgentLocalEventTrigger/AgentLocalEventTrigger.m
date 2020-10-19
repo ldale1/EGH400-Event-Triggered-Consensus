@@ -11,8 +11,8 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentLocalEventTrigger(id, A, B, C, D, CLK, x0)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, CLK, x0);
+        function obj = AgentLocalEventTrigger(id, A, B, C, D, x0, delta, CLK)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, x0, delta, CLK);
             
             % Event triggering constant
             obj.k = 0;
@@ -27,10 +27,9 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
             z = zeros(size(obj.x)); 
             for leader = obj.leaders
                 xj = leader.agent;
-                
+
                 % Consensus summation
-                z = z + leader.weight*(...
-                        obj.x - xj.x);
+                z = z + leader.weight*(obj.x - xj.x);
             end
             
             % Consensus

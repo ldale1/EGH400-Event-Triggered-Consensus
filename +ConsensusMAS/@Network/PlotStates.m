@@ -8,20 +8,25 @@ function PlotStates(obj,varargin)
         end
     end
     
-    figure();
+    figure(), sgtitle("Agent States");
+    time = obj.T;
     for i = 1:obj.agentstates
         subplot(obj.agentstates, 1, i), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
-                plot(obj.T, agent.X(i,:), 'DisplayName', agent.name)
+                plot(time, agent.X(i,:), 'DisplayName', agent.name)
             elseif strcmp(plottype, "stairs")
-                stairs(obj.T,  agent.X(i,:), 'DisplayName', agent.name)
+                stairs(time,  agent.X(i,:), 'DisplayName', agent.name)
             else
                 error("Plot type not recognised");
             end
         end
-        xlim([obj.T(1) obj.T(end)]);
-        title('Agents')
+        xlim([time(1) time(end)]);
         legend()
+        
+        % Labelling
+        title(sprintf('State %d', i))
+        ylabel('Value');
+        xlabel('Time (s)');
     end  
 end

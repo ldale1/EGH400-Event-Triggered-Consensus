@@ -3,7 +3,7 @@ classdef Network < ConsensusMAS.RefClass
     % Inherits from superclass handle so that it is passed by reference
     
     properties
-        TOPS; % Network topologies
+        TOPS; % Network topologies vector
         SIZE; % network size
         agents; % network agents
         agentstates; % number of states
@@ -14,12 +14,11 @@ classdef Network < ConsensusMAS.RefClass
     end
     properties (Dependent)
         ADJ; % adjacency matrix
-        
         t; % current time instant
     end
     
     methods
-        function obj = Network(type, A, B, C, D, X0, ts)
+        function obj = Network(type, A, B, C, D, X0, delta, ts)
             % Network constructor
             import ConsensusMAS.*;
             import ConsensusMAS.Utils.*;
@@ -31,23 +30,22 @@ classdef Network < ConsensusMAS.RefClass
             obj.agentstates = size(A, 1);
             obj.agentinputs = size(B, 2);
             
-
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
                     agents = AgentFixedTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentFixedTrigger(n, A, B, C, D, ts, X0(:,n));
+                        agents(n) = AgentFixedTrigger(n, A, B, C, D, X0(:,n), delta(n), ts);
                     end
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, ts, X0(:,n));
+                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), delta(n), ts);
                     end
                 case Implementations.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, ts, X0(:,n));
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), delta(n), ts);
                     end
                 otherwise
                     error("Unrecognised type");
@@ -81,8 +79,6 @@ classdef Network < ConsensusMAS.RefClass
             for agent = obj.agents
                 agent.leaders = [];
                 agent.followers = [];
-                %agent.xhat = zeros(size(agent.xhat));
-                %agent.u = zeros(size(agent.u));
                 agent.L = L;
             end
             
@@ -99,7 +95,8 @@ classdef Network < ConsensusMAS.RefClass
             
             % This isn't saved !
             for agent = obj.agents
-                agent.setinput;
+                agent.broadcast();
+                agent.check_trigger();
             end
             
             % Storing topology
@@ -107,14 +104,11 @@ classdef Network < ConsensusMAS.RefClass
             top.ADJ = ADJ;
             obj.TOPS = [obj.TOPS top]; 
         end
-        %function ADJ = get.ADJ(obj)
-        %    % Get latest topology
-        %    ADJ = obj.TOPS(end).ADJ; 
-        %end
         
         function consensus = consensus(obj)
             % Checks whether the network has reached consensus
             u = ones(obj.agentinputs, 1, obj.SIZE);
+            
             for agent = obj.agents
                 u(:,:,agent.id) = agent.u;
             end
@@ -143,7 +137,7 @@ classdef Network < ConsensusMAS.RefClass
         
         % Complex Subplot Figures
         PlotErrors(obj, varargin);
-        Plot3(obj, vargargin)
+        Plot3(obj, varargin)
         PlotTriggersStates(obj,varargin);
         PlotTriggersInputs(obj, varargin);
         

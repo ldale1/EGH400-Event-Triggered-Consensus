@@ -2,7 +2,7 @@ function PlotTriggersInputs(obj)
     % Plot the state trajectories
     import ConsensusMAS.Utils.*;
     
-    figure();
+    figure(), sgtitle("Control Inputs and Triggers");
     time = obj.T;
     colors = GetColors(obj.SIZE);
     
@@ -18,7 +18,7 @@ function PlotTriggersInputs(obj)
                 'Color', colors(agent.id, :))
 
             % Triggering instances
-            triggers = logical(agent.TX(i,:));
+            triggers = logical(any(agent.TX));
             tx_time = time(triggers);
             tx_vals = inputs(triggers);
             plot(tx_time, tx_vals, '*', ...
@@ -27,9 +27,16 @@ function PlotTriggersInputs(obj)
                 'Color', colors(agent.id, :))
         end
 
-        % Format plot
-        xlim([time(1) time(end)]);
-        title('Agents')
+         % Formatting
         legend()
+        xlim([time(1) time(end)]);
+        
+        % Labelling
+        if (obj.agentinputs > 1)
+            title(sprintf('Input %d', i))
+        end
+        
+        ylabel('Value');
+        xlabel('Time (s)');
     end  
 end

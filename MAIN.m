@@ -3,64 +3,43 @@ clc; close all;
 
 %% Setup
 % The agent dynamics
-A = [0 1; 
-     0 0];
+A = [0 1 0 0; 
+     0 0 0 0;
+     0 0 0 1;
+     0 0 0 0];
 B = [0 0;
+     1 0;
+     0 0;
      0 1];
 C = eye(size(A));
 D = zeros(size(B));
 
-%SIZE = 6;
-%ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 1, 'strong', 0) * 0.1;
-%X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
-SIZE = 4;
-%X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
-X0 = [4 1 2 3; 
-      1 2 3 4];
 
 %% Simulate
 import ConsensusMAS.*;
 
-% Create the network and simulate
-ts = 1/1e3;
-network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ts);
+% Simulation variables
+SIZE = 3;
+X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
+delta = @(id) SIZE * [sin(2*pi*id/SIZE); 0; cos(2*pi*id/SIZE); 0];
+ts = 1/1e1;
 
-% First adjacency
-network.ADJ = [0 1 1 1;
-               1 0 1 1;
-               1 1 0 1;         
-               1 1 1 0];
-network.Simulate('Fixed', 'time', 2.5);
+% Create the network
+network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, delta, ts);
 
-% Second adjacency
-network.ADJ = [0 0 0 0;
-               0 0 1 0;
-               0 1 0 0;
-               0 0 0 0];
-network.Simulate('Fixed', 'time', 30);
+% Simulate with switching toplogies
+for t = 1:1
+    network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
+    network.Simulate('Fixed', 'time', 30);
+end
 
-% Third adjacency
-network.ADJ = [0 1 1 1;
-               1 0 1 1;
-               1 1 0 1;         
-               1 1 1 0];
-network.Simulate('Dynamic', 'mintime', 30);
-
-
-%network.Simulate('Dynamic', 'mintime', 500, 'maxtime', 50);
-%network.Simulate('Style', 'FixedTime', 'mintime', 6, 'maxtime', 100);
-
-
-
-
-%network.PlotEigs;
 %network.PlotGraph;
 %network.PlotStates;
 %network.PlotInputs;
 network.PlotTriggers;
 network.PlotTriggersStates;
-%network.PlotTriggersInputs;
-%network.Plot3;
+network.PlotTriggersInputs;
+%network.Plot3("state1", 1, "state2", 3);
 network.PlotErrors;
-%network.Animate("test");
+%network.Animate("title", "test", "state1", 1, "state2", 3);
 

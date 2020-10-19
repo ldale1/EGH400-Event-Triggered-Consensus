@@ -1,46 +1,56 @@
-function Animate(obj, title)
-    % Network simulation animation
-
-    % This is two dimensional, assert as much
-    assert(obj.agentstates == 2, "Wrong number of states");
+function Animate(obj, varargin)
+    % Network simulation animation    
     
     % Imports
     import ConsensusMAS.Utils.*;
-
-    %{
-    % Format the data
-    % inputs: agent x rows, steps x columns
-    X1 = zeros(obj.SIZE, length(obj.T));
-    X2 = zeros(obj.SIZE, length(obj.T));
-    TX = zeros(obj.SIZE, length(obj.T));
     
-    for agent = obj.agents
-        X1(agent.id,:) = agent.X(1,:);
-        X2(agent.id,:) = agent.X(2,:);
-        TX(agent.id,:) = any(agent.TX);
+    % Sample frequency
+    time = obj.T;
+    fs = 1/(time(2) - time(1));
+    
+    % Parse Args
+    fixedaxes = 0;
+    historyticks = time(end)*fs;
+    title = "consensus_animation";
+    state1 = 1;
+    state2 = 2;
+    for k = 1:length(varargin)
+        if (strcmp(varargin{k}, "title"))
+            title = varargin{k + 1};
+        end
+        
+        if (strcmp(varargin{k}, "history"))
+            historyticks = floor(varargin{k + 1}*fs);
+        end
+        
+        if (strcmp(varargin{k}, "states"))
+            states = varargin{k + 1};
+            state1 = states(1);
+            state2 = states(2);
+        end
+        
+        if (strcmp(varargin{k}, "fixedaxes"))
+            fixedaxes = varargin{k + 1};
+        end
     end
     
-    % Axis minmax
-    xmin = min(reshape(X1, [], 1)); xmax = max(reshape(X1, [], 1));
-    ymin = min(reshape(X2, [], 1)); ymax = max(reshape(X2, [], 1));
     
-    % Scale out
-    scale = 0.1;
-    xmin = xmin - (xmax - xmin) * scale; xmax = xmax + (xmax - xmin) * scale;
-    ymin = ymin - (ymax - ymin) * scale; ymax = ymax + (ymax - ymin) * scale;
-    %}
-     
+    % This is two dimensional, assert as much
+    assert(obj.agentstates >= max(state1, state2), "Wrong number of states");
+ 
 
     % Setup
-    mov(1:length(obj.T)) = struct('cdata',[],'colormap',[]);
+    mov(1:length(time)) = struct('cdata',[],'colormap',[]);
     scrsz = get(0,'ScreenSize');
-    figmovie = figure('Name','Movie: Consensus', 'Position',[0, 0, scrsz(4)*0.75, scrsz(4)*0.75]);
-    fs = 1/(obj.T(2) - obj.T(1));
+    figmovie = figure(...
+        'Name', 'Movie: Consensus', ...
+        'Position',[0, 0, scrsz(4)*0.75, scrsz(4)*0.75]);
+    
     
     % Colors
     colors = GetColors(obj.SIZE);
        
-    for k = 1:length(obj.T)
+    for k = 1:length(time)
         % Set the labels for each frame of the animation
         figmovie; clf, hold on;
         xlabel('x [m]', 'FontSize', 18)
@@ -49,17 +59,17 @@ function Animate(obj, title)
         
         % Draw the states
         %history = max(k - ceil(length(time)/5), 1);
-        history = 1;%max(k - 100, 1);
+        startindex = max(k - historyticks, 1);
         for agent = obj.agents
             color = colors(agent.id,:);
             
             % States 
-            x_vals = agent.X(1, history:k);
-            y_vals = agent.X(2, history:k);
+            x_vals = agent.X(state1, startindex:k);
+            y_vals = agent.X(state2, startindex:k);
             plot(x_vals, y_vals, 'color', colors(agent.id,:));
             
             % Transmissions
-            txs = logical(any(agent.TX(:,history:k)));
+            txs = logical(any(agent.TX(:,startindex:k)));
             plot(x_vals(txs), y_vals(txs), '*', ...
                 'color', color, 'Markersize', 3);
             
@@ -69,9 +79,9 @@ function Animate(obj, title)
         end
         
         ax = gca;
-        text(ax.XLim(end), ax.YLim(end), sprintf('Time %0.2f sec', obj.T(k)), ...
+        text(ax.XLim(end), ax.YLim(end), sprintf('Time %0.2f sec', time(k)), ...
             'FontSize',18, ...
-            'VerticalAlignment','top', ...
+            'VerticalAlignment','bottom', ...
             'HorizontalAlignment', 'right')
 
         % Record frame data
@@ -80,7 +90,7 @@ function Animate(obj, title)
 
     % Make video
     vidObj = VideoWriter(sprintf('%s.avi', title));
-    vidObj.FrameRate = fs;
+    vidObj.FrameRate = 3*fs;
     open(vidObj);
     writeVideo(vidObj, mov);
     close(vidObj)

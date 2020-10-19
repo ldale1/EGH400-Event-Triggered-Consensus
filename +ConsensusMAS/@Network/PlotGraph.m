@@ -1,8 +1,14 @@
 function PlotGraph(obj)
     % Plot the network topology
     figure();
+    
+    % Rows and columns for subplots
+    cols = floor(sqrt(length(obj.TOPS)));
+    rows = ceil(length(obj.TOPS)/cols);
+    
+    % Iteratively plot topology graphs
     for i = 1:length(obj.TOPS)
-        subplot(1, length(obj.TOPS), i)
+        subplot(cols, rows, i)
         
         % content
         ADJ = obj.TOPS(i).ADJ;
@@ -16,6 +22,6 @@ function PlotGraph(obj)
             g = digraph(ADJ');
         end
         plot(g, 'EdgeLabel', g.Edges.Weight)
-        title(sprintf('Graph t=%.2f', t))
+        title(sprintf('Graph t=%.2fs', t))
     end
 end

@@ -10,8 +10,8 @@ classdef AgentFixedTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentFixedTrigger(id, A, B, C, D, CLK, x0)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, CLK, x0);
+        function obj = AgentFixedTrigger(id, A, B, C, D, x0, delta, CLK)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, x0, delta, CLK);
         end
         
         function triggers = triggers(obj)

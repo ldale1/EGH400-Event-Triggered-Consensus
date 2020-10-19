@@ -2,7 +2,7 @@ function PlotTriggersStates(obj)
     % Plot the state trajectories
     import ConsensusMAS.Utils.*;
   
-    figure();
+    figure(), sgtitle("Agent States and Triggers");
     time = obj.T;
     colors = GetColors(obj.SIZE);
     
@@ -26,7 +26,11 @@ function PlotTriggersStates(obj)
                 'Color', colors(agent.id, :))
         end
         xlim([time(1) time(end)]);
-        title('Agents')
         legend()
+        
+        % Labelling
+        title(sprintf('State %d', i))
+        ylabel('Value');
+        xlabel('Time (s)');
     end  
 end

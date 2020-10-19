@@ -8,23 +8,29 @@ function PlotInputs(obj, varargin)
         end
     end
 
-    figure();
-    T = obj.T;
-    for i = 1:obj.agentstates
+    figure(), sgtitle("Control Inputs");
+    time = obj.T;
+    for i = 1:obj.agentinputs
         subplot(obj.agentinputs, 1, i), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
-                plot(T, agent.U(i,:), 'DisplayName', agent.name)
+                plot(time, agent.U(i,:), 'DisplayName', agent.name)
             elseif strcmp(plottype, "stairs")
-                stairs(T, agent.U(i,:), 'DisplayName', agent.name)
+                stairs(time, agent.U(i,:), 'DisplayName', agent.name)
             else
                 error("Plot type not recognised");
             end
         end
         
-        
-        xlim([obj.T(1) obj.T(end)]);
-        title('Agents')
+        % Formatting
         legend()
+        xlim([time(1) time(end)]);
+        
+        % Labelling
+        if (obj.agentinputs > 1)
+            title(sprintf('Input %d', i))
+        end
+        ylabel('Value');
+        xlabel('Time (s)');
     end  
 end
