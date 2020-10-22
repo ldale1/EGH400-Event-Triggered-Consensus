@@ -7,7 +7,13 @@
 --- TODO ---
 
 1. Transmission time delay
-2. Switching networks
+
+
+--- FIXME ---
+1. Switching networks
+    1.1 What agents do when the tooplogy changes
+
+
 
 
 --- RESOURCES --- 

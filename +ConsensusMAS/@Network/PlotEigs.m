@@ -14,11 +14,13 @@ function PlotEigs(obj)
         subplot(cols, rows, i), hold on;
         
         % Content
-        L = GraphLaplacian(obj.TOPS(i).ADJ);
+        F = GraphFrobenius(obj.TOPS(i).ADJ);
         t = obj.TOPS(i).t;
         
+        
         % Plots
-        plot(eigs(L), '*');
+        eigvals = eigs(F);
+        plot(real(eigvals), imag(eigvals), '*');
         title(sprintf('Graph t=%.2f', t))
     end
 end

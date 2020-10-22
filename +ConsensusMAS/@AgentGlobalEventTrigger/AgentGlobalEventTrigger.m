@@ -11,8 +11,8 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, A, B, C, D, x0, delta, CLK)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, x0, delta, CLK);
+        function obj = AgentGlobalEventTrigger(id, A, B, C, D, K, x0, delta, CLK)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
             
             % Event triggering constant
             obj.k = 0;
@@ -31,8 +31,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
                 % Consensus summation
                 z = z + leader.weight*(...
                     (obj.xhat - xj.xhat) + ...
-                    (obj.delta - xj.delta) ...
-                    );
+                    (obj.delta - xj.delta));
             end
             
             % Consensus

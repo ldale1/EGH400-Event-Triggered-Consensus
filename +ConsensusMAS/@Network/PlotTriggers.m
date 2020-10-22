@@ -1,13 +1,13 @@
 function PlotTriggers(obj)
     % Plot the trigger times
     figure(), hold on;
-    t = obj.T;
+    time = obj.T;
     for i = 1:obj.agentstates
         subplot(obj.agentstates+1, 1, i), hold on;
         for agent = obj.agents
             % Get the network triggering times
             tx = agent.TX(i,:);
-            tx_time = obj.T(logical(tx));
+            tx_time = time(logical(tx));
             
             
             plot(tx_time, agent.id*ones(1, length(tx_time)), '*')
@@ -15,7 +15,7 @@ function PlotTriggers(obj)
                 text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
             end
         end
-        xlim([t(1) t(end)])
+        xlim([time(1) time(end)])
         ylim([0 agent.id + 1])
     end
     
@@ -25,7 +25,7 @@ function PlotTriggers(obj)
     for agent = obj.agents
         % Get the network triggering times
         tx = agent.TX;
-        tx_time = obj.T(logical(any(tx)));
+        tx_time = time(logical(any(tx)));
             
             
         plot(tx_time, agent.id*ones(1, length(tx_time)), '*')
@@ -33,7 +33,7 @@ function PlotTriggers(obj)
             text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
         end
     end
-    xlim([t(1) t(end)])
+    xlim([time(1) time(end)])
     ylim([0 agent.id + 1])
     
 end   

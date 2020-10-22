@@ -4,6 +4,8 @@ classdef Implementations
     enumeration
         FixedTrigger,
         GlobalEventTrigger,
-        LocalEventTrigger
+        LocalEventTrigger,
+        FiniteA,
+        FiniteB
     end
 end

@@ -1,17 +1,14 @@
 classdef AgentFixedTrigger < ConsensusMAS.Agent
     % This class represents a fixed-triggered agent
+    % TODO: make this the superclass
     
     properties
         ERROR_THRESHOLD;
     end
     
-    properties (Dependent)
-        error_threshold;
-    end
-    
     methods
-        function obj = AgentFixedTrigger(id, A, B, C, D, x0, delta, CLK)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, x0, delta, CLK);
+        function obj = AgentFixedTrigger(id, A, B, C, D, K, x0, delta, CLK)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
         end
         
         function triggers = triggers(obj)

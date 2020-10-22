@@ -12,6 +12,7 @@ classdef Agent < ConsensusMAS.RefClass
         C; % Output matrix
         D; % 
         K; % Gain matrix
+        iter;
         
         leaders; % Leading agents
         followers; % Following agents
@@ -33,25 +34,25 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, A, B, C, D, x0, delta, CLK)
+        function obj = Agent(id, A, B, C, D, K, x0, delta, CLK)
             % Class constructor
-            obj.id = id;
-            obj.CLK = CLK;
+            obj.id = id; % Agent id number
+            obj.CLK = CLK; % Agent sampling rate
             
-            [obj.G, obj.H] = c2d(A, B, CLK);
-            obj.C = C;
-            obj.D = D;
-
-            obj.K = lqr(A, B, 1, 1);
-            %obj.K = ones(size(B'));
-            %obj.K = [1/7 -3/7; 2/7 1/7];
-            %obj.K = [1 0; 0 1];
+            [obj.G, obj.H] = c2d(A, B, CLK); % Discrete time ss
+            obj.C = C; % ss
+            obj.D = D; % ss
+            obj.K = K;%lqr(A, B, 1, 1); % Agent gain 
             
-            obj.x = x0;
-            obj.delta = delta;
-            obj.xhat = zeros(size(x0));
-            obj.u = zeros(size(B, 2), 1);
-            obj.tx = zeros(size(x0));
+            
+            obj.iter = 0;
+            
+            
+            obj.x = x0; % Agent current state
+            obj.delta = delta; % Agent relative displacement
+            obj.xhat = zeros(size(x0)); % Agent last broadcase
+            obj.u = zeros(size(B, 2), 1); % Agent control input
+            obj.tx = zeros(size(x0)); % Agent current transmission
         end
         
         
@@ -63,6 +64,9 @@ classdef Agent < ConsensusMAS.RefClass
             % Difference from last broadcast
             error = obj.xhat - obj.x;
             error = floor(abs(error)*1000)/1000;
+            
+            error = [sqrt(error(1)^2 + error(2)^2);
+                     sqrt(error(1)^2 + error(2)^2)];
         end
     end
     
@@ -110,8 +114,7 @@ classdef Agent < ConsensusMAS.RefClass
                 % Consensus summation
                 z = z + leader.weight*(...
                     (obj.xhat - xj.xhat) + ...
-                    (obj.delta - xj.delta) ...
-                    );
+                    (obj.delta - xj.delta));
             end
             obj.u = -obj.K * z;
         end
@@ -122,6 +125,8 @@ classdef Agent < ConsensusMAS.RefClass
             
             % Project forwards, without input
             obj.xhat = obj.G * obj.xhat;
+            
+            obj.iter = obj.iter + 1;
         end
         
         function save(obj)     

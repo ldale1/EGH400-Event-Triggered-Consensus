@@ -3,6 +3,7 @@ classdef Network < ConsensusMAS.RefClass
     % Inherits from superclass handle so that it is passed by reference
     
     properties
+        type;
         TOPS; % Network topologies vector
         SIZE; % network size
         agents; % network agents
@@ -18,12 +19,13 @@ classdef Network < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Network(type, A, B, C, D, X0, delta, ts)
+        function obj = Network(type, A, B, C, D, K, X0, delta, ts)
             % Network constructor
             import ConsensusMAS.*;
             import ConsensusMAS.Utils.*;
             
             % Create the matrices
+            obj.type = type;
             obj.SIZE = size(X0, 2);
             obj.t = 0;
             obj.ts = ts;
@@ -35,17 +37,27 @@ classdef Network < ConsensusMAS.RefClass
                 case Implementations.FixedTrigger
                     agents = AgentFixedTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentFixedTrigger(n, A, B, C, D, X0(:,n), delta(n), ts);
+                        agents(n) = AgentFixedTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), ts);
                     end
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, X0(:,n), delta(n), ts);
+                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), ts);
                     end
                 case Implementations.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, X0(:,n), delta(n), ts);
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), ts);
+                    end
+                case Implementations.FiniteA
+                    agents = AgentFiniteA.empty(obj.SIZE, 0);
+                    for n = 1:obj.SIZE
+                        agents(n) = AgentFiniteA(n, A, B, C, D, X0(:,n), K(n), delta(n), ts);
+                    end
+                case Implementations.FiniteB
+                    agents = AgentFiniteB.empty(obj.SIZE, 0);
+                    for n = 1:obj.SIZE
+                        agents(n) = AgentFiniteB(n, A, B, C, D, X0(:,n), K(n), delta(n), ts);
                     end
                 otherwise
                     error("Unrecognised type");
@@ -70,6 +82,7 @@ classdef Network < ConsensusMAS.RefClass
         
         function set.ADJ(obj, ADJ)
             % Create the network
+            import ConsensusMAS.*;
             import ConsensusMAS.Utils.*;
 
             % Frobenius discrete time RS matrix
@@ -79,11 +92,31 @@ classdef Network < ConsensusMAS.RefClass
             for agent = obj.agents
                 agent.leaders = [];
                 agent.followers = [];
-                agent.L = L;
+                
+                switch obj.type                        
+                    case Implementations.GlobalEventTrigger
+                        agent.L = L;
+                    case Implementations.LocalEventTrigger
+                        agent.L = L;
+                    otherwise
+                        %
+                end
+                
             end
             
             % Create new ones
             F = GraphFrobenius(ADJ);
+            
+            if (obj.type == Implementations.LocalEventTrigger)
+                F = [0.4 0.0 0.0 0.1 0.3 0.2;
+                     0.5 0.5 0.0 0.0 0.0 0.0;
+                     0.3 0.2 0.5 0.0 0.0 0.0;
+                     0.5 0.0 0.0 0.5 0.0 0.0;
+                     0.0 0.0 0.0 0.4 0.4 0.2;
+                     0.0 0.0 0.0 0.0 0.3 0.7];
+            end
+                
+            
             for i = 1:obj.SIZE % row-wise
                 for j = 1:obj.SIZE %column-wise
                     weight = F(i, j);
@@ -94,8 +127,13 @@ classdef Network < ConsensusMAS.RefClass
             end
             
             % This isn't saved !
+            % TODO: This be wrong
             for agent = obj.agents
-                agent.broadcast();
+                agent.tx = ones(size(agent.tx));
+                agent.sample();
+                
+                
+                agent.broadcast(); % Get all agets to set input
                 agent.check_trigger();
             end
             

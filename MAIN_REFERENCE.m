@@ -22,36 +22,29 @@ import ConsensusMAS.*;
 SIZE = 4;
 X0 = (randi(SIZE, size(A, 2), SIZE) - SIZE/2) .* [1; 0; 1; 0];
 X0(:,SIZE) = [0;0;0;0];
-
-
-
 delta = @(id) SIZE * [0; 0; 0; 0];
-ts = 1/1e1;
+ts = 1/1e2;
 
 % Create the network
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, delta, ts);
 
 % Simulate with switching toplogies
-network.ADJ = [0 1 1 10;
-               1 0 1 10;
-               1 1 0 10;
+network.ADJ = [0 1 1 1;
+               1 0 1 1;
+               1 1 0 1;
                0 0 0 0];
-           
-           
-         
-
-for i = 1:1000
-    %{
+          
+for i = 1:3
     if mod(i, 2)
         network.agents(4).x = [1; 0; -1; 0];
     else
         network.agents(4).x = [-1; 0; 1; 0];
     end
-    %}
+    
     
     %network.agents(4).x = [sin(i * 2*pi/333); 0; cos(i * 2*pi/333); 0];
     
-    network.Simulate('Fixed', 'time', 1/25);
+    network.Simulate('Fixed', 'time', 10);
 end
 
 
