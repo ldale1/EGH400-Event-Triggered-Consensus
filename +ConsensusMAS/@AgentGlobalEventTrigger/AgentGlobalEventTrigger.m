@@ -14,6 +14,9 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function obj = AgentGlobalEventTrigger(id, A, B, C, D, K, x0, delta, CLK)
             obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
             
+            % Override
+            obj.xhat = zeros(size(x0));
+            
             % Event triggering constant
             obj.k = 0;
         end
@@ -30,17 +33,22 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
                 
                 % Consensus summation
                 z = z + leader.weight*(...
-                    (obj.xhat - xj.xhat) + ...
+                    (obj.x - xj.x) + ...
                     (obj.delta - xj.delta));
             end
             
             % Consensus
             error_threshold = obj.k * abs(z);
+
+            
+            error_threshold_norm = obj.k * norm(z);
+            %
+            error_threshold = ones(size(obj.x)) * error_threshold_norm;
         end
      
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
-            triggers = (obj.error > obj.error_threshold);
+            triggers = (obj.error >= obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
             end

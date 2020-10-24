@@ -21,35 +21,27 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
         function set.L(obj, L)
             obj.k = 1/max(eig(L));
         end
+        
+        function step(obj)      
+            step@ConsensusMAS.Agent(obj);
+            
+            % Project forwards, without input
+            obj.xhat = obj.G * obj.xhat;
+        end
 
-        function error_threshold = error_threshold(obj)
-            % Calculate the error threhsold
+        function error_threshold = error_threshold(obj)            
+            % Consensus
             c = 0.5;
             alpha = 0.92;
             
-            
-            
-            y = zeros(size(obj.x)); 
-            e = zeros(size(obj.x)); 
-            for leader = obj.leaders
-                xj = leader.agent;
-                
-                % Consensus summation
-                y = y + leader.weight*(...
-                    (obj.x - xj.x) + ...
-                    (obj.delta - xj.delta) ...
-                    );
-                
-                e = e + leader.weight*(...
-                    (obj.error - xj.error)...
-                    );
-            end
-            
-            
-            % Consensus
-            error_threshold = [c * alpha ^ floor(obj.iter / 5); c * alpha ^ floor(obj.iter / 5)];
+            error_val = c * alpha ^ (obj.iter * obj.CLK);
+            error_threshold = ones(size(obj.x)) * error_val;
         end
         
+        function error = error(obj) 
+            % Difference from last broadcast
+            error = norm(obj.xhat - obj.x) * ones(size(obj.x));
+        end
         
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold

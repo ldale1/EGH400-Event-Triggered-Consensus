@@ -1,5 +1,44 @@
-figure(), hold on;
+import ConsensusMAS.*;
+import ConsensusMAS.Utils.*;
 
-for i = 1:10
-    plot(sin(2 * pi * i/10), cos(2 * pi * i/10), 'x');
-end
+A = [-2 2;
+     -1 1];
+B = [1;
+     0];
+C = eye(size(A));
+D = zeros(size(B));
+K = [1 -2];
+
+[G, H] = c2d(A, B, 0.2); % Discrete time ss
+
+
+ADJ = [0 0 0 1 1 1;
+       1 0 0 0 0 0;
+       1 1 0 1 0 0;
+       1 0 0 0 0 0;
+       0 0 0 1 0 1;
+       0 0 0 0 1 0];
+F = GraphFrobenius(ADJ);
+F = [4 0 0 1 3 2;
+     5 5 0 0 0 0;
+     3 2 5 0 0 0;
+     5 0 0 5 0 0;
+     0 0 0 4 4 2;
+     0 0 0 0 3 7]/10;
+                 
+DEG = diag(sum(ADJ, 2));
+I = eye(size(ADJ, 1));
+
+J = jordan(I - F);
+
+dub = kron(I, G) + kron(J, -H*K);
+
+
+
+sort(eig(dub(3:end, 3:end)))
+
+
+%kron(eye(2:end, 2:end), G) + kron(, H *K)
+
+
+

@@ -12,7 +12,7 @@ classdef Agent < ConsensusMAS.RefClass
         C; % Output matrix
         D; % 
         K; % Gain matrix
-        iter;
+        iter; % Discrete steps count
         
         leaders; % Leading agents
         followers; % Following agents
@@ -29,8 +29,8 @@ classdef Agent < ConsensusMAS.RefClass
         ERROR; % Error matrix
     end
     properties (Dependent)
-        name; % Agent name
-        error; % Deviation from last broadcast
+        %name; % Agent name
+        %error; % Deviation from last broadcast
     end
     
     methods
@@ -44,29 +44,23 @@ classdef Agent < ConsensusMAS.RefClass
             obj.D = D; % ss
             obj.K = K;%lqr(A, B, 1, 1); % Agent gain 
             
-            
             obj.iter = 0;
-            
-            
             obj.x = x0; % Agent current state
             obj.delta = delta; % Agent relative displacement
-            obj.xhat = zeros(size(x0)); % Agent last broadcase
+            obj.xhat = x0; % Agent last broadcase
             obj.u = zeros(size(B, 2), 1); % Agent control input
             obj.tx = zeros(size(x0)); % Agent current transmission
         end
         
         
-        function name = get.name(obj)
+        function name = name(obj)
             % Agent display name
             name = sprintf("Agent %d", obj.id);
         end
-        function error = get.error(obj) 
+        function error = error(obj) 
             % Difference from last broadcast
             error = obj.xhat - obj.x;
             error = floor(abs(error)*1000)/1000;
-            
-            error = [sqrt(error(1)^2 + error(2)^2);
-                     sqrt(error(1)^2 + error(2)^2)];
         end
     end
     
@@ -123,9 +117,7 @@ classdef Agent < ConsensusMAS.RefClass
             % Move, with input
             obj.x = obj.G * obj.x + obj.H * obj.u;
             
-            % Project forwards, without input
-            obj.xhat = obj.G * obj.xhat;
-            
+            % Discrete step count
             obj.iter = obj.iter + 1;
         end
         

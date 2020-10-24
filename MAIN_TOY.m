@@ -19,7 +19,7 @@ X0 = [-6 3 10 -10 0; 2 -5 -3 7 2];
 p = @(id) zeros(size(A, 1), 1);
 
 % Create the network and simulate
-ts = 1/500;
+ts = 1/1e3;
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, p, ts);
 network.ADJ = ADJ;
 network.Simulate('Fixed', 'time', 6);

@@ -79,11 +79,12 @@ function Simulate(obj, type, varargin)
         for agent = obj.agents
             agent.check_trigger();
         end
-
+        
         % Step accordingly
         for agent = obj.agents
             agent.step();
         end 
+
         obj.t = obj.t + obj.ts;
         
         

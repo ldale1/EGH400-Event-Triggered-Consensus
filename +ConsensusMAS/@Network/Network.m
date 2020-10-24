@@ -29,7 +29,7 @@ classdef Network < ConsensusMAS.RefClass
             obj.SIZE = size(X0, 2);
             obj.t = 0;
             obj.ts = ts;
-            obj.agentstates = size(A, 1);
+            obj.agentstates = size(A, 2);
             obj.agentinputs = size(B, 2);
             
             % Create the agents
@@ -67,6 +67,7 @@ classdef Network < ConsensusMAS.RefClass
             for agent = agents
                 agent.save()
             end
+            
             obj.agents = agents;
         end
         
@@ -106,16 +107,15 @@ classdef Network < ConsensusMAS.RefClass
             
             % Create new ones
             F = GraphFrobenius(ADJ);
-            
             if (obj.type == Implementations.LocalEventTrigger)
-                F = [0.4 0.0 0.0 0.1 0.3 0.2;
-                     0.5 0.5 0.0 0.0 0.0 0.0;
-                     0.3 0.2 0.5 0.0 0.0 0.0;
-                     0.5 0.0 0.0 0.5 0.0 0.0;
-                     0.0 0.0 0.0 0.4 0.4 0.2;
-                     0.0 0.0 0.0 0.0 0.3 0.7];
+                F = [4 0 0 1 3 2;
+                     5 5 0 0 0 0;
+                     3 2 5 0 0 0;
+                     5 0 0 5 0 0;
+                     0 0 0 4 4 2;
+                     0 0 0 0 3 7]/10;
             end
-                
+            
             
             for i = 1:obj.SIZE % row-wise
                 for j = 1:obj.SIZE %column-wise
@@ -129,12 +129,7 @@ classdef Network < ConsensusMAS.RefClass
             % This isn't saved !
             % TODO: This be wrong
             for agent = obj.agents
-                agent.tx = ones(size(agent.tx));
-                agent.sample();
-                
-                
-                agent.broadcast(); % Get all agets to set input
-                agent.check_trigger();
+                agent.setinput()
             end
             
             % Storing topology

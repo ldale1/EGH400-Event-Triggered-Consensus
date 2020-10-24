@@ -16,7 +16,7 @@ function PlotTriggersStates(obj, varargin)
     
     % Iteratively plot input states and triggers
     for i = 1:obj.agentstates
-        subplot(obj.agentstates, 1, i), hold on;
+        subplot(obj.agentstates, 1, i), hold on, grid on;
         for agent = obj.agents
             % states
             states = agent.X(i,:);
