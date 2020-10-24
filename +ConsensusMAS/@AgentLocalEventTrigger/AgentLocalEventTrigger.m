@@ -28,6 +28,12 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
             % Project forwards, without input
             obj.xhat = obj.G * obj.xhat;
         end
+        
+        function error = error(obj) 
+            % Difference from last broadcast
+            error = norm(obj.xhat - obj.x) * ones(size(obj.x));
+            error = floor(abs(error)*1000)/1000;
+        end
 
         function error_threshold = error_threshold(obj)            
             % Consensus
@@ -36,11 +42,6 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
             
             error_val = c * alpha ^ (obj.iter * obj.CLK);
             error_threshold = ones(size(obj.x)) * error_val;
-        end
-        
-        function error = error(obj) 
-            % Difference from last broadcast
-            error = norm(obj.xhat - obj.x) * ones(size(obj.x));
         end
         
         function triggers = triggers(obj)
@@ -54,6 +55,7 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
         function save(obj)
             % Record current properties
             save@ConsensusMAS.Agent(obj);
+            obj.ERROR = [obj.ERROR, obj.error];
             obj.ERROR_THRESHOLD = [obj.ERROR_THRESHOLD, obj.error_threshold];
         end
     end

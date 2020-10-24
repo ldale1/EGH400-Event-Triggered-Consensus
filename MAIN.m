@@ -34,7 +34,7 @@ network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, p, ts);
 % Simulate with switching toplogies
 for t = 1:1
     network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
-    network.Simulate('Fixed', 'time', 75);
+    network.Simulate('Fixed', 'time', 100);
 end
 
 %network.PlotGraph;

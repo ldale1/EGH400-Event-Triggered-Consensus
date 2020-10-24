@@ -1,32 +1,33 @@
-% Cleanup
+%% EX1. 
+import ConsensusMAS.*;
 clc; close all;
 
-%% Setup
-import ConsensusMAS.*;
-
-% The network
-ADJ = [0 1 1 0 0; 
-       1 0 1 0 0; 
-       1 1 0 1 0; 
-       0 0 1 0 1; 
-       0 0 0 1 0];
-
 % The agent dynamics
-A = [-4 1;  4 -2];
-B = [1 3; -2 1];
+A = [0 1;  
+     0 0];
+B = [0;
+     1];
 C = eye(size(A));
 D = zeros(size(B)); 
-K = @(id) [1/7 -3/7; 2/7 1/7];
+K = @(id) lqr(A, B, 1, 1);
 
 % Initial conditions
-X0 = [-6 3 10 -10 0; 2 -5 -3 7 2];
+ADJ = [0 1 1 0 0 0;
+       1 0 1 0 0 0;
+       1 1 0 0 0 0;
+       0 0 0 0 0 0;
+       0 0 0 1 0 0;
+       0 0 0 0 0 0];
+X0 = [1 2 3 6 8 10; 
+      -1 0 1 1 3 3];
 p = @(id) zeros(size(A, 1), 1);
+ 
 
 % Create the network and simulate
-ts = 1/1e3;
+ts = 1/1e2;
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, p, ts);
 network.ADJ = ADJ;
-network.Simulate('Fixed', 'time', 6);
+network.Simulate('Fixed', 'time', 60);
 
 
 %network.PlotGraph;

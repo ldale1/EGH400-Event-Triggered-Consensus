@@ -49,7 +49,7 @@ import ConsensusMAS.Utils.*;
 
 
 % Create the network
-ts = 0.2;
+ts = 0.02;
 network = Network(Implementations.LocalEventTrigger, A, B, C, D, K, X0, p, ts);
 
 % Simulate with switching toplogies
@@ -66,5 +66,5 @@ network.PlotTriggersStates;
 network.PlotTriggersInputs;
 %network.Plot3("states", [1 3]);
 network.PlotErrors;
-%network.Animate("title", "tester", "state1", 1, "state2", 3);
+%network.Animate("title", "tester", "states", [1 3]);
 

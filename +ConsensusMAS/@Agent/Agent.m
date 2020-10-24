@@ -29,7 +29,7 @@ classdef Agent < ConsensusMAS.RefClass
         ERROR; % Error matrix
     end
     properties (Dependent)
-        %name; % Agent name
+        name; % Agent name
         %error; % Deviation from last broadcast
     end
     
@@ -42,25 +42,20 @@ classdef Agent < ConsensusMAS.RefClass
             [obj.G, obj.H] = c2d(A, B, CLK); % Discrete time ss
             obj.C = C; % ss
             obj.D = D; % ss
-            obj.K = K;%lqr(A, B, 1, 1); % Agent gain 
+            obj.K = K; % Agent gain 
             
             obj.iter = 0;
             obj.x = x0; % Agent current state
             obj.delta = delta; % Agent relative displacement
+            
             obj.xhat = x0; % Agent last broadcase
             obj.u = zeros(size(B, 2), 1); % Agent control input
             obj.tx = zeros(size(x0)); % Agent current transmission
         end
         
-        
-        function name = name(obj)
+        function name = get.name(obj)
             % Agent display name
             name = sprintf("Agent %d", obj.id);
-        end
-        function error = error(obj) 
-            % Difference from last broadcast
-            error = obj.xhat - obj.x;
-            error = floor(abs(error)*1000)/1000;
         end
     end
     
@@ -125,7 +120,6 @@ classdef Agent < ConsensusMAS.RefClass
             % Record current properties
             obj.X = [obj.X obj.x];
             obj.U = [obj.U obj.u];
-            obj.ERROR = [obj.ERROR, obj.error];
             obj.TX = [obj.TX, obj.tx];
         end
     end

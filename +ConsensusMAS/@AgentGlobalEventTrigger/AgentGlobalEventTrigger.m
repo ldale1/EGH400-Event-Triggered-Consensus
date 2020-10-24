@@ -15,7 +15,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
             
             % Override
-            obj.xhat = zeros(size(x0));
+            %obj.xhat = zeros(size(x0));
             
             % Event triggering constant
             obj.k = 0;
@@ -23,6 +23,18 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         
         function set.L(obj, L)
             obj.k = 1/max(eig(L));
+        end
+        function error = error(obj) 
+            % Difference from last broadcast
+            error = obj.xhat - obj.x;
+            error = floor(abs(error)*1000)/1000;
+        end
+        
+        function step(obj)      
+            step@ConsensusMAS.Agent(obj);
+            
+            % Project forwards, without input
+            %obj.xhat = obj.G * obj.xhat;
         end
         
         function error_threshold = error_threshold(obj)
@@ -41,14 +53,14 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             error_threshold = obj.k * abs(z);
 
             
-            error_threshold_norm = obj.k * norm(z);
+            %error_threshold_norm = obj.k * norm(z);
             %
-            error_threshold = ones(size(obj.x)) * error_threshold_norm;
+            %error_threshold = ones(size(obj.x)) * error_threshold_norm;
         end
      
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
-            triggers = (obj.error >= obj.error_threshold);
+            triggers = (obj.error > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
             end
@@ -57,6 +69,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function save(obj)
             % Record current properties
             save@ConsensusMAS.Agent(obj);
+            obj.ERROR = [obj.ERROR, obj.error];
             obj.ERROR_THRESHOLD = [obj.ERROR_THRESHOLD, obj.error_threshold];
         end
     end
