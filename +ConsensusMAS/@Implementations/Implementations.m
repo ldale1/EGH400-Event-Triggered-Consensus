@@ -6,6 +6,7 @@ classdef Implementations
         GlobalEventTrigger,
         LocalEventTrigger,
         FiniteA,
-        FiniteB
+        FiniteB,
+        SampledEventTrigger
     end
 end

@@ -19,14 +19,14 @@ D = zeros(size(B));
 import ConsensusMAS.*;
 
 % Simulation variables
-SIZE = 5;
+SIZE = 10;
 X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
 
 %p = @(id) SIZE * [sin(2*pi*id/SIZE); 0; cos(2*pi*id/SIZE); 0];
 p = @(id) zeros(size(A, 1), 1);
 K = @(id) lqr(A, B, 1, 1);
 
-ts = 1/5e1;
+ts = 1/1e1;
 
 % Create the network
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, p, ts);
@@ -34,7 +34,7 @@ network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, p, ts);
 % Simulate with switching toplogies
 for t = 1:1
     network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
-    network.Simulate('Fixed', 'time', 100);
+    network.Simulate('Fixed', 'time', 15);
 end
 
 %network.PlotGraph;

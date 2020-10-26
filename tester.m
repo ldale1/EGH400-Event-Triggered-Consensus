@@ -42,3 +42,37 @@ sort(eig(dub(3:end, 3:end)))
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+%%
+
+
+chairs = network.agents;
+
+[~, ind] = sort([chairs.x], 2);
+chairs_sorted = chairs(ind(1,:));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -11,11 +11,11 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, A, B, C, D, K, x0, delta, CLK)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
+        function obj = AgentGlobalEventTrigger(id, A, B, C, D, K, x0, delta, setpoint, CLK)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, setpoint, CLK);
             
             % Override
-            %obj.xhat = zeros(size(x0));
+            obj.xhat = zeros(size(x0));
             
             % Event triggering constant
             obj.k = 0;
@@ -34,7 +34,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             step@ConsensusMAS.Agent(obj);
             
             % Project forwards, without input
-            %obj.xhat = obj.G * obj.xhat;
+            obj.xhat = obj.G * obj.xhat;
         end
         
         function error_threshold = error_threshold(obj)
@@ -63,7 +63,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             triggers = (obj.error > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
-            end
+            end  
         end
         
         function save(obj)

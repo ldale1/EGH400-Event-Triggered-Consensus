@@ -49,7 +49,7 @@ import ConsensusMAS.Utils.*;
 
 
 % Create the network
-ts = 0.02;
+ts = 0.2;
 network = Network(Implementations.LocalEventTrigger, A, B, C, D, K, X0, p, ts);
 
 % Simulate with switching toplogies

@@ -10,6 +10,11 @@ classdef Network < ConsensusMAS.RefClass
         agentstates; % number of states
         agentinputs; % number of inputs
         
+        A;
+        B;
+        C;
+        D;
+        
         T; % times vector
         ts; % time steps
     end
@@ -19,7 +24,7 @@ classdef Network < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Network(type, A, B, C, D, K, X0, delta, ts)
+        function obj = Network(type, A, B, C, D, K, X0, delta, setpoint, ts)
             % Network constructor
             import ConsensusMAS.*;
             import ConsensusMAS.Utils.*;
@@ -32,23 +37,34 @@ classdef Network < ConsensusMAS.RefClass
             obj.agentstates = size(A, 2);
             obj.agentinputs = size(B, 2);
             
+            obj.A = A;
+            obj.B = B;
+            obj.C = C;
+            obj.D = D;
+                    
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
                     agents = AgentFixedTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentFixedTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), ts);
+                        agents(n) = AgentFixedTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0),  ts);
                     end
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), ts);
+                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
+                    end
+                case Implementations.SampledEventTrigger
+                    agents = AgentSampledEventTrigger.empty(obj.SIZE, 0);
+                    for n = 1:obj.SIZE
+                        agents(n) = AgentSampledEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
                     end
                 case Implementations.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), ts);
+                        agents(n) = AgentLocalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
                     end
+                %{
                 case Implementations.FiniteA
                     agents = AgentFiniteA.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
@@ -59,6 +75,7 @@ classdef Network < ConsensusMAS.RefClass
                     for n = 1:obj.SIZE
                         agents(n) = AgentFiniteB(n, A, B, C, D, X0(:,n), K(n), delta(n), ts);
                     end
+                %}
                 otherwise
                     error("Unrecognised type");
             end
@@ -88,6 +105,19 @@ classdef Network < ConsensusMAS.RefClass
 
             % Frobenius discrete time RS matrix
             L = GraphLaplacian(ADJ);
+            F = GraphFrobenius(ADJ);
+            
+            % Create new ones
+            %{
+            if (obj.type == Implementations.LocalEventTrigger)
+                F = [4 0 0 1 3 2;
+                     5 5 0 0 0 0;
+                     3 2 5 0 0 0;
+                     5 0 0 5 0 0;
+                     0 0 0 4 4 2;
+                     0 0 0 0 3 7]/10;
+            end
+            %}
             
             % Cleanse connectoisn
             for agent = obj.agents
@@ -98,19 +128,12 @@ classdef Network < ConsensusMAS.RefClass
                     case Implementations.GlobalEventTrigger
                         agent.L = L;
                     case Implementations.LocalEventTrigger
-                        agent.L = L;
+                        agent.F = F;
                     otherwise
                         %
                 end
                 
             end
-            
-            % Create new ones
-            F = GraphFrobenius(ADJ);
-            if (obj.type == Implementations.LocalEventTrigger)
-
-            end
-            
             
             for i = 1:obj.SIZE % row-wise
                 for j = 1:obj.SIZE %column-wise
@@ -133,6 +156,14 @@ classdef Network < ConsensusMAS.RefClass
             obj.TOPS = [obj.TOPS top]; 
         end
         
+        function ADJ = get.ADJ(obj)
+            try
+                ADJ = obj.TOPS(end).ADJ; 
+            catch
+                ADJ = zeros(obj.SIZE);
+            end
+        end
+        
         function consensus = consensus(obj)
             % Checks whether the network has reached consensus
             u = ones(obj.agentinputs, 1, obj.SIZE);
@@ -153,6 +184,7 @@ classdef Network < ConsensusMAS.RefClass
        
         % Simulate network
         Simulate(obj, varargin);
+        SimulateDynamic(obj, varargin);
         
         % Graph Figures
         PlotEigs(obj, varargin);

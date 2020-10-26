@@ -9,7 +9,7 @@ function Animate(obj, varargin)
     fs = 1/(time(2) - time(1));
     
     % Parse Args
-    fixedaxes = 0;
+    fixedaxes = NaN;
     historyticks = time(end)*fs;
     title = "consensus_animation";
     state1 = 1;
@@ -55,8 +55,7 @@ function Animate(obj, varargin)
         figmovie; clf, hold on;
         xlabel('x [m]', 'FontSize', 18)
         ylabel('y [m]', 'FontSize', 18)
-        
-        
+
         % Draw the states
         %history = max(k - ceil(length(time)/5), 1);
         startindex = max(k - historyticks, 1);
@@ -74,8 +73,30 @@ function Animate(obj, varargin)
                 'color', color, 'Markersize', 3);
             
             % Current pos agent number
-            text(x_vals(end), y_vals(end), sprintf("%d", agent.id), ...
+            if ~isnan(fixedaxes)
+                if ~(x_vals(end) > fixedaxes(2) || ...
+                     x_vals(end) < fixedaxes(1) || ...
+                     y_vals(end) > fixedaxes(4) || ...
+                     y_vals(end) < fixedaxes(3))
+                    text(x_vals(end), y_vals(end), sprintf("%d", agent.id), ...
+                            'HorizontalAlignment', 'center')
+                end
+            else
+                text(x_vals(end), y_vals(end), sprintf("%d", agent.id), ...
                 'HorizontalAlignment', 'center')
+            end
+            
+        end
+        
+        
+        if ~isnan(fixedaxes)
+            axis(fixedaxes)
+            
+            % background
+            I = imread('cityview.jpg'); 
+            h = image(fixedaxes(1:2), fixedaxes(3:4), I); 
+            h.AlphaData = 0.1;
+            uistack(h,'bottom')
         end
         
         ax = gca;
@@ -90,7 +111,7 @@ function Animate(obj, varargin)
 
     % Make video
     vidObj = VideoWriter(sprintf('%s.avi', title));
-    vidObj.FrameRate = 3*fs;
+    vidObj.FrameRate = fs;
     open(vidObj);
     writeVideo(vidObj, mov);
     close(vidObj)

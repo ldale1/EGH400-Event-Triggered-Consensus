@@ -20,6 +20,7 @@ classdef Agent < ConsensusMAS.RefClass
         x; % Current state vector
         xhat; % Most recent transmission
         delta;
+        setpoint;
         u; % Current input vector
         tx; % Current trigger vector
         
@@ -34,7 +35,7 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, A, B, C, D, K, x0, delta, CLK)
+        function obj = Agent(id, A, B, C, D, K, x0, delta, setpoint,  CLK)
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
@@ -44,9 +45,10 @@ classdef Agent < ConsensusMAS.RefClass
             obj.D = D; % ss
             obj.K = K; % Agent gain 
             
-            obj.iter = 0;
+            obj.iter = 1;
             obj.x = x0; % Agent current state
             obj.delta = delta; % Agent relative displacement
+            obj.setpoint = setpoint;
             
             obj.xhat = x0; % Agent last broadcase
             obj.u = zeros(size(B, 2), 1); % Agent control input
@@ -105,6 +107,13 @@ classdef Agent < ConsensusMAS.RefClass
                     (obj.xhat - xj.xhat) + ...
                     (obj.delta - xj.delta));
             end
+            
+            % setpoint
+            setpoint_nans = isnan(obj.setpoint);
+            z = z .* setpoint_nans;
+            z(~setpoint_nans) = obj.x(~setpoint_nans) - obj.setpoint(~setpoint_nans);
+            
+            % Input
             obj.u = -obj.K * z;
         end
         

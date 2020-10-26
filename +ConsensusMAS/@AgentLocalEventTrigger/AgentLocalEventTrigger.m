@@ -2,24 +2,35 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
     % This class represents a network agent
     
     properties
-        k;
+        c;
+        alpha;
         ERROR_THRESHOLD;
     end
     
     properties (Dependent)
-        L;
+        F;
     end
     
     methods
-        function obj = AgentLocalEventTrigger(id, A, B, C, D, K, x0, delta, CLK)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
+        function obj = AgentLocalEventTrigger(id, A, B, C, D, K, x0, delta, setpoint, CLK)
+            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, setpoint, CLK);
             
             % Event triggering constant
-            obj.k = 0;
+            obj.c = 0.5;
+            obj.alpha = 0.999;
         end
         
-        function set.L(obj, L)
-            obj.k = 1/max(eig(L));
+        function set.F(obj, F)
+            I = eye(size(F, 1));
+            J = jordan(I - F);
+
+            
+            I1 = eye(size(F,1)-1);
+            delta = J(2:end, 2:end);
+            Xi = kron(I1, obj.G) + kron(delta, -obj.H*obj.K);
+            eigs_Xi = eigs(Xi);
+            
+            obj.alpha = 0.92;
         end
         
         function step(obj)      
@@ -37,10 +48,8 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
 
         function error_threshold = error_threshold(obj)            
             % Consensus
-            c = 0.5;
-            alpha = 0.92;
-            
-            error_val = c * alpha ^ (obj.iter * obj.CLK);
+            t = obj.iter * obj.CLK;
+            error_val = obj.c * obj.alpha^t;
             error_threshold = ones(size(obj.x)) * error_val;
         end
         

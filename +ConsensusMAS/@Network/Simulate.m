@@ -16,8 +16,7 @@ function Simulate(obj, type, varargin)
             end
         end
         exit_func = @(t, c) (...
-            ((round(t - mintime, 6) >= 0) && c) || ...
-            t > maxtime);
+            ((round(t - mintime, 6) >= 0) && c) ||  t > maxtime);
     end
 
     function exit_func = FixedFunc(t, varargin)
@@ -72,12 +71,19 @@ function Simulate(obj, type, varargin)
     end 
     %}
 
+    
+    
     % Simulate
     while (true) 
         
         % Broadcast agents if needed
         for agent = obj.agents
             agent.check_trigger();
+        end
+        
+        % Have agents save their data
+        for agent = obj.agents
+            agent.save();
         end
         
         % Step accordingly
@@ -88,10 +94,7 @@ function Simulate(obj, type, varargin)
         obj.t = obj.t + obj.ts;
         
         
-        % Have agents save their data
-        for agent = obj.agents
-            agent.save();
-        end
+        
         
         %{
         if obj.t > 150 && obj.t < 160
