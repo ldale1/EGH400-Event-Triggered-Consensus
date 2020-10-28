@@ -69,8 +69,12 @@ chairs_sorted = chairs(ind(1,:));
 
 
 
+%%
 
 
+a = [struct.empty(0)]
+a = [a struct('a', 1)]
+a = [a struct('a', 1)]
 
 
 

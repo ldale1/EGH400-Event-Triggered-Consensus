@@ -81,6 +81,11 @@ function Simulate(obj, type, varargin)
             agent.check_trigger();
         end
         
+        % Check for an incoming transmission
+        for agent = obj.agents
+            agent.check_receive()
+        end
+        
         % Have agents save their data
         for agent = obj.agents
             agent.save();
