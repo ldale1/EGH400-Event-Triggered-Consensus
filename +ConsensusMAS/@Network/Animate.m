@@ -111,7 +111,7 @@ function Animate(obj, varargin)
 
     % Make video
     vidObj = VideoWriter(sprintf('%s.avi', title));
-    vidObj.FrameRate = fs;
+    vidObj.FrameRate = 3*fs;
     open(vidObj);
     writeVideo(vidObj, mov);
     close(vidObj)

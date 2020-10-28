@@ -20,11 +20,13 @@ K = @(id) [1/7 -3/7; 2/7 1/7];
 
 % Initial conditions
 X0 = [-6 3 10 -10 0; 2 -5 -3 7 2];
-p = @(id) zeros(size(A, 1), 1);
+ref = @(id) zeros(size(A, 1), 1);
+set = @(id) NaN * zeros(size(A, 1), 1);
+
 
 % Create the network and simulate
 ts = 1/1e3;
-network = Network(Implementations.SampledEventTrigger, A, B, C, D, K, X0, p, ts);
+network = Network(Implementations.SampledEventTrigger, A, B, C, D, K, X0, ref, set, ts);
 network.ADJ = ADJ;
 network.Simulate('Fixed', 'time', 6);
 

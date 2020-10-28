@@ -44,7 +44,7 @@ function SimulateDynamic(obj, type, varargin)
     end
     
     % Iterations without spawning agent
-    spawn_limit = 6;
+    spawn_limit = 5;
     unspawned = 0;
     pseudo_chance = 5; % inverse of this
     

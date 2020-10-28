@@ -22,11 +22,13 @@ import ConsensusMAS.*;
 SIZE = 4;
 X0 = (randi(SIZE, size(A, 2), SIZE) - SIZE/2) .* [1; 0; 1; 0];
 X0(:,SIZE) = [0;0;0;0];
-p = @(id) SIZE * [0; 0; 0; 0];
+ref = @(id) SIZE * [0; 0; 0; 0];
+set = @(id) NaN * zeros(size(A, 1), 1);
+
 ts = 1/1e2;
 
 % Create the network
-network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, p, ts);
+network = Network(Implementations.GlobalEventTrigger, A, B, C, D, X0, ref, set, ts);
 
 % Simulate with switching toplogies
 network.ADJ = [0 1 1 1;

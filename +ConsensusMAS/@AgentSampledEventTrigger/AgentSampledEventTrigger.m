@@ -24,6 +24,10 @@ classdef AgentSampledEventTrigger < ConsensusMAS.Agent
                     sigma = 0.010;
                 case 4
                     sigma = 0.015; 
+                otherwise
+                    fprintf("Uncalculated agent (%d)\n", id)
+                    sigma = 0.01;
+                    
             end
             obj.sigma = sigma;
             obj.theta = 0.005;

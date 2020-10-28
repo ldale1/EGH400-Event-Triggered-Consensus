@@ -16,11 +16,13 @@ K = @(id) [1 -2];
 
 X0 = [0.4 0.5 0.6 0.7 0.8 0.4;
       0.3 0.2 0.1 0.0 -.1 -.2];
-p = @(id) zeros(size(A, 1), 1);
+ref = @(id) zeros(size(A, 1), 1);
+set = @(id) NaN * zeros(size(A, 1), 1);
+
 
 ADJ = [0 0 0 1 1 1;
        1 0 0 0 0 0;
-       1 1 0 1 0 0; % 4 shoudl talk to 3
+       1 1 0 1 0 0; % 4 should talk to 3
        1 0 0 0 0 0;
        0 0 0 1 0 1;
        0 0 0 0 1 0];
@@ -50,7 +52,7 @@ import ConsensusMAS.Utils.*;
 
 % Create the network
 ts = 0.2;
-network = Network(Implementations.LocalEventTrigger, A, B, C, D, K, X0, p, ts);
+network = Network(Implementations.LocalEventTrigger, A, B, C, D, K, X0, ref, set, ts);
 
 % Simulate with switching toplogies
 for t = 1:1
