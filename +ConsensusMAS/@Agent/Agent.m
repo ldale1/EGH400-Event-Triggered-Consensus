@@ -94,22 +94,26 @@ classdef Agent < ConsensusMAS.RefClass
         function check_receive(obj)
             for i = 1:length(obj.transmissions_rx)
                 rx = obj.transmissions_rx(i);
-                                
-                % Best transmission
-                last = find([rx.buffer.delay] <= 1, 1, 'last');
-                if ~isempty(last) 
-                    obj.transmissions_rx(i).xhat = rx.buffer(last).xhat;
-                    obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
-                    
-                    % We got something
-                    obj.setinput()
-                end
+                
+                if length(rx.buffer) > 1
+                    % Best transmission
+                    last = find([rx.buffer.delay] <= 1, 1, 'last');
+                    if ~isempty(last) 
+                        obj.transmissions_rx(i).xhat = rx.buffer(last).xhat;
+                        obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
 
-                % Move everything up in buffer
-                for j = 1:length(obj.transmissions_rx(i).buffer)
-                    obj.transmissions_rx(i).buffer(j).delay = ...
-                        obj.transmissions_rx(i).buffer(j).delay - 1; 
+                        % We got something
+                        obj.setinput()
+                    end
+
+                    % Move everything up in buffer
+                    for j = 1:length(obj.transmissions_rx(i).buffer)
+                        obj.transmissions_rx(i).buffer(j).delay = ...
+                            obj.transmissions_rx(i).buffer(j).delay - 1; 
+                    end
                 end
+                                
+                
             end
         end
         
@@ -130,7 +134,11 @@ classdef Agent < ConsensusMAS.RefClass
                 % Filter for leading obj
                 leading_agents = [follower.agent.transmissions_rx.agent];
                 leading_obj = ([leading_agents.id] == obj.id);
-                 
+                
+                if sum(leading_obj) > 1
+                    ;
+                end
+                
                 % Add to receiver buffer
                 follower.agent.transmissions_rx(leading_obj).buffer = [
                     follower.agent.transmissions_rx(leading_obj).buffer, ...

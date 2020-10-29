@@ -30,7 +30,7 @@ ref = @(id) zeros(size(A, 1), 1);
 set = @(id) NaN * zeros(size(A, 1), 1);
 K = @(id) lqr(A, B, 1, 1);
 
-ts = 1/5e1;
+ts = 1/1e2;
 
 % Create the network
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, ref, set, ts);
@@ -38,7 +38,7 @@ network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, ref, se
 % Simulate with switching toplogies
 for t = 1:1
     network.ADJ = ones(SIZE) - diag(ones(SIZE, 1));%RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
-    network.Simulate('Fixed', 'time', 100);
+    network.Simulate('Fixed', 'time', 50);
 end
 
 %network.PlotGraph;

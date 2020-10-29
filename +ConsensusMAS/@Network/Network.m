@@ -123,6 +123,7 @@ classdef Network < ConsensusMAS.RefClass
             for agent = obj.agents
                 agent.leaders = [];
                 agent.followers = [];
+                agent.transmissions_rx = [];
                 
                 switch obj.type                        
                     case Implementations.GlobalEventTrigger

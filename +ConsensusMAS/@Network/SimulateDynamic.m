@@ -58,10 +58,8 @@ function SimulateDynamic(obj, type, varargin)
             K = lqr(A, B, 1, 1);
             
             % initial conds
-            X0 = [randi(5*10, 1, 1)/10; 
-                  randi(2*10, 1, 1)/10; 
-                  randi(5*10, 1, 1)/10; 
-                  randi(1*10, 1, 1)/10];
+            X0 = [randi(5*10, 1, 1)/10;  randi(2*10, 1, 1)/10; 
+                  randi(5*10, 1, 1)/10;  randi(1*10, 1, 1)/10];
 
             % dont have a reference or setpoint yet
             ref = [0; 0; 0; 0];
@@ -132,6 +130,7 @@ function SimulateDynamic(obj, type, varargin)
             end
         end
         
+        % Change the adjacency if needed
         if any(size(ADJ) ~= size(obj.ADJ)) || any(reshape(ADJ ~= obj.ADJ, [], 1))
             obj.ADJ = ADJ;
         end
@@ -139,6 +138,11 @@ function SimulateDynamic(obj, type, varargin)
         % Broadcast agents if needed
         for agent = obj.agents
             agent.check_trigger();
+        end
+        
+        % Check for an incoming transmission
+        for agent = obj.agents
+            agent.check_receive()
         end
         
         % Have agents save their data

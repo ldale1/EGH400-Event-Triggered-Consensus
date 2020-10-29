@@ -98,9 +98,6 @@ function Simulate(obj, type, varargin)
 
         obj.t = obj.t + obj.ts;
         
-        
-        
-        
         %{
         if obj.t > 150 && obj.t < 160
             fprintf("STEP:\n")

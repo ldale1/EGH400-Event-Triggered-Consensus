@@ -21,14 +21,17 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
         end
         
         function set.F(obj, F)
+            % Change the exponential power
             I = eye(size(F, 1));
             J = jordan(I - F);
 
-            
+            % Calculate Xi matrix
             I1 = eye(size(F,1)-1);
             delta = J(2:end, 2:end);
             Xi = kron(I1, obj.G) + kron(delta, -obj.H*obj.K);
-            eigs_Xi = eigs(Xi);
+            eigs_Xi_max = max(eigs(Xi));
+            
+            assertTrue(eigs_Xi_max  < 1, "Max Xi eigenvalue too large")
             
             obj.alpha = 0.92;
         end
@@ -38,6 +41,13 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
             
             % Project forwards, without input
             obj.xhat = obj.G * obj.xhat;
+            
+            % Estimate other agentss
+            for i = 1:length(obj.transmissions_rx)
+                obj.transmissions_rx(i).xhat = ...
+                    obj.transmissions_rx(i).agent.G * ...
+                    obj.transmissions_rx(i).xhat;
+            end
         end
         
         function error = error(obj) 
