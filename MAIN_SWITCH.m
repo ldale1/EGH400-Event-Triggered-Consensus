@@ -3,14 +3,10 @@ clc; close all;
 
 %% Setup
 % The agent dynamics
-A = [0 1 0 0; 
-     0 0 0 0;
-     0 0 0 1;
-     0 0 0 0];
-B = [0 0;
-     1 0;
-     0 0;
-     0 1];
+A = [0 1; 
+     0 0];
+B = [0;
+     1];
 C = eye(size(A));
 D = zeros(size(B));
 

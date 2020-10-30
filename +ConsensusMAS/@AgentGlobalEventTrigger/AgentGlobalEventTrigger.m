@@ -27,7 +27,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function error = error(obj) 
             % Difference from last broadcast
             error = obj.xhat - obj.x;
-            error = floor(abs(error)*1000)/1000;
+            error = floor(abs(error)*100)/100;
         end
         
         function step(obj)      
@@ -36,12 +36,14 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             % Project forwards, without input
             obj.xhat = obj.G * obj.xhat;
             
-            % Estimate other agentss
+            %{
+            % Estimate other agents
             for i = 1:length(obj.transmissions_rx)
                 obj.transmissions_rx(i).xhat = ...
                     obj.transmissions_rx(i).agent.G * ...
                     obj.transmissions_rx(i).xhat;
             end
+            %}
         end
         
         function error_threshold = error_threshold(obj)
@@ -57,17 +59,13 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             end
             
             % Consensus
-            error_threshold = obj.k * abs(z);
-
-            
-            %error_threshold_norm = obj.k * norm(z);
-            %
-            %error_threshold = ones(size(obj.x)) * error_threshold_norm;
+            error_threshold = obj.k * norm(abs(z));
+            error_threshold = error_threshold * ones(size(obj.x));
         end
      
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
-            triggers = (obj.error > obj.error_threshold);
+            triggers = (norm(obj.error)* ones(size(obj.x)) > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
             end  

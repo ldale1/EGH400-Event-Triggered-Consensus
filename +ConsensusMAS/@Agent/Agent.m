@@ -95,7 +95,7 @@ classdef Agent < ConsensusMAS.RefClass
             for i = 1:length(obj.transmissions_rx)
                 rx = obj.transmissions_rx(i);
                 
-                if length(rx.buffer) > 1
+                if length(rx.buffer) >= 1
                     % Best transmission
                     last = find([rx.buffer.delay] <= 1, 1, 'last');
                     if ~isempty(last) 
@@ -103,7 +103,7 @@ classdef Agent < ConsensusMAS.RefClass
                         obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
 
                         % We got something
-                        obj.setinput()
+                        %obj.setinput()
                     end
 
                     % Move everything up in buffer
@@ -125,7 +125,7 @@ classdef Agent < ConsensusMAS.RefClass
         function broadcast(obj)
             
             for follower = obj.followers
-                %follower.agent.receive();
+                follower.agent.receive();
             end
             
             % Broadcasts with delay
@@ -133,12 +133,8 @@ classdef Agent < ConsensusMAS.RefClass
                                 
                 % Filter for leading obj
                 leading_agents = [follower.agent.transmissions_rx.agent];
-                leading_obj = ([leading_agents.id] == obj.id);
-                
-                if sum(leading_obj) > 1
-                    ;
-                end
-                
+                leading_obj = ([leading_agents.id] == obj.id);                
+   
                 % Add to receiver buffer
                 follower.agent.transmissions_rx(leading_obj).buffer = [
                     follower.agent.transmissions_rx(leading_obj).buffer, ...
@@ -159,11 +155,23 @@ classdef Agent < ConsensusMAS.RefClass
         function setinput(obj)
             % Calculate the next control input
             z = zeros(size(obj.H, 1),1);
+            
+            %{
             for transmission = obj.transmissions_rx                
                 % Consensus summation
                 z = z + transmission.weight*(...
                     (obj.xhat - transmission.xhat) + ...
                     (obj.delta - transmission.agent.delta));
+            end
+            %}
+            
+            for leader = obj.leaders
+                xj = leader.agent;
+                
+                % Consensus summation
+                z = z + leader.weight*(...
+                    (obj.xhat - xj.xhat) + ...
+                    (obj.delta - xj.delta));
             end
             
             % setpoint

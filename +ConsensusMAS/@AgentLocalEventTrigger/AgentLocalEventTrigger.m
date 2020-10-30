@@ -31,7 +31,9 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
             Xi = kron(I1, obj.G) + kron(delta, -obj.H*obj.K);
             eigs_Xi_max = max(eigs(Xi));
             
-            assertTrue(eigs_Xi_max  < 1, "Max Xi eigenvalue too large")
+            if (eigs_Xi_max  > 1)
+            	fprintf("Max Xi eigenvalue %.2f too large", eigs_Xi_max);
+            end
             
             obj.alpha = 0.92;
         end
