@@ -17,8 +17,6 @@ classdef Agent < ConsensusMAS.RefClass
         leaders; % Leading agents
         followers; % Following agents
         
-        transmissions_rx;
-        
         x; % Current state vector
         xhat; % Most recent transmission
         delta;
@@ -69,16 +67,6 @@ classdef Agent < ConsensusMAS.RefClass
             % Attach a reciever to this object
             obj.followers = [obj.followers, struct('agent', reciever, 'weight', weight)];
             reciever.leaders = [reciever.leaders, struct('agent', obj, 'weight', weight)];
-            
-            % What is coming in
-            reciever.transmissions_rx = [...
-                reciever.transmissions_rx,  ...
-                struct(...
-                    'agent', obj, ...
-                    'weight', weight, ...
-                    'xhat', obj.xhat, ...
-                    'buffer', struct([]) ...
-                )];
         end
         
         function check_trigger(obj)
@@ -91,71 +79,33 @@ classdef Agent < ConsensusMAS.RefClass
             end
         end
         
-        function check_receive(obj)
-            for i = 1:length(obj.transmissions_rx)
-                rx = obj.transmissions_rx(i);
-                                
-                % Best transmission
-                last = find([rx.buffer.delay] <= 1, 1, 'last');
-                if ~isempty(last) 
-                    obj.transmissions_rx(i).xhat = rx.buffer(last).xhat;
-                    obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
-                    
-                    % We got something
-                    obj.setinput()
-                end
-
-                % Move everything up in buffer
-                for j = 1:length(obj.transmissions_rx(i).buffer)
-                    obj.transmissions_rx(i).buffer(j).delay = ...
-                        obj.transmissions_rx(i).buffer(j).delay - 1; 
-                end
-            end
-        end
-        
         function sample(obj)
             % Set the broadcast
             obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
         end
         
         function broadcast(obj)
-            
+            % Broadcast this object to all its neighbours
             for follower = obj.followers
-                %follower.agent.receive();
-            end
-            
-            % Broadcasts with delay
-            for follower = obj.followers
-                                
-                % Filter for leading obj
-                leading_agents = [follower.agent.transmissions_rx.agent];
-                leading_obj = ([leading_agents.id] == obj.id);
-                 
-                % Add to receiver buffer
-                follower.agent.transmissions_rx(leading_obj).buffer = [
-                    follower.agent.transmissions_rx(leading_obj).buffer, ...
-                    struct(...
-                        'xhat', obj.xhat, ...
-                        'delay', 1 ... % randi(3)
-                    )];
+                follower.agent.receive();
             end
         end
         
         function receive(obj)
             % Leader broadcast notification
-            fprintf("WARN\n")
-            fprintf("receive, shouldn't be called\n")
             obj.setinput();
         end
         
         function setinput(obj)
             % Calculate the next control input
             z = zeros(size(obj.H, 1),1);
-            for transmission = obj.transmissions_rx                
+            for leader = obj.leaders     
+                xj = leader.agent;
+                
                 % Consensus summation
-                z = z + transmission.weight*(...
-                    (obj.xhat - transmission.xhat) + ...
-                    (obj.delta - transmission.agent.delta));
+                z = z + leader.weight*(...
+                    (obj.xhat - xj.xhat) + ...
+                    (obj.delta - xj.delta));
             end
             
             % setpoint
@@ -170,10 +120,6 @@ classdef Agent < ConsensusMAS.RefClass
         function step(obj)               
             % Move, with input
             obj.x = obj.G * obj.x + obj.H * obj.u;
-            
-            % Add measurement noise
-            %snr = 1;
-            %obj.x = awgn(obj.x, snr, 'measured');
             
             % Discrete step count
             obj.iter = obj.iter + 1;
