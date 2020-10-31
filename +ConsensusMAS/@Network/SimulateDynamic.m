@@ -58,7 +58,7 @@ function SimulateDynamic(obj, type, varargin)
             K = lqr(A, B, 1, 1);
             
             % initial conds
-            X0 = [randi(5*10, 1, 1)/10; 
+            X0 = [0; 
                   randi(2*10, 1, 1)/10; 
                   randi(5*10, 1, 1)/10; 
                   randi(1*10, 1, 1)/10];

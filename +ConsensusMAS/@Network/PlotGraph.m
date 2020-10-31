@@ -24,4 +24,5 @@ function PlotGraph(obj)
         plot(g, 'EdgeLabel', g.Edges.Weight)
         title(sprintf('Graph t=%.2fs', t))
     end
+    sgtitle('Topologies')
 end
