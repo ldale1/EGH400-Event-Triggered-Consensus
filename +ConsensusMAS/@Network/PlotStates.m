@@ -8,7 +8,7 @@ function PlotStates(obj,varargin)
         end
     end
     
-    figure(), sgtitle("Agent States");
+    figure(), sgtitle("Scenario State Differences");
     time = obj.T;
     for i = 1:obj.agentstates
         subplot(obj.agentstates, 1, i), hold on;

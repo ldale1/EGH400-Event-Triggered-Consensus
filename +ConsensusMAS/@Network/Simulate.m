@@ -72,7 +72,25 @@ function Simulate(obj, type, varargin)
     %}
 
     
-    
+    % Broadcast agents if needed
+    for agent = obj.agents
+        agent.tx =[1;1];
+        agent.broadcast;
+    end
+
+    % Have agents save their data
+    for agent = obj.agents
+        agent.save();
+    end
+
+    % Step accordingly
+    for agent = obj.agents
+        agent.step();
+    end 
+
+    obj.t = obj.t + obj.ts;
+
+        
     % Simulate
     while (true) 
         

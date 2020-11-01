@@ -28,9 +28,11 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
             I1 = eye(size(F,1)-1);
             delta = J(2:end, 2:end);
             Xi = kron(I1, obj.G) + kron(delta, -obj.H*obj.K);
+            Xi
             eigs_Xi = eigs(Xi);
+            eigs_Xi
             
-            obj.alpha = 0.92;
+            obj.alpha = abs(max(eigs_Xi));
         end
         
         function step(obj)      

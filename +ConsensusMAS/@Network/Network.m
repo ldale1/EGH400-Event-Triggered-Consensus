@@ -108,16 +108,11 @@ classdef Network < ConsensusMAS.RefClass
             F = GraphFrobenius(ADJ);
             
             % Create new ones
-            %{
+            
             if (obj.type == Implementations.LocalEventTrigger)
-                F = [4 0 0 1 3 2;
-                     5 5 0 0 0 0;
-                     3 2 5 0 0 0;
-                     5 0 0 5 0 0;
-                     0 0 0 4 4 2;
-                     0 0 0 0 3 7]/10;
+
             end
-            %}
+            
             
             % Cleanse connectoisn
             for agent = obj.agents

@@ -27,7 +27,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function error = error(obj) 
             % Difference from last broadcast
             error = obj.xhat - obj.x;
-            error = floor(abs(error)*1000)/1000;
+            error = ones(size(obj.x)) * floor(norm(abs(error))*1000)/1000;
         end
         
         function step(obj)      
@@ -50,7 +50,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             end
             
             % Consensus
-            error_threshold = obj.k * abs(z);
+            error_threshold = obj.k * norm(abs(z)) .* ones(size(obj.x));
 
             
             %error_threshold_norm = obj.k * norm(z);

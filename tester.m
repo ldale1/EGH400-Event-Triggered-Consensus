@@ -72,7 +72,11 @@ chairs_sorted = chairs(ind(1,:));
 
 
 
+%%
+for i = 1:length(network.agents)
+network2.agents(i).X = network2.agents(i).X + network1.agents(i).X
+end
 
-
-
+%%
+network2.PlotStates
 
