@@ -71,7 +71,7 @@ function Simulate(obj, type, varargin)
     end 
     %}
 
-    
+
     
     % Simulate
     while (true) 

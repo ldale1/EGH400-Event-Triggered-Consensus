@@ -140,15 +140,15 @@ classdef Agent < ConsensusMAS.RefClass
                     follower.agent.transmissions_rx(leading_obj).buffer, ...
                     struct(...
                         'xhat', obj.xhat, ...
-                        'delay', 1 ... % randi(3)
+                        'delay', 10+randi(5) ... %
                     )];
             end
         end
         
         function receive(obj)
             % Leader broadcast notification
-            fprintf("WARN\n")
-            fprintf("receive, shouldn't be called\n")
+            %fprintf("WARN\n")
+            %fprintf("receive, shouldn't be called\n")
             obj.setinput();
         end
         
@@ -188,8 +188,8 @@ classdef Agent < ConsensusMAS.RefClass
             obj.x = obj.G * obj.x + obj.H * obj.u;
             
             % Add measurement noise
-            %snr = 1;
-            %obj.x = awgn(obj.x, snr, 'measured');
+            %snr = 50;
+            %obj.x = awgn(obj.x, snr);
             
             % Discrete step count
             obj.iter = obj.iter + 1;

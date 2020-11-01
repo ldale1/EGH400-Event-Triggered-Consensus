@@ -3,14 +3,10 @@ clc; close all;
 
 %% Setup
 % The agent dynamics
-A = [0 1 0 0; 
-     0 0 0 0;
-     0 0 0 1;
-     0 0 0 0];
-B = [0 0;
-     1 0;
-     0 0;
-     0 1];
+A = [0 1; 
+     0 0;];
+B = [0;
+     1];
 C = eye(size(A));
 D = zeros(size(B));
 
@@ -20,8 +16,11 @@ import ConsensusMAS.*;
 
 % Simulation variables
 SIZE = 5;
-X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
 
+
+%X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
+X0 = [5.5 -4.5 12.5 9.5 -0.5;
+      9.5 -6.5 -0.5 -1.5 2.5];
 %%
 import ConsensusMAS.*;
 
@@ -36,16 +35,22 @@ ts = 1/1e2;
 network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, ref, set, ts);
 
 % Simulate with switching toplogies
-for t = 1:1
-    network.ADJ = ones(SIZE) - diag(ones(SIZE, 1));%RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
-    network.Simulate('Fixed', 'time', 50);
+%for t = 1:1
+%    network.ADJ = ones(SIZE) - diag(ones(SIZE, 1));%RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
+%    network.Simulate('Fixed', 'time', 10);
+%end
+
+% Simulate with switching toplogies
+for i = 1:10
+    network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
+    network.Simulate('Fixed', 'time', 100*ts);
 end
 
-%network.PlotGraph;
+network.PlotGraph;
 %network.PlotStates;
 %network.PlotInputs;
-network.PlotTriggers;
-network.PlotTriggersStates;
+%network.PlotTriggers;
+%network.PlotTriggersStates;
 %network.PlotTriggersInputs;
 %network.Plot3("state1", 1, "state2", 3);
 %network.PlotErrors;

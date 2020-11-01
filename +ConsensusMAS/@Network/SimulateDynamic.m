@@ -1,4 +1,4 @@
-function SimulateDynamic(obj, type, varargin)
+function SimulateDynamic(obj, type, goober, varargin)
     % Run the network simulation
     % Agents are assigned to lanes
     import ConsensusMAS.*;
@@ -44,9 +44,9 @@ function SimulateDynamic(obj, type, varargin)
     end
     
     % Iterations without spawning agent
-    spawn_limit = 5;
+    spawn_limit = 3;
     unspawned = 0;
-    pseudo_chance = 5; % inverse of this
+    pseudo_chance = goober; % inverse of this
     
     % Simulate
     while (true)
@@ -58,8 +58,10 @@ function SimulateDynamic(obj, type, varargin)
             K = lqr(A, B, 1, 1);
             
             % initial conds
-            X0 = [randi(5*10, 1, 1)/10;  randi(2*10, 1, 1)/10; 
-                  randi(5*10, 1, 1)/10;  randi(1*10, 1, 1)/10];
+            X0 = [randi(5*10, 1, 1)/10;  
+                  randi(2*10, 1, 1)/10; 
+                  randi(5*10, 1, 1)/10;  
+                  randi(1*10, 1, 1)/10];
 
             % dont have a reference or setpoint yet
             ref = [0; 0; 0; 0];

@@ -78,5 +78,15 @@ a = [a struct('a', 1)]
 
 
 
+%%
 
 
+a1 = network1.agents
+a2 = network2.agents
+
+for i = 1:length(a1)
+    a1(i).X = a1(i).X - a2(i).X
+end
+
+
+network1.PlotStates

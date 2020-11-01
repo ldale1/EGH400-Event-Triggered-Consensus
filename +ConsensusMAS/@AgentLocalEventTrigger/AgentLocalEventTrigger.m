@@ -50,6 +50,7 @@ classdef AgentLocalEventTrigger < ConsensusMAS.Agent
                     obj.transmissions_rx(i).agent.G * ...
                     obj.transmissions_rx(i).xhat;
             end
+            
         end
         
         function error = error(obj) 
