@@ -1,3 +1,9 @@
-# Ignore directory
-ignore/
+# Useless directories
+Archives/
+Figures/
+Ignores/
+
+
+
+# MATLAB autosave files
 *.asv

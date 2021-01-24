@@ -1,9 +1,6 @@
 function Simulate(obj, type, varargin)
     % Run the network simulation
-   
-    
     function exit_func = DynamicFunc(t, varargin)
-        % parse args
         % Unpackage repacked args
         varargin = varargin{1};
         mintime = 0;
@@ -15,12 +12,11 @@ function Simulate(obj, type, varargin)
                 maxtime = varargin{k + 1} + t;
             end
         end
-        exit_func = @(t, c) (...
-            ((round(t - mintime, 6) >= 0) && c) ||  t > maxtime);
+        exit_func = @(t, c) ...
+            (((round(t - mintime, 6) >= 0) && c) ||  t > maxtime);
     end
 
     function exit_func = FixedFunc(t, varargin)
-        % parse args
         % Unpackage repacked args
         % TODO: Fix this up... shouldn't need args
         varargin = varargin{1};
@@ -75,16 +71,15 @@ function Simulate(obj, type, varargin)
     
     % Simulate
     while (true) 
+        % Broadcast agents if needed
+        for agent = obj.agents
+            agent.check_trigger();
+        end
         
         % Check for an incoming transmission
         for agent = obj.agents
             agent.check_receive()
         end 
-        
-        % Broadcast agents if needed
-        for agent = obj.agents
-            agent.check_trigger();
-        end
 
         % Have agents save their data
         for agent = obj.agents

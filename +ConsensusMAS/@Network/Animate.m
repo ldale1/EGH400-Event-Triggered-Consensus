@@ -11,12 +11,12 @@ function Animate(obj, varargin)
     % Parse Args
     fixedaxes = NaN;
     historyticks = time(end)*fs;
-    title = "consensus_animation";
+    title_mov = "consensus_animation";
     state1 = 1;
     state2 = 2;
     for k = 1:length(varargin)
         if (strcmp(varargin{k}, "title"))
-            title = varargin{k + 1};
+            title_mov = varargin{k + 1};
         end
         
         if (strcmp(varargin{k}, "history"))
@@ -110,7 +110,7 @@ function Animate(obj, varargin)
     end
 
     % Make video
-    vidObj = VideoWriter(sprintf('%s.avi', title));
+    vidObj = VideoWriter(sprintf('%s.avi', title_mov));
     vidObj.FrameRate = 3*fs;
     open(vidObj);
     writeVideo(vidObj, mov);

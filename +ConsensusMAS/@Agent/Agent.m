@@ -95,15 +95,15 @@ classdef Agent < ConsensusMAS.RefClass
             for i = 1:length(obj.transmissions_rx)
                 rx = obj.transmissions_rx(i);
                 
-                if length(rx.buffer) >= 1
+                if ~isempty(rx.buffer)
                     % Best transmission
-                    last = find([rx.buffer.delay] <= 1, 1, 'last');
+                    last = find([rx.buffer.delay] < 1, 1, 'last');
                     if ~isempty(last) 
                         obj.transmissions_rx(i).xhat = rx.buffer(last).xhat;
                         obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
 
                         % We got something
-                        %obj.setinput()
+                        obj.setinput()
                     end
 
                     % Move everything up in buffer
@@ -112,8 +112,6 @@ classdef Agent < ConsensusMAS.RefClass
                             obj.transmissions_rx(i).buffer(j).delay - 1; 
                     end
                 end
-                                
-                
             end
         end
         
@@ -123,10 +121,9 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function broadcast(obj)
-            
-            for follower = obj.followers
-                follower.agent.receive();
-            end
+            %for follower = obj.followers
+            %    follower.agent.receive();
+            %end
             
             % Broadcasts with delay
             for follower = obj.followers
@@ -140,38 +137,20 @@ classdef Agent < ConsensusMAS.RefClass
                     follower.agent.transmissions_rx(leading_obj).buffer, ...
                     struct(...
                         'xhat', obj.xhat, ...
-                        'delay', 10+randi(5) ... %
+                        'delay', 0 ... %
                     )];
             end
-        end
-        
-        function receive(obj)
-            % Leader broadcast notification
-            %fprintf("WARN\n")
-            %fprintf("receive, shouldn't be called\n")
-            obj.setinput();
         end
         
         function setinput(obj)
             % Calculate the next control input
             z = zeros(size(obj.H, 1),1);
             
-            %{
             for transmission = obj.transmissions_rx                
                 % Consensus summation
                 z = z + transmission.weight*(...
                     (obj.xhat - transmission.xhat) + ...
                     (obj.delta - transmission.agent.delta));
-            end
-            %}
-            
-            for leader = obj.leaders
-                xj = leader.agent;
-                
-                % Consensus summation
-                z = z + leader.weight*(...
-                    (obj.xhat - xj.xhat) + ...
-                    (obj.delta - xj.delta));
             end
             
             % setpoint

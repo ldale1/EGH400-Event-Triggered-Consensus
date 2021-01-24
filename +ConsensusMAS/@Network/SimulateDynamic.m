@@ -1,4 +1,4 @@
-function SimulateDynamic(obj, type, goober, varargin)
+function SimulateDynamic(obj, type, varargin)
     % Run the network simulation
     % Agents are assigned to lanes
     import ConsensusMAS.*;
@@ -44,9 +44,9 @@ function SimulateDynamic(obj, type, goober, varargin)
     end
     
     % Iterations without spawning agent
-    spawn_limit = 3;
+    spawn_limit = 5;
     unspawned = 0;
-    pseudo_chance = goober; % inverse of this
+    pseudo_chance = 5; % inverse of this
     
     % Simulate
     while (true)
@@ -58,9 +58,9 @@ function SimulateDynamic(obj, type, goober, varargin)
             K = lqr(A, B, 1, 1);
             
             % initial conds
-            X0 = [randi(5*10, 1, 1)/10;  
+            X0 = [0; 
                   randi(2*10, 1, 1)/10; 
-                  randi(5*10, 1, 1)/10;  
+                  randi(5*10, 1, 1)/10; 
                   randi(1*10, 1, 1)/10];
 
             % dont have a reference or setpoint yet
@@ -132,7 +132,6 @@ function SimulateDynamic(obj, type, goober, varargin)
             end
         end
         
-        % Change the adjacency if needed
         if any(size(ADJ) ~= size(obj.ADJ)) || any(reshape(ADJ ~= obj.ADJ, [], 1))
             obj.ADJ = ADJ;
         end
@@ -142,9 +141,9 @@ function SimulateDynamic(obj, type, goober, varargin)
             agent.check_trigger();
         end
         
-        % Check for an incoming transmission
+        % Broadcast agents if needed
         for agent = obj.agents
-            agent.check_receive()
+            agent.check_receive();
         end
         
         % Have agents save their data
