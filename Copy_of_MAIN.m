@@ -10,6 +10,8 @@ B = [0;
 C = eye(size(A));
 D = zeros(size(B));
 
+
+
 %% Simulate
 import ConsensusMAS.*;
 
@@ -39,18 +41,12 @@ network = Network(Implementations.GlobalEventTrigger, A, B, C, D, K, X0, ref, se
 %    network.Simulate('Fixed', 'time', 10);
 %end
 
-% Simulate with switching toplogies
-network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
-for i = 1:1
-    network.Simulate('Fixed', 'time', 5000*ts);
-end
+a1 = AgentFixedTrigger(1, A, B, C, D, K(1), X0(:,1), ref(1), set(0),  ts);
+a2 = AgentFixedTrigger(2, A, B, C, D, K(2), X0(:,2), ref(2), set(0),  ts);
+%https://github.com/ldale1/EGH400-Event-Triggered-Consensus/blob/double-staging/%2BConsensusMAS/%40Agent/Agent.m
 
-network.PlotGraph;
-%network.PlotStates;
-%network.PlotInputs;
-network.PlotTriggers;
-network.PlotTriggersStates;
-%network.PlotTriggersInputs;
-%network.Plot3("state1", 1, "state2", 3);
-network.PlotErrors;
-%network.Animate("title", "tester", "state1", 1, "state2", 3);
+a1.addReceiver(a2, 1);
+
+a1.broadcast;
+
+a2.transmissions_rx

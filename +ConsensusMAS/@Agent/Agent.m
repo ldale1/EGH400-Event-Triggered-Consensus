@@ -2,7 +2,7 @@ classdef Agent < ConsensusMAS.RefClass
     % This class represents a network agent
     % Inherits from superclass handle so that it is passed by reference
     
-    % What about tx and rx in same step ?
+    % TODO: What about tx and rx in same step ?
     
     properties
         id; % Agent ID number
@@ -37,7 +37,7 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, A, B, C, D, K, x0, delta, setpoint,  CLK)
+        function obj = Agent(id, A, B, C, D, K, x0, delta, setpoint, CLK)
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
@@ -48,6 +48,7 @@ classdef Agent < ConsensusMAS.RefClass
             obj.K = K; % Agent gain 
             
             obj.iter = 1;
+            
             obj.x = x0; % Agent current state
             obj.delta = delta; % Agent relative displacement
             obj.setpoint = setpoint;
@@ -55,6 +56,9 @@ classdef Agent < ConsensusMAS.RefClass
             obj.xhat = x0; % Agent last broadcase
             obj.u = zeros(size(B, 2), 1); % Agent control input
             obj.tx = zeros(size(x0)); % Agent current transmission
+            
+            
+            obj.transmissions_rx = [];
         end
         
         function name = get.name(obj)
@@ -65,18 +69,25 @@ classdef Agent < ConsensusMAS.RefClass
     
     
     methods
+        function debug(~, msg, varargin)
+            if false
+                fprintf(msg, varargin{:});
+            end
+        end
+        
         function addReceiver(obj, reciever, weight)
             % Attach a reciever to this object
             obj.followers = [obj.followers, struct('agent', reciever, 'weight', weight)];
             reciever.leaders = [reciever.leaders, struct('agent', obj, 'weight', weight)];
             
             % What is coming in
+            % Add this object to the list
             reciever.transmissions_rx = [...
                 reciever.transmissions_rx,  ...
                 struct(...
                     'agent', obj, ...
                     'weight', weight, ...
-                    'xhat', obj.xhat, ...
+                    'xhat', nan(size(obj.xhat)), ...%obj.xhat, ...
                     'buffer', struct([]) ...
                 )];
         end
@@ -85,13 +96,15 @@ classdef Agent < ConsensusMAS.RefClass
             % Act on error threshold
             obj.tx = obj.triggers();
             if any(obj.tx)
+                obj.debug("%s triggered with %.3f %.3f\n", obj.name, obj.x(1), obj.x(2))
                 obj.sample();
-                obj.setinput();
                 obj.broadcast();
+                obj.setinput();
             end
         end
         
         function check_receive(obj)
+            % For all leading agents
             for i = 1:length(obj.transmissions_rx)
                 rx = obj.transmissions_rx(i);
                 
@@ -103,9 +116,21 @@ classdef Agent < ConsensusMAS.RefClass
                         obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
 
                         % We got something
+                        obj.debug("%s detected a new transmission from %s\n", ...
+                            obj.name, obj.transmissions_rx(i).agent.name);
+                        
                         obj.setinput()
                     end
-
+                end
+            end
+        end
+        
+        function shift_receive(obj)
+            % For all leading agents
+            for i = 1:length(obj.transmissions_rx)
+                rx = obj.transmissions_rx(i);
+                
+                if ~isempty(rx.buffer)
                     % Move everything up in buffer
                     for j = 1:length(obj.transmissions_rx(i).buffer)
                         obj.transmissions_rx(i).buffer(j).delay = ...
@@ -117,6 +142,7 @@ classdef Agent < ConsensusMAS.RefClass
         
         function sample(obj)
             % Set the broadcast
+            obj.debug("%s sampling\n", obj.name)
             obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
         end
         
@@ -143,15 +169,38 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function setinput(obj)
+            obj.debug("%s setting input\n", obj.name)
             % Calculate the next control input
-            z = zeros(size(obj.H, 1),1);
+%            z = zeros(size(obj.H, 1),1);
+%                        
+%             for leader = obj.leaders
+%                 xj = leader.agent;
+%                 
+%                 % Consensus summation
+%                 z = z + leader.weight*(...
+%                     (obj.xhat - xj.xhat) + ...
+%                     (obj.delta - xj.delta));
+%                 
+%                 fprintf("%s has xhat %.3f %.3f\n", ...
+%                     xj.name, xj.xhat(1), xj.xhat(2))
+%             end
             
+            obj.check_receive()
+            
+            z = zeros(size(obj.H, 1),1);
             for transmission = obj.transmissions_rx                
                 % Consensus summation
+                %if ~any(isnan(transmission.xhat))
                 z = z + transmission.weight*(...
                     (obj.xhat - transmission.xhat) + ...
-                    (obj.delta - transmission.agent.delta));
+                    (obj.delta - transmission.agent.delta) ...
+                );
+            
+                obj.debug("%s has xhat %.3f %.3f\n", ...
+                    transmission.agent.name, transmission.xhat(1), transmission.xhat(2))
+                %end
             end
+            
             
             % setpoint
             setpoint_nans = isnan(obj.setpoint);

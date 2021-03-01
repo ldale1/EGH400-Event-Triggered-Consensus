@@ -41,11 +41,11 @@ network.SimulateDynamic('Fixed', 'time', 20);
 
 
 %network.PlotGraph;
-%network.PlotStates;
+network.PlotStates;
 %network.PlotInputs;
 %network.PlotTriggers;
 %network.PlotTriggersStates;
 %network.PlotTriggersInputs;
 %network.Plot3("states", [1 3]);
 %network.PlotErrors;
-network.Animate("title", "cool1", "states", [1 3], "history", 1, "fixedaxes", [0 30 0 6]);
+%network.Animate("title", "cool1", "states", [1 3], "history", 1, "fixedaxes", [0 30 0 6]);

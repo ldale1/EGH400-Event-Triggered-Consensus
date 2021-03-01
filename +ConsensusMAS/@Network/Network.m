@@ -107,8 +107,8 @@ classdef Network < ConsensusMAS.RefClass
             L = GraphLaplacian(ADJ);
             F = GraphFrobenius(ADJ);
             
+            %{
             % Create new ones
-            
             if (obj.type == Implementations.LocalEventTrigger)
                 F = [4 0 0 1 3 2;
                      5 5 0 0 0 0;
@@ -117,9 +117,9 @@ classdef Network < ConsensusMAS.RefClass
                      0 0 0 4 4 2;
                      0 0 0 0 3 7]/10;
             end
+            %}
             
-            
-            % Cleanse connectoisn
+            % Cleanse connections
             for agent = obj.agents
                 agent.leaders = [];
                 agent.followers = [];
@@ -173,6 +173,7 @@ classdef Network < ConsensusMAS.RefClass
         
         function consensus = consensus(obj)
             % Checks whether the network has reached consensus
+            % If at consensus should not have a control input
             u = ones(obj.agentinputs, 1, obj.SIZE);
             
             for agent = obj.agents
@@ -180,6 +181,7 @@ classdef Network < ConsensusMAS.RefClass
             end
             consensus = all(all(abs(u) < 1e-2));
         end
+        
         function final_value = final_value(obj)
             % Gets the current average of current states
             if ~obj.consensus

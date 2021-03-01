@@ -14,12 +14,12 @@ D = zeros(size(B));
 import ConsensusMAS.*;
 
 % Simulation variables
-SIZE = 5;
+SIZE = 3;
 
 
-%X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
-X0 = [5.5 -4.5 12.5 9.5 -0.5;
-      9.5 -6.5 -0.5 -1.5 2.5];
+X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
+%X0 = [5.5 -4.5 12.5 9.5 -0.5;
+%      9.5 -6.5 -0.5 -1.5 2.5];
 %%
 import ConsensusMAS.*;
 

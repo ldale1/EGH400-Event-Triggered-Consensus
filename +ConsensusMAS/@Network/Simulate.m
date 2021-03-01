@@ -67,7 +67,7 @@ function Simulate(obj, type, varargin)
     end 
     %}
 
-
+    fprintf("Simulate begin...\n")
     
     % Simulate
     while (true) 
@@ -91,6 +91,10 @@ function Simulate(obj, type, varargin)
             agent.step();
         end 
 
+        for agent = obj.agents
+            agent.shift_receive()
+        end
+        
         obj.t = obj.t + obj.ts;
         
         %{

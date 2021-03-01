@@ -8,7 +8,6 @@ classdef AgentFiniteA < ConsensusMAS.Agent
     
     properties (Dependent)
         L;
-        
         Y;
         E;
         Z;

@@ -37,15 +37,11 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             obj.xhat = obj.G * obj.xhat;
             
             % Estimate other agents
-            
-            %{
             for i = 1:length(obj.transmissions_rx)
                 obj.transmissions_rx(i).xhat = ...
                     obj.transmissions_rx(i).agent.G * ...
                     obj.transmissions_rx(i).xhat;
             end
-            %}
-            
         end
         
         function error_threshold = error_threshold(obj)
