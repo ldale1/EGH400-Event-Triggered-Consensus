@@ -50,6 +50,12 @@ for i = 1:3
 end
 
 
+% Simulate with switching toplogies
+%for t = 1:1
+%    network.ADJ = ones(SIZE) - diag(ones(SIZE, 1));%RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 0);
+%    network.Simulate('Fixed', 'time', 10);
+%end
+
            
 
 

@@ -7,29 +7,26 @@ classdef Agent < ConsensusMAS.RefClass
     properties
         id; % Agent ID number
         CLK; % Sampling rate
-        G; % Discrete time state matrix
-        H; % Discrete time input matrix
-        C; % Output matrix
-        D; % 
+        fx;
+        numstates;
+        numinputs;
         K; % Gain matrix
-        iter; % Discrete steps count
         
-        leaders; % Leading agents
+        leaders; % Leading agents - necessary?
         followers; % Following agents
-        
-        transmissions_rx;
+        transmissions_rx; % Transmissions received vector
         
         x; % Current state vector
         xhat; % Most recent transmission
-        delta;
-        setpoint;
         u; % Current input vector
         tx; % Current trigger vector
+        delta; % Relative to neighbours
+        setpoint; % State setpoint
         
-        X; % States matrix
-        U; % Inputs matix
-        TX; % Trigger matrix
-        ERROR; % Error matrix
+        X; % State vector tracking
+        U; % Input vector tracking
+        TX; % Trigger vector tracking
+        ERROR; % Error vector tracking
     end
     properties (Dependent)
         name; % Agent name
@@ -37,24 +34,23 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, A, B, C, D, K, x0, delta, setpoint, CLK)
+        function obj = Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK)
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
             
-            [obj.G, obj.H] = c2d(A, B, CLK); % Discrete time ss
-            obj.C = C; % ss
-            obj.D = D; % ss
-            obj.K = K; % Agent gain 
+            obj.fx = states;
+            obj.K = K;
             
-            obj.iter = 1;
-            
+            obj.numstates = numstates;
+            obj.numinputs = numinputs;
+                        
             obj.x = x0; % Agent current state
             obj.delta = delta; % Agent relative displacement
             obj.setpoint = setpoint;
             
             obj.xhat = x0; % Agent last broadcase
-            obj.u = zeros(size(B, 2), 1); % Agent control input
+            obj.u = zeros(obj.numinputs, 1); % Agent control input
             obj.tx = zeros(size(x0)); % Agent current transmission
             
             
@@ -104,7 +100,7 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function check_receive(obj)
-            % For all leading agents
+            % Look for new transmissions
             for i = 1:length(obj.transmissions_rx)
                 rx = obj.transmissions_rx(i);
                 
@@ -125,8 +121,9 @@ classdef Agent < ConsensusMAS.RefClass
             end
         end
         
+        
         function shift_receive(obj)
-            % For all leading agents
+            % Move the transmissions buffer along
             for i = 1:length(obj.transmissions_rx)
                 rx = obj.transmissions_rx(i);
                 
@@ -147,11 +144,7 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function broadcast(obj)
-            %for follower = obj.followers
-            %    follower.agent.receive();
-            %end
-            
-            % Broadcasts with delay
+            % Broadcasts with delay to all followers
             for follower = obj.followers
                                 
                 % Filter for leading obj
@@ -169,6 +162,7 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function setinput(obj)
+            % Set the input on broadcast, or receive
             obj.debug("%s setting input\n", obj.name)
             % Calculate the next control input
 %            z = zeros(size(obj.H, 1),1);
@@ -187,7 +181,7 @@ classdef Agent < ConsensusMAS.RefClass
             
             obj.check_receive()
             
-            z = zeros(size(obj.H, 1),1);
+            z = zeros(obj.numstates, 1);
             for transmission = obj.transmissions_rx                
                 % Consensus summation
                 %if ~any(isnan(transmission.xhat))
@@ -208,19 +202,17 @@ classdef Agent < ConsensusMAS.RefClass
             z(~setpoint_nans) = obj.x(~setpoint_nans) - obj.setpoint(~setpoint_nans);
             
             % Input
-            obj.u = -obj.K * z;
+            obj.u = -obj.K(obj.x) * z;
         end
         
         function step(obj)               
             % Move, with input
-            obj.x = obj.G * obj.x + obj.H * obj.u;
+            obj.x = obj.x + obj.fx(obj.x, obj.u)*obj.CLK;
             
             % Add measurement noise
             %snr = 50;
             %obj.x = awgn(obj.x, snr);
-            
-            % Discrete step count
-            obj.iter = obj.iter + 1;
+
         end
         
         function save(obj)     

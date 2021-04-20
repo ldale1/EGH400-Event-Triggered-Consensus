@@ -7,13 +7,9 @@ classdef Network < ConsensusMAS.RefClass
         TOPS; % Network topologies vector
         SIZE; % network size
         agents; % network agents
-        agentstates; % number of states
-        agentinputs; % number of inputs
+        agentstates;
+        agentinputs;
         
-        A;
-        B;
-        C;
-        D;
         
         T; % times vector
         ts; % time steps
@@ -24,7 +20,7 @@ classdef Network < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Network(type, A, B, C, D, K, X0, delta, setpoint, ts)
+        function obj = Network(type, states, numstates, numinputs, K, X0, delta, setpoint, ts)
             % Network constructor
             import ConsensusMAS.*;
             import ConsensusMAS.Utils.*;
@@ -34,26 +30,42 @@ classdef Network < ConsensusMAS.RefClass
             obj.SIZE = size(X0, 2);
             obj.t = 0;
             obj.ts = ts;
-            obj.agentstates = size(A, 2);
-            obj.agentinputs = size(B, 2);
             
-            obj.A = A;
-            obj.B = B;
-            obj.C = C;
-            obj.D = D;
-                    
+            obj.agentstates = numstates;
+            obj.agentinputs = numinputs;
+            
             % Create the agents
             switch type
                 case Implementations.FixedTrigger
                     agents = AgentFixedTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentFixedTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0),  ts);
+                        agents(n) = AgentFixedTrigger( ... 
+                            n,  ...
+                            states,  ...
+                            numstates,  ...
+                            numinputs,  ...
+                            K(n),  ...
+                            X0(:,n),  ...
+                            delta(n),  ...
+                            setpoint(n),   ...
+                            ts);
                     end
+                
                 case Implementations.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
-                        agents(n) = AgentGlobalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
+                        agents(n) = AgentGlobalEventTrigger( ... 
+                            n,  ...
+                            states,  ...
+                            numstates,  ...
+                            numinputs,  ...
+                            K(n),  ...
+                            X0(:,n),  ...
+                            delta(n),  ...
+                            setpoint(n),   ...
+                            ts);
                     end
+                %{
                 case Implementations.SampledEventTrigger
                     agents = AgentSampledEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
@@ -64,7 +76,7 @@ classdef Network < ConsensusMAS.RefClass
                     for n = 1:obj.SIZE
                         agents(n) = AgentLocalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
                     end
-                %{
+                
                 case Implementations.FiniteA
                     agents = AgentFiniteA.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE

@@ -11,8 +11,8 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, A, B, C, D, K, x0, delta, setpoint, CLK)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, setpoint, CLK);
+        function obj = AgentGlobalEventTrigger(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK)
+            obj@ConsensusMAS.Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK);
             
             % Override
             obj.xhat = zeros(size(x0));
@@ -27,20 +27,29 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function error = error(obj) 
             % Difference from last broadcast
             error = obj.xhat - obj.x;
-            error = floor(abs(error)*100)/100;
+            error = floor(abs(error)*1000)/1000;
         end
         
         function step(obj)      
             step@ConsensusMAS.Agent(obj);
             
             % Project forwards, without input
-            obj.xhat = obj.G * obj.xhat;
+            %obj.xhat = obj.G * obj.xhat;
+            obj.xhat = obj.xhat + obj.fx(obj.xhat, zeros(obj.numinputs, 1))*obj.CLK;
+            
             
             % Estimate other agents
             for i = 1:length(obj.transmissions_rx)
+                
+                leader = obj.transmissions_rx(i).agent;
+                transmission = obj.transmissions_rx(i).xhat;
+                
                 obj.transmissions_rx(i).xhat = ...
-                    obj.transmissions_rx(i).agent.G * ...
-                    obj.transmissions_rx(i).xhat;
+                    transmission + ...
+                    leader.fx(transmission, zeros(leader.numinputs, 1))*leader.CLK;
+            
+                    %obj.transmissions_rx(i).agent.G * ...
+                    %obj.transmissions_rx(i).xhat;
             end
         end
         
