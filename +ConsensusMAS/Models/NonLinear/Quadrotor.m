@@ -11,6 +11,9 @@ states = @(x, u) [...
     (u(1) + u(2))*sin(x(5)) - u(3)*cos(x(5)); ...
     u(1) - u(2)];
 
+% Wind matrix
+states_vz = [2 4];
+  
 % Simulation variables
 SIZE = 3;
 
@@ -83,8 +86,8 @@ set = @(id) NaN * zeros(size(numstates, 1), 1);
 % Gain Scheduling
 A = @(x) [0  1  0  0  0;
           0  0  0  0  0;
-          0  0  0  1  -1;
-          0  0  0  0  0
+          0  0  0  1  0;
+          0  0  0  0  -1
           0  0  0  0  0];
       
 x = repmat(pi/1.5, 1, 6);
@@ -94,7 +97,7 @@ B = @(x) ...
      -sin(x(5)) -sin(x(5)) 0;
      0 0 0;
      cos(x(5)) cos(x(5)) 0;
-     0 0 1];
+     0 0 0];
 
 K = @(id) (@(x) place(A(x), (x), -2:-1:-6));
 

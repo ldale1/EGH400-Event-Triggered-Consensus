@@ -10,35 +10,65 @@ classdef Wind < ConsensusMAS.RefClass
         time % time
         ts % time step
         
-        meridional % east
-        zonal % north
+        meridional % east m/s
+        zonal % north m/s
+        
+        model_enum
     end
-
+   
     
     methods
-        function obj = Wind(lat, long, alt, time, ts)
-            obj.lat = lat;
-            obj.long = long;
-            obj.alt = alt;
-            obj.time = time;
-            obj.p = 1.225;
-            obj.ts = ts;
+        function obj = Wind(model_enum, lat, long, alt, time, ts)
+            obj.model_enum = model_enum;
+            obj.lat = lat; % latitude
+            obj.long = long; % longitude
+            obj.alt = alt; % altitude
+            
+            obj.p = 1.225; % density of air
+            obj.time = time; % sim time
+            obj.ts = ts; % time step
+            
             
             obj.set_velocities()
         end
         
+        function forces = forces(obj, agent)
+            % Cd is drag coefficient
+            % S is effective aperture
+            Cd = agent.Cd;
+            S  = agent.S;
+            states_vz = agent.x(agent.states_vz);
+            
+            switch (length(states_vz))
+                % Syntax ??
+                case 1
+                    vx = states_vz(2);
+                    vy = 0;
+                case 2
+                    vx = states_vz(2);
+                    vy = states_vz(1);
+                otherwise
+                    vx = 0;
+                    vy = 0;
+            end
+            
+            mf = obj.meridional_force(vx, Cd, S);
+            zf = obj.zonal_force(vy, Cd, S);
+            forces = [mf; zf];
+        end
+        
         function mf = meridional_force(obj, agent_veloc, Cd, S)
-            v = obj.meridional - agent_veloc;
-            mf = (obj.p * v^2 * Cd * S) / 2;
+            v = agent_veloc - obj.meridional;
+            mf = sign(v) * (obj.p * v^2 * Cd * S) / 2;
         end
         
         function zf = zonal_force(obj, agent_veloc, Cd, S)
-            v = obj.zonal - agent_veloc;
-            zf = (obj.p * v^2 * Cd * S) / 2;
+            v = agent_veloc - obj.zonal;
+            zf = sign(v) * (obj.p * v^2 * Cd * S) / 2;
         end
         
         function step(obj)
-            obj.t = obj.t + obj.ts;
+            obj.time = obj.time + obj.ts;
             
             objt.set_velocities()
         end

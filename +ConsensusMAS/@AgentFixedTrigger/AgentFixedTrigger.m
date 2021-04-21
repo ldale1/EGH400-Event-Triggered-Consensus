@@ -7,8 +7,8 @@ classdef AgentFixedTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentFixedTrigger(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK)
-            obj@ConsensusMAS.Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK);
+        function obj = AgentFixedTrigger(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, states_vz)
+            obj@ConsensusMAS.Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, states_vz);
         end
         
         function error = error(obj) 

@@ -12,6 +12,9 @@ states = @(x, u) [...
     (u(1) + u(2))*sin(x(5)) + u(3)*cos(x(5)) - x(4); ...
     x(6); ...
     u(1) - u(2) - x(6)];
+
+% Wind matrix
+states_vz = [1 3];
   
 % Interagent delta, and also setpoint
 ref = @(id) zeros(size(numstates, 1), 1);

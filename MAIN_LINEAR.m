@@ -3,7 +3,7 @@ clc; close all; import ConsensusMAS.*;
 
 % Load the model
 ts = 1/1e3;
-run('+ConsensusMAS/Models/NonLinear/HoverCraft')
+run('+ConsensusMAS/Models/Linear/Simple')
 
 % Run the simulation;
 wind_model = WindModelEnum.None;
@@ -17,16 +17,18 @@ network = Network( ...
             ref,  ...  % Relative setpoint funtion
             set,  ... % Fixed setpoint function
             ts, ... % Time step
-            states_vz, ... % Velocity states
+            states_vz, ... % Wind disturbance matrix
             wind_model ... % enumerated wind model
         );
+
 
     
 % Simulate with switching toplogies
 network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
 for i = 1:1
-    network.Simulate('Fixed', 'time', 10);
+    network.Simulate('Fixed', 'time', 25);
 end
+
 
 %network.PlotGraph;
 network.PlotStates;
@@ -37,3 +39,4 @@ network.PlotInputs;
 %network.Plot3("state1", 1, "state2", 3);
 %network.PlotErrors;
 %network.Animate("title", "tester", "state1", 1, "state2", 3);
+

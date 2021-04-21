@@ -27,6 +27,12 @@ classdef Agent < ConsensusMAS.RefClass
         U; % Input vector tracking
         TX; % Trigger vector tracking
         ERROR; % Error vector tracking
+        
+        states_vz;
+        Dw; % Wind disturbance matrix
+        S = 0; % Surface area
+        Cd = 1; % Drag coefficient
+        m = 1; % mass
     end
     properties (Dependent)
         name; % Agent name
@@ -34,7 +40,7 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK)
+        function obj = Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, states_vz)
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
@@ -53,8 +59,13 @@ classdef Agent < ConsensusMAS.RefClass
             obj.u = zeros(obj.numinputs, 1); % Agent control input
             obj.tx = zeros(size(x0)); % Agent current transmission
             
+            obj.transmissions_rx = []; % received vectors
             
-            obj.transmissions_rx = [];
+            obj.states_vz = states_vz;
+            obj.Dw = zeros(numstates, 2);
+            for i = 1:length(states_vz)
+                obj.Dw(states_vz(i), i) = 1/obj.m;
+            end
         end
         
         function name = get.name(obj)
@@ -207,8 +218,9 @@ classdef Agent < ConsensusMAS.RefClass
         
         function step(obj)               
             % Move, with input
+            % This is dodgy
             obj.x = obj.x + obj.fx(obj.x, obj.u)*obj.CLK;
-            
+
             % Add measurement noise
             %snr = 50;
             %obj.x = awgn(obj.x, snr);

@@ -10,6 +10,7 @@ classdef Network < ConsensusMAS.RefClass
         agentstates;
         agentinputs;
         
+        wind_model; % disturbance
         
         T; % times vector
         ts; % time steps
@@ -20,7 +21,7 @@ classdef Network < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Network(type, states, numstates, numinputs, K, X0, delta, setpoint, ts)
+        function obj = Network(type, states, numstates, numinputs, K, X0, delta, setpoint, ts, wind_input, wind_model_enum)
             % Network constructor
             import ConsensusMAS.*;
             import ConsensusMAS.Utils.*;
@@ -48,7 +49,8 @@ classdef Network < ConsensusMAS.RefClass
                             X0(:,n),  ...
                             delta(n),  ...
                             setpoint(n),   ...
-                            ts);
+                            ts, ...
+                            wind_input);
                     end
                 
                 case Implementations.GlobalEventTrigger
@@ -63,7 +65,8 @@ classdef Network < ConsensusMAS.RefClass
                             X0(:,n),  ...
                             delta(n),  ...
                             setpoint(n),   ...
-                            ts);
+                            ts, ...
+                            wind_input);
                     end
                 %{
                 case Implementations.SampledEventTrigger
@@ -91,6 +94,15 @@ classdef Network < ConsensusMAS.RefClass
                 otherwise
                     error("Unrecognised type");
             end
+            
+            obj.wind_model = Wind( ...
+                wind_model_enum,  ...
+                27.47, ... % lat brisbane
+                153.02, ... % long brisbane
+                1000, ... %altitude
+                0, ... % start time
+                ts ...
+            );
             
             % Save their initial values
             for agent = agents
