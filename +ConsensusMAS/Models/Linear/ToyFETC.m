@@ -1,4 +1,4 @@
-%% https://ieeexplore-ieee-org.ezp01.library.qut.edu.au/document/1384698
+%% Finite-Time Consensus for Linear Multiagent Systems via Event-Triggered Strategy Without Continuous Communication
 
 import ConsensusMAS.*;
 
@@ -8,7 +8,7 @@ A = [-1 2;
 B = [2; 
      1];
  %}
- ts=0.01;
+ 
 A = [0 1;  
      0 0];
 

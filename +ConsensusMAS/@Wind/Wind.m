@@ -35,26 +35,38 @@ classdef Wind < ConsensusMAS.RefClass
         function forces = forces(obj, agent)
             % Cd is drag coefficient
             % S is effective aperture
-            Cd = agent.Cd;
-            S  = agent.S;
-            states_vz = agent.x(agent.states_vz);
+            import ConsensusMAS.WindModelEnum;
             
-            switch (length(states_vz))
-                % Syntax ??
-                case 1
-                    vx = states_vz(2);
-                    vy = 0;
-                case 2
-                    vx = states_vz(2);
-                    vy = states_vz(1);
+            switch (obj.model_enum)
+                case WindModelEnum.Basic
+                    Cd = agent.Cd;
+                    S  = agent.S;
+                    states_vz = agent.x(agent.states_vz);
+                    
+                    % Do we have the right states
+                    switch (length(states_vz))
+                        % Syntax ??
+                        case 1
+                            vx = states_vz(2);
+                            vy = 0;
+                        case 2
+                            vx = states_vz(2);
+                            vy = states_vz(1);
+                        otherwise
+                            vx = 0;
+                            vy = 0;
+                    end
+
+                    mf = obj.meridional_force(vx, Cd, S);
+                    zf = obj.zonal_force(vy, Cd, S);
+                    forces = [mf; zf];
+                
+                case WindModelEnum.Constant
+                    forces = [1; 1];
+                
                 otherwise
-                    vx = 0;
-                    vy = 0;
+                    forces = [0; 0];       
             end
-            
-            mf = obj.meridional_force(vx, Cd, S);
-            zf = obj.zonal_force(vy, Cd, S);
-            forces = [mf; zf];
         end
         
         function mf = meridional_force(obj, agent_veloc, Cd, S)
@@ -70,7 +82,7 @@ classdef Wind < ConsensusMAS.RefClass
         function step(obj)
             obj.time = obj.time + obj.ts;
             
-            objt.set_velocities()
+            obj.set_velocities()
         end
     end
     

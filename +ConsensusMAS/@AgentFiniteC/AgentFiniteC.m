@@ -1,17 +1,17 @@
-classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
+classdef AgentFiniteC < ConsensusMAS.Agent
     % This class represents an event-triggered agent
-    
+
     properties
         k;
         ERROR_THRESHOLD;
     end
     
     properties (Dependent)
-        L;
+        L;    
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states)
+        function obj = AgentFiniteC(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states)
             obj@ConsensusMAS.Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states);
             
             % Override
@@ -24,12 +24,10 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function set.L(obj, L)
             obj.k = 1/max(eig(L));
         end
-        function error = error(obj) 
-            % Difference from last broadcast
-            error = obj.xhat - obj.x;
-            
-            % Quantise
-            error = floor(abs(error)*1000)/1000;
+        
+        function error = error(obj)            
+             % Quantise
+            error = floor(abs(obj.e)*1000)/1000;
         end
         
         function step(obj)      
@@ -73,16 +71,21 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             end  
         end
         
-        %{
         function setinput(obj)
             z = obj.ConsensusTarget();
-            for i = 1:length(z)
-                z(i) = abs(z(i))^2*sign(z(i));
-            end
-            obj.u = -[1 1] * z;
-        end
-        %}
-        
+            
+            K = [-1.6330, -0.2410];
+            P = [1.0728, -0.5126;
+                 -0.5126, 1.2662];
+            
+            c1 = 3.7788;
+            c2 = 4;
+            
+            p = 0.5;
+            
+            obj.u = c1*K*z + c2*K*obj.sig(z, p);
+        end     
+
         function save(obj)
             % Record current properties
             save@ConsensusMAS.Agent(obj);

@@ -6,11 +6,13 @@ classdef Agent < ConsensusMAS.RefClass
     
     properties
         id; % Agent ID number
+        t = 0;
         CLK; % Sampling rate
         fx;
         numstates;
         numinputs;
         K; % Gain matrix
+        
         
         leaders; % Leading agents - necessary?
         followers; % Following agents
@@ -28,19 +30,20 @@ classdef Agent < ConsensusMAS.RefClass
         TX; % Trigger vector tracking
         ERROR; % Error vector tracking
         
-        states_vz;
+        wind_states;
         Dw; % Wind disturbance matrix
-        S = 0; % Surface area
+        S = 0.1; % Surface area
         Cd = 1; % Drag coefficient
         m = 1; % mass
     end
     properties (Dependent)
         name; % Agent name
+        e;
         %error; % Deviation from last broadcast
     end
     
     methods
-        function obj = Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, states_vz)
+        function obj = Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states)
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
@@ -61,10 +64,10 @@ classdef Agent < ConsensusMAS.RefClass
             
             obj.transmissions_rx = []; % received vectors
             
-            obj.states_vz = states_vz;
+            obj.wind_states = wind_states;
             obj.Dw = zeros(numstates, 2);
-            for i = 1:length(states_vz)
-                obj.Dw(states_vz(i), i) = 1/obj.m;
+            for i = 1:length(wind_states)
+                obj.Dw(wind_states(i), i) = 1/obj.m;
             end
         end
         
@@ -72,16 +75,15 @@ classdef Agent < ConsensusMAS.RefClass
             % Agent display name
             name = sprintf("Agent %d", obj.id);
         end
+        
+        function error = get.e(obj) 
+            error = obj.x - obj.xhat;
+        end
     end
     
     
     methods
-        function debug(~, msg, varargin)
-            if false
-                fprintf(msg, varargin{:});
-            end
-        end
-        
+       
         function addReceiver(obj, reciever, weight)
             % Attach a reciever to this object
             obj.followers = [obj.followers, struct('agent', reciever, 'weight', weight)];
@@ -103,7 +105,6 @@ classdef Agent < ConsensusMAS.RefClass
             % Act on error threshold
             obj.tx = obj.triggers();
             if any(obj.tx)
-                obj.debug("%s triggered with %.3f %.3f\n", obj.name, obj.x(1), obj.x(2))
                 obj.sample();
                 obj.broadcast();
                 obj.setinput();
@@ -121,11 +122,6 @@ classdef Agent < ConsensusMAS.RefClass
                     if ~isempty(last) 
                         obj.transmissions_rx(i).xhat = rx.buffer(last).xhat;
                         obj.transmissions_rx(i).buffer = rx.buffer(last+1:end);
-
-                        % We got something
-                        obj.debug("%s detected a new transmission from %s\n", ...
-                            obj.name, obj.transmissions_rx(i).agent.name);
-                        
                         obj.setinput()
                     end
                 end
@@ -150,7 +146,6 @@ classdef Agent < ConsensusMAS.RefClass
         
         function sample(obj)
             % Set the broadcast
-            obj.debug("%s sampling\n", obj.name)
             obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
         end
         
@@ -172,41 +167,24 @@ classdef Agent < ConsensusMAS.RefClass
             end
         end
         
-        function setinput(obj)
-            % Set the input on broadcast, or receive
-            obj.debug("%s setting input\n", obj.name)
-            % Calculate the next control input
-%            z = zeros(size(obj.H, 1),1);
-%                        
-%             for leader = obj.leaders
-%                 xj = leader.agent;
-%                 
-%                 % Consensus summation
-%                 z = z + leader.weight*(...
-%                     (obj.xhat - xj.xhat) + ...
-%                     (obj.delta - xj.delta));
-%                 
-%                 fprintf("%s has xhat %.3f %.3f\n", ...
-%                     xj.name, xj.xhat(1), xj.xhat(2))
-%             end
-            
-            obj.check_receive()
-            
+        function z = ConsensusTarget(obj)
             z = zeros(obj.numstates, 1);
             for transmission = obj.transmissions_rx                
                 % Consensus summation
-                %if ~any(isnan(transmission.xhat))
                 z = z + transmission.weight*(...
-                    (obj.xhat - transmission.xhat) + ...
-                    (obj.delta - transmission.agent.delta) ...
+                    (obj.xhat - transmission.xhat) + ... % Difference of states
+                    (obj.delta - transmission.agent.delta) ... % Relative Offset
                 );
-            
-                obj.debug("%s has xhat %.3f %.3f\n", ...
-                    transmission.agent.name, transmission.xhat(1), transmission.xhat(2))
-                %end
             end
+        end
+        
+        function setinput(obj)
+            % Set the input on broadcast, or receive
+            obj.check_receive()
             
             
+            z = obj.ConsensusTarget();
+           
             % setpoint
             setpoint_nans = isnan(obj.setpoint);
             z = z .* setpoint_nans;
@@ -216,9 +194,11 @@ classdef Agent < ConsensusMAS.RefClass
             obj.u = -obj.K(obj.x) * z;
         end
         
-        function step(obj)               
+        function step(obj)
+            obj.t = obj.t + obj.CLK;
+            
             % Move, with input
-            % This is dodgy
+            % This is dodgy             
             obj.x = obj.x + obj.fx(obj.x, obj.u)*obj.CLK;
 
             % Add measurement noise
@@ -232,6 +212,15 @@ classdef Agent < ConsensusMAS.RefClass
             obj.X = [obj.X obj.x];
             obj.U = [obj.U obj.u];
             obj.TX = [obj.TX, obj.tx];
+        end
+    end
+    
+    methods (Static)
+        function y = sig(x, a)
+            y = ones(size(x));
+            for i = 1:length(x)
+                y(i) = abs(x(i))^a * sign(x(i));
+            end
         end
     end
     

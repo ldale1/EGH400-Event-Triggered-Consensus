@@ -2,13 +2,12 @@
 clc; close all; import ConsensusMAS.*;
 
 % Load the model
-ts = 1/1e3;
-run('+ConsensusMAS/Models/NonLinear/HoverCraft')
+ts = 1/1e4;
+run('+ConsensusMAS/Models/NonLinear/Quadrotor')
 
 % Run the simulation;
-wind_model = WindModelEnum.None;
 network = Network( ...
-            Implementations.GlobalEventTrigger,  ... % Which type of agent
+            Implementations.FixedTrigger,  ... % Which type of agent
             states,  ... % States function
             numstates,  ... % number of states
             numinputs,  ... % number of inputs
@@ -17,15 +16,15 @@ network = Network( ...
             ref,  ...  % Relative setpoint funtion
             set,  ... % Fixed setpoint function
             ts, ... % Time step
-            states_vz, ... % Velocity states
-            wind_model ... % enumerated wind model
+            wind_states, ... % Velocity states
+            WindModelEnum.Constant ... % enumerated wind model
         );
 
     
 % Simulate with switching toplogies
 network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
 for i = 1:1
-    network.Simulate('Fixed', 'time', 10);
+    network.Simulate('Fixed', 'time', 20);
 end
 
 %network.PlotGraph;

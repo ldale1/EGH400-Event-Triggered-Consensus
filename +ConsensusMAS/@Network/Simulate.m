@@ -97,23 +97,17 @@ function Simulate(obj, type, varargin)
             agent.x = agent.x + wind;
         end
 
+        % Move agent recieve buffers
         for agent = obj.agents
             agent.shift_receive()
         end
         
-        obj.t = obj.t + obj.ts;
+        % Next wind stage
+        obj.wind_model.step()
         
-        %{
-        if obj.t > 150 && obj.t < 160
-            fprintf("STEP:\n")
-            disp(obj.t)
-            disp(squeeze([obj.agents.tx]))
-            disp(squeeze([obj.agents.xhat]))
-            disp(squeeze([obj.agents.u]))
-            fprintf("\n")
-        end
-        %}
-
+        % Time
+        obj.t = obj.t + obj.ts;
+  
         % Check the exit conditions
         if exit_func(obj.t, obj.consensus)
             break;

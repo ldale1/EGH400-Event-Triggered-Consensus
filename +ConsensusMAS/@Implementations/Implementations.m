@@ -5,8 +5,10 @@ classdef Implementations
         FixedTrigger,
         GlobalEventTrigger,
         LocalEventTrigger,
-        %FiniteA,
+        FiniteA,
         %FiniteB,
-        SampledEventTrigger
+        FiniteC,
+        SampledEventTrigger,
+        ETSMC
     end
 end

@@ -3,6 +3,7 @@ classdef WindModelEnum
     
     enumeration
         None,
-        Basic
+        Basic,
+        Constant
     end
 end

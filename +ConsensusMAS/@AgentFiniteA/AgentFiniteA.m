@@ -14,12 +14,12 @@ classdef AgentFiniteA < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentFiniteA(id, A, B, C, D, K, x0, delta, CLK)
-            obj@ConsensusMAS.Agent(id, A, B, C, D, K, x0, delta, CLK);
+        function obj = AgentFiniteA(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states)
+            obj@ConsensusMAS.Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states);
             
             % Event triggering constant
             obj.k = 0;
-            
+            %{
             switch (id)
                 case 1
                     obj.K = 2;
@@ -30,6 +30,7 @@ classdef AgentFiniteA < ConsensusMAS.Agent
                 case 4
                     obj.K = 2;
             end
+            %}
         end
         
         function set.L(obj, L)
@@ -68,19 +69,15 @@ classdef AgentFiniteA < ConsensusMAS.Agent
         
         function setinput(obj)
             % Calculate the next control input
-            z = zeros(size(obj.H, 1),1);
-            for leader = obj.leaders     
-                xj = leader.agent;
-                
-                % Consensus summation
-                z = z + leader.weight*(...
-                    (obj.xhat - xj.xhat) + ...
-                    (obj.delta - xj.delta));
-            end
-                        
-            beta = 0.2;
-            gamma = 0.8;
-            obj.u = -beta * sign(z) * abs(z)^gamma;
+            z = obj.ConsensusTarget();
+                       
+            
+            obj.u = sign(z(1) + z(2))^0.5 + z(2);
+            
+            %beta = 0.2;
+            %gamma = 0.8;
+            %K = -obj.K(obj.x);
+            %obj.u = -beta * sign(K * z) * abs(K * z)^gamma;
         end
         
         function error_threshold = error_threshold(obj)

@@ -14,7 +14,7 @@ states = @(x, u) [...
     u(1) - u(2) - x(6)];
 
 % Wind matrix
-states_vz = [1 3];
+wind_states = [2 4];
   
 % Interagent delta, and also setpoint
 ref = @(id) zeros(size(numstates, 1), 1);
@@ -35,7 +35,15 @@ B = @(x) [0 0 0;
           0 0 0;
           1 -1 0];
  
-K = @(id) (@(x) place(A(x), B(x), -7:1:-2));
+      
+Q = [0 0 0 0 0 0;
+     0 9 0 0 0 0;
+     0 0 0 0 0 0;
+     0 0 0 9 0 0;
+     0 0 0 0 1 0;
+     0 0 0 0 0 9];
+R = 1;
+K = @(id) (@(x) lqr(A(x), B(x), 1, 1)); %place(A(x), B(x), -7:1:-2));
 
 % Simulation variables
 SIZE = 3;
