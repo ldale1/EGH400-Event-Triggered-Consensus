@@ -93,7 +93,7 @@ function Simulate(obj, type, varargin)
         
         % exogenous disturbanece
         for agent = obj.agents
-            wind = obj.ts * agent.Dw * obj.wind_model.forces(agent);
+            wind = obj.ts * agent.Dw * -obj.wind_model.forces(agent);
             agent.x = agent.x + wind;
         end
 
