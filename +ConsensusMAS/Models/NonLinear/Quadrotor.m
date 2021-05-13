@@ -18,7 +18,7 @@ states = @(x, u) [...
     x(6)/J; ...
     l*u(1) - l*u(2) - x(6)/J];
 
-K = @(id) (@(x) x);
+K = @(id) (@(x, u) x);
 
 % Wind matrix
 wind_states = [2 4];

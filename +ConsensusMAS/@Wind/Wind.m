@@ -41,17 +41,17 @@ classdef Wind < ConsensusMAS.RefClass
                 case WindModelEnum.Basic
                     Cd = agent.Cd;
                     S  = agent.S;
-                    states_vz = agent.x(agent.states_vz);
+                    states_vz = agent.x(agent.wind_states);
                     
                     % Do we have the right states
                     switch (length(states_vz))
                         % Syntax ??
                         case 1
-                            vx = states_vz(2);
+                            vx = states_vz(1);
                             vy = 0;
                         case 2
-                            vx = states_vz(2);
-                            vy = states_vz(1);
+                            vx = states_vz(1);
+                            vy = states_vz(2);
                         otherwise
                             vx = 0;
                             vy = 0;

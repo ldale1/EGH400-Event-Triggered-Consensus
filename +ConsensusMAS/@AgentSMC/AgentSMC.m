@@ -47,7 +47,7 @@ classdef AgentSMC < ConsensusMAS.Agent
             
             u = -(c * B)^-1* (c * A * z + 1.5*sign(s));
             %}
-            c = [0.5 1];
+            c = [1.5 1];
             s = c * x;
             u = -[0 0.5]*x-1.4 *sign(s);
             

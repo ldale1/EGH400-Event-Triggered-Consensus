@@ -191,7 +191,7 @@ classdef Agent < ConsensusMAS.RefClass
             z(~setpoint_nans) = obj.x(~setpoint_nans) - obj.setpoint(~setpoint_nans);
             
             % Input
-            obj.u = -obj.K(obj.x) * z;
+            obj.u = -obj.K(obj.x, obj.u) * z;
         end
         
         function step(obj)

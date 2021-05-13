@@ -27,7 +27,7 @@ states = @(x, u) A*x + B*u;
 %K_fix = place(A, B, -3:-1:-4)
 %K_fix = place(G, H, -0.3:-0.1:-0.4)
 K_fixed = dlqr(G, H, 1, 1);
-K = @(id) (@(x) K_fixed);
+K = @(id) (@(x, u) K_fixed);
   
 % Interagent delta, and also setpoint
 ref = @(id) zeros(size(numstates, 1), 1);

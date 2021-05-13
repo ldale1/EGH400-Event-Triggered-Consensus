@@ -4,18 +4,22 @@ import ConsensusMAS.*;
 
 % Load the model
 ts = 1/1e2;
-run('+ConsensusMAS/Models/Linear/ToyFETC')
+run('+ConsensusMAS/Models/Linear/Simple')
 
-SIZE = 10;
-X0 = randi(5*SIZE, numstates, SIZE) - 5*SIZE/2;
+SIZE = 6;
+%X0 = randi(5*SIZE, numstates, SIZE) - 5*SIZE/2;
+%X0(2,:) = X0(2,:) + 10
 
+X0 = [5.5 -4.5 12.5 9.5 -0.5; 9.5 -6.5 -0.5 -1.5 2.5];
 
 % Run the simulation;
 %implementation = Implementations.ETSMC;
+%implementation = Implementations.FiniteC;
+
+
 %implementation = Implementations.FixedTrigger;
-%implementation = Implementations.GlobalEventTrigger;
-implementation = Implementations.FiniteC;
-wind_model = WindModelEnum.None;
+implementation = Implementations.GlobalEventTrigger;
+wind_model = WindModelEnum.Basic;
 network = Network( ...
             implementation,  ... % Which type of agent
             states,  ... % States function
@@ -45,6 +49,7 @@ end
 %network.PlotTriggers;
 network.PlotTriggersStates;
 network.PlotTriggersInputs;
+
 %network.Plot3("state1", 1, "state2", 3);
 %network.PlotErrors;
 %network.Animate("title", "tester", "state1", 1, "state2", 3);
