@@ -34,6 +34,7 @@ classdef Agent < ConsensusMAS.RefClass
         Cd = 1; % Drag coefficient
         m = 1; % mass
     end
+    
     properties (Dependent)
         name; % Agent name
         e;
@@ -223,7 +224,6 @@ classdef Agent < ConsensusMAS.RefClass
             % Add measurement noise
             %snr = 50;
             %obj.x = awgn(obj.x, snr);
-
         end
         
         function save(obj)     
