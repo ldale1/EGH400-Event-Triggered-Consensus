@@ -10,11 +10,14 @@ classdef Agent < ConsensusMAS.RefClass
         CLK; % Sampling rate
         fx;
         controller; % Gain matrix
+        controller_enum;
         numstates;
         numinputs;
         leaders; % Leading agents - necessary?
         followers; % Following agents
         transmissions_rx; % Transmissions received vector
+        
+        map;
         
         x; % Current state vector
         xhat; % Most recent transmission
@@ -42,34 +45,82 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, states, Af, Bf, controller, c_struct, numstates, numinputs, x0, delta, setpoint, CLK, wind_states)
+        function obj = Agent(id, states, Af, Bf, controller_enum, cs, numstates, numinputs, x0, delta, setpoint, CLK, wind_states)
             import ConsensusMAS.ControllersEnum;
+            
+            % TODO: remove numstates, numinputs and get from controller
+            % struct
             
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
-            
             obj.fx = states;
+            obj.controller_enum = controller_enum;
             
-            switch (controller)
+            switch (controller_enum)
                 % TODO: c_struct Q & R
                 
                 case ControllersEnum.PolePlacement
-                    K = lqr(Af(x, u), Bf(c_struct.x_op, c_struct.u_op), 1, 1);
+                    K = lqr(Af(x, u), Bf(cs.x_op, cs.u_op), 1, 1);
                     obj.controller = @(x, u, z) -K*z;
                 
                 case ControllersEnum.GainScheduled
                     K = @(x, u) lqr(Af(x, u), Bf(x, u), 1, 1);
                     obj.controller = @(x, u, z) -K(x, u)*z;
                     
-                case ControllersEnum.SMC
-                    %
-                
+                case ControllersEnum.SmcScheduled
+                    map = containers.Map;
+                    for target = cs.round_targets
+                        n = cs.n;
+                        m = cs.m;
+                        x = cs.target_x(target);
+                        u = cs.target_u(target);
+                        
+                        % Linear point
+                        A = Af(x, u);
+                        B = Bf(x, u);
+
+                        % Transformation
+                        [Trp, ~] = qr(B);
+                        Tr = Trp';
+                        Tr = [Tr(m+1:n,:);Tr(1:m,:)];
+
+                        % Transformed!
+                        Az = Tr * A * (Tr');
+                        Bz = Tr * B;
+
+                        % Gains
+                        A11 = Az(1:n-m, 1:n-m);
+                        A12 = Az(1:n-m, n-m+1:end);
+                        C1 = lqr(A11, A12, 1, 1);
+                        C = [C1, eye(n-m)];
+
+                        regime.t = target;
+                        regime.Az = Az;
+                        regime.Bz = Bz;
+                        regime.C = C;
+                        regime.Tr = Tr;
+
+                        map(string(target)) = regime;
+                    end
+                    
+                    % Regime based off operating conditions
+                    get_key = @(x) interp1(...
+                        cs.round_targets, cs.round_targets, ...
+                        cs.map_state(x), 'nearest');
+                    get_regime = @(x) map(string(get_key(x)));
+                    
+                    % Input based on regime
+                    get_s = @(r, x) r.C * (r.Tr * x);
+                    get_u = @(r, x) -(r.C*r.Bz)^-1*(r.C*r.Az*(r.Tr*x) + cs.k*sign(get_s(r, x)));
+                    
+                    % Get the regime with x, u -- > get the control input
+                    % with regime, z
+                    obj.controller = @(x, u, z) get_u(get_regime(x), z);
+
                 otherwise
                     error("Unrecognised type");
             end
-            
-            
             
             obj.numstates = numstates;
             obj.numinputs = numinputs;
@@ -202,13 +253,13 @@ classdef Agent < ConsensusMAS.RefClass
             % Set the input on broadcast, or receive
             obj.check_receive()
             
-            
+            % Consensus goal
             z = obj.ConsensusTarget();
            
             % setpoint
-            setpoint_nans = isnan(obj.setpoint);
-            z = z .* setpoint_nans;
-            z(~setpoint_nans) = obj.x(~setpoint_nans) - obj.setpoint(~setpoint_nans);
+            sp_nans = isnan(obj.setpoint);
+            z = z .* sp_nans;
+            z(~sp_nans) = obj.x(~sp_nans) - obj.setpoint(~sp_nans);
             
             % Input
             obj.u = obj.controller(obj.x, obj.u, z);

@@ -1,16 +1,24 @@
 % Setup
 clc; close all; import ConsensusMAS.*;
 
+if ~exists('network_map', 'var')
+    network_map = containers.Map;
+end
+
 % Load the model
 ts = 1/1e2;
 run('+ConsensusMAS/Models/NonLinear/HoverCraft')
 
+trigger_type = ImplementationsEnum.FixedTrigger;
+controller_type = ControllersEnum.GainScheduled;
+key = sprintf("%s-%s", string(trigger_type), string(controller_type));
+
 % Run the simulation;
 network = Network( ...
-            Implementations.GlobalEventTrigger,  ... % Which type of agent
+            trigger_type,  ... % Which type of agent
             states,  ... % States function
             Af, Bf,  ... % Gain function 
-            ControllersEnum.GainScheduled, ...
+            controller_type, ...
             controller_struct, ...
             numstates,  ... % number of states
             numinputs,  ... % number of inputs
@@ -22,13 +30,15 @@ network = Network( ...
             WindModelEnum.None ... % enumerated wind model
         );
 
-    
+ 
 % Simulate with switching toplogies
 network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
 for i = 1:1
     network.Simulate('Fixed', 'time', 10);
 end
- 
+
+network_map(key) = network;
+
 %network.PlotGraph;
 %network.PlotStates;
 %network.PlotInputs;
@@ -37,4 +47,6 @@ network.PlotTriggersStates;
 %network.PlotTriggersInputs;
 %network.Plot3("state1", 1, "state2", 3);
 %network.PlotErrors;
+network.PlotErrorsNorm("subplots", "none");
+network.PlotErrorsNorm("subplots", "states");
 %network.Animate("title", "tester", "state1", 1, "state2", 3);

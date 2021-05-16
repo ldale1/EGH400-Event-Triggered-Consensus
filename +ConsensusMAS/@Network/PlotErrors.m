@@ -28,4 +28,3 @@ function PlotErrors(obj)
         end
     end
 end
-

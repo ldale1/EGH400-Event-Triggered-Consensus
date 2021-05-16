@@ -46,7 +46,7 @@ classdef Network < ConsensusMAS.RefClass
             
             % Create the agents
             switch type
-                case Implementations.FixedTrigger
+                case ImplementationsEnum.FixedTrigger
                     agents = AgentFixedTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
                         agents(n) = AgentFixedTrigger( ... 
@@ -65,7 +65,7 @@ classdef Network < ConsensusMAS.RefClass
                             wind_input);
                     end
                 
-                case Implementations.GlobalEventTrigger
+                case ImplementationsEnum.GlobalEventTrigger
                     agents = AgentGlobalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
                         agents(n) = AgentGlobalEventTrigger( ... 
@@ -83,18 +83,18 @@ classdef Network < ConsensusMAS.RefClass
                             wind_input);
                     end
                 %{
-                case Implementations.SampledEventTrigger
+                case ImplementationsEnum.SampledEventTrigger
                     agents = AgentSampledEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
                         agents(n) = AgentSampledEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
                     end
-                case Implementations.LocalEventTrigger
+                case ImplementationsEnum.LocalEventTrigger
                     agents = AgentLocalEventTrigger.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
                         agents(n) = AgentLocalEventTrigger(n, A, B, C, D, K(n), X0(:,n), delta(n), setpoint(0), ts);
                     end
                 %}
-                case Implementations.ETSMC
+                case ImplementationsEnum.ETSMC
                     agents = AgentSMC.empty(obj.SIZE, 0);
                     for n = 1:obj.SIZE
                         agents(n) = AgentSMC( ... 
@@ -154,7 +154,7 @@ classdef Network < ConsensusMAS.RefClass
             
             %{
             % Create new ones
-            if (obj.type == Implementations.LocalEventTrigger)
+            if (obj.type == ImplementationsEnum.LocalEventTrigger)
                 F = [4 0 0 1 3 2;
                      5 5 0 0 0 0;
                      3 2 5 0 0 0;
@@ -171,14 +171,13 @@ classdef Network < ConsensusMAS.RefClass
                 agent.transmissions_rx = [];
                 
                 switch obj.type                        
-                    case Implementations.GlobalEventTrigger
+                    case ImplementationsEnum.GlobalEventTrigger
                         agent.L = L;
-                    case Implementations.LocalEventTrigger
+                    case ImplementationsEnum.LocalEventTrigger
                         agent.F = F;
                     otherwise
                         %
                 end
-                
             end
             
             for i = 1:obj.SIZE % row-wise
@@ -251,6 +250,7 @@ classdef Network < ConsensusMAS.RefClass
         
         % Complex Subplot Figures
         PlotErrors(obj, varargin);
+        PlotErrorsNorm(obj, varargin);
         Plot3(obj, varargin)
         PlotTriggersStates(obj,varargin);
         PlotTriggersInputs(obj, varargin);

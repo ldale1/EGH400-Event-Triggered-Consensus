@@ -1,13 +1,13 @@
-classdef Implementations
+classdef ImplementationsEnum
     % Enumeration for agent implementations
     
     enumeration
         FixedTrigger,
         GlobalEventTrigger,
         LocalEventTrigger,
-        FiniteA,
+        %FiniteA,
         %FiniteB,
-        FiniteC,
+        %FiniteC,
         SampledEventTrigger,
         ETSMC
     end

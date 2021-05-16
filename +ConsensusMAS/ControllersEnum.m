@@ -4,7 +4,8 @@ classdef ControllersEnum
     
     enumeration
         PolePlacement,
-        GainScheduled
+        GainScheduled,
+        SmcScheduled
     end
 end
 

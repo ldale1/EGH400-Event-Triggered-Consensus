@@ -45,12 +45,22 @@ Q = [0 0 0 0 0 0;
      0 0 0 0 0 9];
 R = 1;
 
-controller_struct.x_op = [0 0 0 0 pi/4 0 0];
+% pole place
+controller_struct.x_op = [0 0 0 0 pi/4 0];
 controller_struct.u_op = [0;0;0];
 controller_struct.Q = Q;
 controller_struct.R = R;
 
+% sliding
+controller_struct.n = numstates;
+controller_struct.m = numinputs;
+controller_struct.k = 10;
 
+targets = 128;             
+controller_struct.map_state = @(x) mod(x(5), 2*pi);
+controller_struct.round_targets = (-(2*pi/targets):(2*pi/targets):(2*pi)) + pi/targets;
+controller_struct.target_x = @(target) [0; 0; 0; 0; target; 0];
+controller_struct.target_u = @(target) [0; 0; 0];
 
 %% Simulation variables
 
