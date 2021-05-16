@@ -9,9 +9,11 @@ run('+ConsensusMAS/Models/NonLinear/HoverCraft')
 network = Network( ...
             Implementations.GlobalEventTrigger,  ... % Which type of agent
             states,  ... % States function
+            Af, Bf,  ... % Gain function 
+            ControllersEnum.GainScheduled, ...
+            controller_struct, ...
             numstates,  ... % number of states
             numinputs,  ... % number of inputs
-            K,  ... % Gain function 
             X0,  ... % Matrix of initial states (len(x) * N)
             ref,  ...  % Relative setpoint funtion
             set,  ... % Fixed setpoint function
@@ -26,7 +28,7 @@ network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
 for i = 1:1
     network.Simulate('Fixed', 'time', 10);
 end
-
+ 
 %network.PlotGraph;
 %network.PlotStates;
 %network.PlotInputs;

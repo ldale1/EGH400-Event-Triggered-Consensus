@@ -11,8 +11,8 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states)
-            obj@ConsensusMAS.Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states);
+        function obj = AgentGlobalEventTrigger(id, states, Af, Bf, controller, c_struct, numstates, numinputs, x0, delta, setpoint, CLK, wind_states)
+            obj@ConsensusMAS.Agent(id, states, Af, Bf, controller, c_struct, numstates, numinputs, x0, delta, setpoint, CLK, wind_states);
             
             % Override
             obj.xhat = zeros(size(x0));

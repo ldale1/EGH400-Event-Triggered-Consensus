@@ -23,6 +23,7 @@ function PlotStates(obj,varargin)
         end
         xlim([time(1) time(end)]);
         legend()
+        grid on;
         
         % Labelling
         title(sprintf('State %d', i))

@@ -9,11 +9,9 @@ classdef Agent < ConsensusMAS.RefClass
         t = 0;
         CLK; % Sampling rate
         fx;
+        controller; % Gain matrix
         numstates;
         numinputs;
-        K; % Gain matrix
-        
-        
         leaders; % Leading agents - necessary?
         followers; % Following agents
         transmissions_rx; % Transmissions received vector
@@ -43,13 +41,34 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, states, numstates, numinputs, K, x0, delta, setpoint, CLK, wind_states)
+        function obj = Agent(id, states, Af, Bf, controller, c_struct, numstates, numinputs, x0, delta, setpoint, CLK, wind_states)
+            import ConsensusMAS.ControllersEnum;
+            
             % Class constructor
             obj.id = id; % Agent id number
             obj.CLK = CLK; % Agent sampling rate
             
             obj.fx = states;
-            obj.K = K;
+            
+            switch (controller)
+                % TODO: c_struct Q & R
+                
+                case ControllersEnum.PolePlacement
+                    K = lqr(Af(x, u), Bf(c_struct.x_op, c_struct.u_op), 1, 1);
+                    obj.controller = @(x, u, z) -K*z;
+                
+                case ControllersEnum.GainScheduled
+                    K = @(x, u) lqr(Af(x, u), Bf(x, u), 1, 1);
+                    obj.controller = @(x, u, z) -K(x, u)*z;
+                    
+                case ControllersEnum.SMC
+                    %
+                
+                otherwise
+                    error("Unrecognised type");
+            end
+            
+            
             
             obj.numstates = numstates;
             obj.numinputs = numinputs;
@@ -191,7 +210,7 @@ classdef Agent < ConsensusMAS.RefClass
             z(~setpoint_nans) = obj.x(~setpoint_nans) - obj.setpoint(~setpoint_nans);
             
             % Input
-            obj.u = -obj.K(obj.x, obj.u) * z;
+            obj.u = obj.controller(obj.x, obj.u, z);
         end
         
         function step(obj)
