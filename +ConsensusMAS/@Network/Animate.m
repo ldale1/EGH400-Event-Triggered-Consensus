@@ -104,7 +104,8 @@ function Animate(obj, varargin)
             'FontSize',18, ...
             'VerticalAlignment','bottom', ...
             'HorizontalAlignment', 'right')
-
+        
+        grid on;
         % Record frame data
         mov(k) = getframe(gcf);
     end

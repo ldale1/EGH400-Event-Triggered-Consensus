@@ -4,6 +4,7 @@ classdef WindModelEnum
     enumeration
         None,
         Basic,
-        Constant
+        Constant,
+        Sinusoid
     end
 end

@@ -18,6 +18,7 @@ classdef Agent < ConsensusMAS.RefClass
         transmissions_rx; % Transmissions received vector
         
         map;
+        iters = 0;
         
         x; % Current state vector
         xhat; % Most recent transmission
@@ -36,6 +37,8 @@ classdef Agent < ConsensusMAS.RefClass
         S = 0.1; % Surface area
         Cd = 1; % Drag coefficient
         m = 1; % mass
+        
+        goal;
     end
     
     properties (Dependent)
@@ -57,11 +60,12 @@ classdef Agent < ConsensusMAS.RefClass
             obj.fx = states;
             obj.controller_enum = controller_enum;
             
+            
             switch (controller_enum)
                 % TODO: c_struct Q & R
                 
                 case ControllersEnum.PolePlacement
-                    K = lqr(Af(x, u), Bf(cs.x_op, cs.u_op), 1, 1);
+                    K = lqr(Af(cs.x_op, cs.u_op), Bf(cs.x_op, cs.u_op), 1, 1);
                     obj.controller = @(x, u, z) -K*z;
                 
                 case ControllersEnum.GainScheduled
@@ -71,20 +75,27 @@ classdef Agent < ConsensusMAS.RefClass
                 case ControllersEnum.SmcScheduled
                     map = containers.Map;
                     for target = cs.round_targets
-                        n = cs.n;
-                        m = cs.m;
+                        
                         x = cs.target_x(target);
                         u = cs.target_u(target);
                         
                         % Linear point
                         A = Af(x, u);
                         B = Bf(x, u);
-
+                        
+                        n = cs.n;
+                        %m = rank(A);
+                        m = cs.m;
+                        
+                        [n,m]=size(B);
+                        
                         % Transformation
                         [Trp, ~] = qr(B);
                         Tr = Trp';
+                        
                         Tr = [Tr(m+1:n,:);Tr(1:m,:)];
-
+                        %Tr = [Tr(n-m+1:n,:); Tr(1:n-m,:)];
+                        
                         % Transformed!
                         Az = Tr * A * (Tr');
                         Bz = Tr * B;
@@ -93,7 +104,8 @@ classdef Agent < ConsensusMAS.RefClass
                         A11 = Az(1:n-m, 1:n-m);
                         A12 = Az(1:n-m, n-m+1:end);
                         C1 = lqr(A11, A12, 1, 1);
-                        C = [C1, eye(n-m)];
+                        C = [C1, eye(m)];
+                        %C = [C1, eye(m)];
 
                         regime.t = target;
                         regime.Az = Az;
@@ -262,11 +274,18 @@ classdef Agent < ConsensusMAS.RefClass
             z(~sp_nans) = obj.x(~sp_nans) - obj.setpoint(~sp_nans);
             
             % Input
+            obj.goal = z;
             obj.u = obj.controller(obj.x, obj.u, z);
         end
         
         function step(obj)
+            
             obj.t = obj.t + obj.CLK;
+            
+            import ConsensusMAS.ControllersEnum;
+            if obj.controller_enum == ControllersEnum.SmcScheduled
+                obj.u = obj.controller(obj.x, obj.u, obj.goal);
+            end
             
             % Move, with input
             % This is dodgy             
@@ -279,6 +298,7 @@ classdef Agent < ConsensusMAS.RefClass
         
         function save(obj)     
             % Record current properties
+            obj.iters = obj.iters + 1;
             obj.X = [obj.X obj.x];
             obj.U = [obj.U obj.u];
             obj.TX = [obj.TX, obj.tx];

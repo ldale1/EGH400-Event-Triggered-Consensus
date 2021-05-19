@@ -39,12 +39,15 @@ s1 = C * z1;
 S1 = s1;
 
 u1 = -(C*Az*z1 + k*sign(s1));
+u1 = -(C*Bz)^-1*(C*Az*z1 + k*sign(s1));
 U1 = u1;
 
 for i = 1:10000
     z1 = z1 + (Az * z1 + Bz * u1) * ts;
     s1 = C * z1;
     u1 = -(C*Az*z1 + k*sign(s1));
+    u1 = -(C*Bz)^-1*(C*Az*z1 + k*sign(s1));
+
     
     Z1 = [Z1 z1];
     S1 = [S1 s1];

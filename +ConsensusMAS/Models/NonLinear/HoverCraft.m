@@ -66,6 +66,22 @@ controller_struct.target_u = @(target) [0; 0; 0];
 
 SIZE = 3;
 
+% Random generator
+scale_p = 10;
+scale_p_dot = 10;
+scale_theta = pi;
+scale_theta_dot = 2;
+x_generator = @() [ ...
+    scale_p*(rand()-1/2); 
+    scale_p_dot*(rand()-1/2); 
+    scale_p*(rand()-1/2); 
+    scale_p_dot*(rand()-1/2); 
+    scale_theta*(rand()-1/2);
+    scale_theta_dot*(rand()-1/2)];
+X_generator = @(num_agents) cell2mat(arrayfun(@(x) {x_generator()}, 1:num_agents));
+    
+X0 = X_generator(SIZE);
+
 % SCENARIO ONE
 %{
 x0_1 = [+5.00 +1.00 -8.00 -3.00 3*pi/8 -1];

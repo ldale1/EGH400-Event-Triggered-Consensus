@@ -22,7 +22,13 @@ function PlotStates(obj,varargin)
             end
         end
         xlim([time(1) time(end)]);
-        legend()
+        
+        if (length(obj.agents) < 20)
+            legend()
+        end
+        
+        
+        
         grid on;
         
         % Labelling

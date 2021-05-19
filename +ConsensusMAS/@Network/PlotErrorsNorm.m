@@ -24,7 +24,11 @@ function PlotErrorsNorm(obj, varargin)
         for ii = 1:obj.SIZE
             Xs(ii,:) = obj.agents(ii).X(i,:);
         end
+        
+        % 
         standard = std(Xs, 1);
+        
+        % Sum errors sq, average --> sum for agents // experiment
         
         if strcmp(plottype, "none")
             figure(998), hold on, legend()
