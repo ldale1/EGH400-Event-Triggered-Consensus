@@ -17,6 +17,8 @@ classdef Agent < ConsensusMAS.RefClass
         followers; % Following agents
         transmissions_rx; % Transmissions received vector
         
+        stepall = false;
+        
         map;
         iters = 0;
         
@@ -69,10 +71,12 @@ classdef Agent < ConsensusMAS.RefClass
                     obj.controller = @(x, u, z) -K*z;
                 
                 case ControllersEnum.GainScheduled
-                    K = @(x, u) lqr(Af(x, u), Bf(x, u), 1, 1);
+                    K = @(x, u) lqr(Af(x, u), Bf(x, u), cs.Q, cs.R);
                     obj.controller = @(x, u, z) -K(x, u)*z;
                     
                 case ControllersEnum.SmcScheduled
+                    obj.stepall = true;
+                    
                     map = containers.Map;
                     for target = cs.round_targets
                         
@@ -267,6 +271,11 @@ classdef Agent < ConsensusMAS.RefClass
             
             % Consensus goal
             z = obj.ConsensusTarget();
+            
+            %z(6) = z(6) + obj.xhat(6)*mean([obj.transmissions_rx.weight]);
+            
+            z(6) = -z(6) + obj.x(6);
+            %z(6) = obj.x(6);
            
             % setpoint
             sp_nans = isnan(obj.setpoint);
@@ -282,8 +291,8 @@ classdef Agent < ConsensusMAS.RefClass
             
             obj.t = obj.t + obj.CLK;
             
-            import ConsensusMAS.ControllersEnum;
-            if obj.controller_enum == ControllersEnum.SmcScheduled
+            
+            if obj.stepall
                 obj.u = obj.controller(obj.x, obj.u, obj.goal);
             end
             

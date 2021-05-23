@@ -6,10 +6,10 @@ if ~exist('network_map', 'var')
 end
 
 % Load the model
-ts = 1/1e2;
-run('+ConsensusMAS/Models/NonLinear/Copy_of_HoverCraft')
+ts = 5/1e2;
+run('+ConsensusMAS/Models/NonLinear/QuadrotorTest')
 
-trigger_type = ImplementationsEnum.FixedTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
 controller_type = ControllersEnum.GainScheduled;
 key = sprintf("%s-%s", string(trigger_type), string(controller_type));
 
@@ -27,14 +27,14 @@ network = Network( ...
             set,  ... % Fixed setpoint function
             ts, ... % Time step
             wind_states, ... % Velocity states
-            WindModelEnum.Basic ... % enumerated wind model
+            WindModelEnum.None ... % enumerated wind model
         );
 
  
 % Simulate with switching toplogies
 network.ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
 for i = 1:1
-    network.Simulate('Fixed', 'time', 20);
+    network.Simulate('Fixed', 'time',75);
 end
 
 network_map(key) = network;
@@ -46,7 +46,7 @@ network.PlotStates;
 %network.PlotTriggersStates;
 %network.PlotTriggersInputs;
 %network.Plot3("state1", 1, "state2", 3);
-network.PlotErrors;
-network.PlotErrorsNorm("subplots", "none");
-network.PlotErrorsNorm("subplots", "states");
+%network.PlotErrors;
+%network.PlotErrorsNorm("subplots", "none");
+%network.PlotErrorsNorm("subplots", "states");
 %network.Animate("title", "tester", "state1", 1, "state2", 4);
