@@ -87,7 +87,6 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         function save(obj)
             % Record current properties
             save@ConsensusMAS.Agent(obj);
-            obj.ERROR = [obj.ERROR, obj.error];
             obj.ERROR_THRESHOLD = [obj.ERROR_THRESHOLD, obj.error_threshold];
         end
     end

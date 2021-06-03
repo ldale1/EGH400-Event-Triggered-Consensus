@@ -17,6 +17,7 @@ classdef Agent < ConsensusMAS.RefClass
         followers; % Following agents
         transmissions_rx; % Transmissions received vector
         
+        virtual = false;
         stepall = false;
         
         map;
@@ -34,6 +35,7 @@ classdef Agent < ConsensusMAS.RefClass
         TX; % Trigger vector tracking
         ERROR; % Error vector tracking
         
+        wind;
         wind_states;
         Dw; % Wind disturbance matrix
         S = 0.1; % Surface area
@@ -45,12 +47,14 @@ classdef Agent < ConsensusMAS.RefClass
     
     properties (Dependent)
         name; % Agent name
-        e;
-        %error; % Deviation from last broadcast
+        %e;
+        error; % Deviation from last broadcast
     end
     
     methods
-        function obj = Agent(id, states, Af, Bf, controller_enum, cs, numstates, numinputs, x0, delta, setpoint, CLK, wind_states)
+        function obj = Agent(id, states, Af, Bf, controller_enum, cs, ...
+                                numstates, numinputs, x0, delta, setpoint, ...
+                                CLK, wind_states)
             import ConsensusMAS.ControllersEnum;
             
             % TODO: remove numstates, numinputs and get from controller
@@ -62,80 +66,68 @@ classdef Agent < ConsensusMAS.RefClass
             obj.fx = states;
             obj.controller_enum = controller_enum;
             
+            function reg = smc_regime(A, B)
+                %{
+                get_Tr = @(A, B, Tr, m, n)    
+                        
+                get_Az = @(A, Tr) Tr * A * (Tr');
+                get_Bz = @(B, Tr) Tr * B;
+
+                get_C = @(Az, m, n) [lqr(Az(1:n-m, 1:n-m), Az(1:n-m, n-m+1:end), 1, 1), eye(m)];
+
+                get_regime = @(A, B, ) [...
+                    get_Az(A, Tr), ...
+                    get_Bz(B, Tr), ...
+                    get_C(), ...
+                    Tr]; 
+                %}
+                [n,m] = size(B);
+                
+                [Trp, ~] = qr(B);
+                Tr = Trp';
+                Tr = [Tr(m+1:n,:);Tr(1:m,:)];
+                        
+                Az = Tr * A * (Tr');
+                Bz = Tr * B;
+                
+                %Q = eye(4).*[1 1 1 1];
+                Q = 1;
+                R = 1;
+                C = [lqr(Az(1:n-m, 1:n-m), Az(1:n-m, n-m+1:end), Q, R), eye(m)];
+
+                reg.Az = Az;
+                reg.Bz = Bz;
+                reg.C = C;
+                reg.Tr = Tr;
+                %reg = {Az, Bz, C, Tr};      
+            end
             
             switch (controller_enum)
                 % TODO: c_struct Q & R
                 
                 case ControllersEnum.PolePlacement
-                    K = lqr(Af(cs.x_op, cs.u_op), Bf(cs.x_op, cs.u_op), 1, 1);
+                    K = lqr(Af(cs.x_op, cs.u_op), Bf(cs.x_op, cs.u_op), cs.Q, cs.R);
                     obj.controller = @(x, u, z) -K*z;
                 
                 case ControllersEnum.GainScheduled
                     K = @(x, u) lqr(Af(x, u), Bf(x, u), cs.Q, cs.R);
                     obj.controller = @(x, u, z) -K(x, u)*z;
                     
-                case ControllersEnum.SmcScheduled
+                case ControllersEnum.Smc                  
                     obj.stepall = true;
-                    
-                    map = containers.Map;
-                    for target = cs.round_targets
-                        
-                        x = cs.target_x(target);
-                        u = cs.target_u(target);
-                        
-                        % Linear point
-                        A = Af(x, u);
-                        B = Bf(x, u);
-                        
-                        n = cs.n;
-                        %m = rank(A);
-                        m = cs.m;
-                        
-                        [n,m]=size(B);
-                        
-                        % Transformation
-                        [Trp, ~] = qr(B);
-                        Tr = Trp';
-                        
-                        Tr = [Tr(m+1:n,:);Tr(1:m,:)];
-                        %Tr = [Tr(n-m+1:n,:); Tr(1:n-m,:)];
-                        
-                        % Transformed!
-                        Az = Tr * A * (Tr');
-                        Bz = Tr * B;
 
-                        % Gains
-                        A11 = Az(1:n-m, 1:n-m);
-                        A12 = Az(1:n-m, n-m+1:end);
-                        C1 = lqr(A11, A12, 1, 1);
-                        C = [C1, eye(m)];
-                        %C = [C1, eye(m)];
-
-                        regime.t = target;
-                        regime.Az = Az;
-                        regime.Bz = Bz;
-                        regime.C = C;
-                        regime.Tr = Tr;
-
-                        map(string(target)) = regime;
-                    end
-                    
-                    % Regime based off operating conditions
-                    get_key = @(x) interp1(...
-                        cs.round_targets, cs.round_targets, ...
-                        cs.map_state(x), 'nearest');
-                    get_regime = @(x) map(string(get_key(x)));
-                    
                     % Input based on regime
-                    get_s = @(r, x) r.C * (r.Tr * x);
-                    get_u = @(r, x) -(r.C*r.Bz)^-1*(r.C*r.Az*(r.Tr*x) + cs.k*sign(get_s(r, x)));
+                    %get_u = @(Az, Bz, C, Tr, x) -(C*Bz)^-1*(C*Az*(Tr*x) + cs.k*sign(C * (Tr * x)));
+                    get_u = @(R, x) -(R.C*R.Bz)^-1*(R.C*R.Az*(R.Tr*x) + ...
+                                        cs.k*sign(R.C*(R.Tr*x)));
                     
                     % Get the regime with x, u -- > get the control input
                     % with regime, z
-                    obj.controller = @(x, u, z) get_u(get_regime(x), z);
-
+                    obj.controller = @(x, u, z) get_u(...
+                        smc_regime(Af(x, u), Bf(x, u)), z);
+                    
                 otherwise
-                    error("Unrecognised type");
+                    obj.controller = @(x, u, z) obj.t;
             end
             
             obj.numstates = numstates;
@@ -151,11 +143,14 @@ classdef Agent < ConsensusMAS.RefClass
             
             obj.transmissions_rx = []; % received vectors
             
-            obj.wind_states = wind_states;
+            global wind
+            obj.wind = wind;
+            
             obj.Dw = zeros(numstates, 2);
             for i = 1:length(wind_states)
                 obj.Dw(wind_states(i), i) = 1/obj.m;
             end
+            obj.wind_states = wind_states;
         end
         
         function name = get.name(obj)
@@ -163,8 +158,17 @@ classdef Agent < ConsensusMAS.RefClass
             name = sprintf("Agent %d", obj.id);
         end
         
+        %{
         function error = get.e(obj) 
             error = obj.x - obj.xhat;
+        end
+        %}
+        function error = get.error(obj) 
+            % Difference from last broadcast
+            error = obj.xhat - obj.x;
+            
+            % Quantise
+            error = floor(abs(error)*1000)/1000;
         end
     end
     
@@ -272,10 +276,19 @@ classdef Agent < ConsensusMAS.RefClass
             % Consensus goal
             z = obj.ConsensusTarget();
             
+            
+            %wf = obj.wind.forces(obj);
+            %z = z + 0.2 * any(wf) * (obj.x - (z + wf));
+            %z = z / 1.2;
             %z(6) = z(6) + obj.xhat(6)*mean([obj.transmissions_rx.weight]);
             
-            z(6) = -z(6) + obj.x(6);
-            %z(6) = obj.x(6);
+            
+            % TODO
+            base_weight = length(obj.leaders) + 1;
+            self_weight = base_weight * 10;
+
+            z(6) = (obj.x(6)*self_weight + z(6)*base_weight)/(base_weight+self_weight);
+            z(6) = obj.x(6);
            
             % setpoint
             sp_nans = isnan(obj.setpoint);
@@ -288,17 +301,20 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function step(obj)
-            
             obj.t = obj.t + obj.CLK;
             
-            
             if obj.stepall
-                obj.u = obj.controller(obj.x, obj.u, obj.goal);
+                obj.setinput();
+                %obj.u = obj.controller(obj.x, obj.u, obj.goal);
             end
             
             % Move, with input
             % This is dodgy             
             obj.x = obj.x + obj.fx(obj.x, obj.u)*obj.CLK;
+            
+            % exogenous disturbanece
+            %obj.x = obj.x - obj.wind.forces(obj)*obj.CLK;
+        
 
             % Add measurement noise
             %snr = 50;
@@ -308,6 +324,7 @@ classdef Agent < ConsensusMAS.RefClass
         function save(obj)     
             % Record current properties
             obj.iters = obj.iters + 1;
+            obj.ERROR = [obj.ERROR, obj.error];
             obj.X = [obj.X obj.x];
             obj.U = [obj.U obj.u];
             obj.TX = [obj.TX, obj.tx];

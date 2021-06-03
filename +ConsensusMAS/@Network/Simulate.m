@@ -71,6 +71,15 @@ function Simulate(obj, type, varargin)
     
     % Simulate
     while (true) 
+        
+        % Step accordingly
+        for agent = obj.virtual_agents
+            agent.save();
+            agent.broadcast();
+            agent.step();
+        end 
+        
+        
         % Broadcast agents if needed
         for agent = obj.agents
             agent.check_trigger();
@@ -80,7 +89,7 @@ function Simulate(obj, type, varargin)
         for agent = obj.agents
             agent.check_receive()
         end 
-
+        
         % Have agents save their data
         for agent = obj.agents
             agent.save();
@@ -90,20 +99,14 @@ function Simulate(obj, type, varargin)
         for agent = obj.agents
             agent.step();
         end 
-        
-        % exogenous disturbanece
-        for agent = obj.agents
-            wind = obj.ts * agent.Dw * -obj.wind_model.forces(agent);
-            agent.x = agent.x + wind;
-        end
-
+    
         % Move agent recieve buffers
         for agent = obj.agents
             agent.shift_receive()
         end
         
         % Next wind stage
-        obj.wind_model.step()
+        obj.wind.step()
         
         % Time
         obj.t = obj.t + obj.ts;
@@ -112,5 +115,7 @@ function Simulate(obj, type, varargin)
         if exit_func(obj.t, obj.consensus)
             break;
         end
+        
+        obj.assign_formation();
     end
 end

@@ -8,9 +8,9 @@ numstates = 6;
 numinputs = 3;
 states = @(x, u) [...
     x(2); ...
-    (u(1) + u(2))*cos(x(5)) - u(3)*sin(x(5)) - x(2); ...
+    -x(2) + (u(1) + u(2))*cos(x(5)) - u(3)*sin(x(5)); ...
     x(4); ...
-    (u(1) + u(2))*sin(x(5)) + u(3)*cos(x(5)) - x(4); ...
+    -x(4) + (u(1) + u(2))*sin(x(5)) + u(3)*cos(x(5)) ; ...
     x(6); ...
     u(1) - u(2) - x(6)];
 
@@ -22,24 +22,24 @@ ref = @(id) zeros(size(numstates, 1), 1);
 set = @(id) NaN * zeros(size(numstates, 1), 1);
 
 Af = @(x,u) [0 1 0 0 0 0;
-          0 -1 0 0 (-(u(1)+u(2))*sin(x(5)) - u(3)*cos(x(5))) 0;
+          0 -1 0 0 not0(-(u(1)+u(2))*sin(x(5)) - u(3)*cos(x(5))) 0;
           0 0 0 1 0 0;
-          0 0 0 -1 ((u(1)+u(2))*cos(x(5)) - u(3)*sin(x(5))) 0;
+          0 0 0 -1 not0((u(1)+u(2))*cos(x(5)) - u(3)*sin(x(5))) 0;
           0 0 0 0 0 1;
           0 0 0 0 0 -1];
 Bf = @(x,u) [0 0 0;
-          cos(x(5)) cos(x(5)) -sin(x(5));
+          cos0(x(5)) cos0(x(5)) -sin0(x(5));
           0 0 0;
-          sin(x(5)) sin(x(5)) cos(x(5));
+          sin0(x(5)) sin0(x(5)) cos0(x(5));
           0 0 0;
           1 -1 0];
  
       
 
 %% Controller Specific Info
-Q = [0 0 0 0 0 0;
+Q = [1 0 0 0 0 0;
      0 9 0 0 0 0;
-     0 0 0 0 0 0;
+     0 0 1 0 0 0;
      0 0 0 9 0 0;
      0 0 0 0 1 0;
      0 0 0 0 0 9];
@@ -67,7 +67,7 @@ controller_struct.target_u = @(target) [0; 0; 0];
 SIZE = 3;
 
 % Random generator
-scale_p = 10;
+scale_p = 200;
 scale_p_dot = 10;
 scale_theta = pi;
 scale_theta_dot = 2;
@@ -90,9 +90,37 @@ x0_3 = [-13.00 -0.20 +4.00 -1.00 pi/24 +1];
 %}
 
 % SCENARIO TWO
+%{
 x0_1 = [+5.00 +1.00 -8.00 -3.00 3*pi/8 -5];
 x0_2 = [+1.00 -6.00 +2.00 +5.00  pi/8 -3];
 x0_3 = [-13.00 -0.20 +4.00 -1.00 pi/24 +3];
 
 
 X0 = [x0_1', x0_2', x0_3'];
+%}
+
+
+
+
+
+
+
+function v = not0(v)
+    if v==0
+        v = 0.001;
+    end
+end
+
+function s = sin0(rad)
+    s = sin(rad);
+    if s==0
+        s = 0.001;
+    end
+end
+
+function c = cos0(rad)
+    c = cos(rad);
+    if c==0
+        c = -0.001;
+    end
+end

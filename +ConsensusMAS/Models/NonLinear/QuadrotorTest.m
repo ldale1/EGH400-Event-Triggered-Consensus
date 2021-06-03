@@ -12,15 +12,10 @@ states = @(x, u) [...
     x(6); ...
     u(1) - u(2) - x(6)];
 
-K = @(id) (@(x, u) x);
+%K = @(id) (@(x, u) x);
 
 % Wind matrix
 wind_states = [2 4];
-
-% Interagent delta, and also setpoint
-ref = @(id) zeros(numstates, 1);
-set = @(id) NaN*zeros(numstates, 1);
-
 
 Af = @(x, u) [0  1  0  0  0  0;
               0  0  0  0  not0( -(u(1)+u(2))*cos(x(5)) )  0;
@@ -55,6 +50,7 @@ controller_struct.R = R;
 % sliding
 controller_struct.n = numstates;
 controller_struct.m = numinputs;
+controller_struct.k = 50;
 controller_struct.k = 10;
 
 targets = 128;             
@@ -68,11 +64,26 @@ controller_struct.target_u = @(target) [0; 0; 0];
 % Simulation variables
 SIZE = 5;
 
+% Interagent delta, and also setpoint
+ref = @(id) zeros(numstates, 1);
+set = @(id) NaN*zeros(numstates, 1);
+%set = @(id) [NaN; NaN; NaN; 0; NaN; NaN];
+
 % Random generator
-scale_p = 100;
+scale_p = 200;
 scale_p_dot = 20;
 scale_theta = pi/4;
 scale_theta_dot = 2;
+
+scale_p = 5;
+scale_p_dot = 1;
+scale_theta = pi/8;
+scale_theta_dot = .1;
+scale_p = 200;
+scale_p_dot = 20;
+scale_theta = pi/4;
+scale_theta_dot = 2;
+
 x_generator = @() [ ...
     scale_p*(rand()-1/2); 
     scale_p_dot*(rand()-1/2); 

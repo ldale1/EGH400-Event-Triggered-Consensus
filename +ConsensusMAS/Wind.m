@@ -1,7 +1,7 @@
 classdef Wind < ConsensusMAS.RefClass
     
     
-    properties (Access = private)
+    properties
         lat % latitude
         long % longitudde
         alt % altitude
@@ -63,10 +63,15 @@ classdef Wind < ConsensusMAS.RefClass
                 
                 case WindModelEnum.Constant
                     forces = [1; 1];
+                    
+                case WindModelEnum.Sinusoid
+                    forces = [sin(obj.time); cos(obj.time)];
                 
                 otherwise
                     forces = [0; 0];       
             end
+            
+            forces = agent.Dw * forces;
         end
         
         function mf = meridional_force(obj, agent_veloc, Cd, S)
