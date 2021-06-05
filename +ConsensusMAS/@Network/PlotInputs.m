@@ -32,5 +32,6 @@ function PlotInputs(obj, varargin)
         end
         ylabel('Value');
         xlabel('Time (s)');
+        grid on 
     end  
 end

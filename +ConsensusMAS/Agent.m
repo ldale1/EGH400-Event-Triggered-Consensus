@@ -93,7 +93,7 @@ classdef Agent < ConsensusMAS.RefClass
                 %Q = eye(4).*[1 1 1 1];
                 Q = 1;
                 R = 1;
-                C = [lqr(Az(1:n-m, 1:n-m), Az(1:n-m, n-m+1:end), Q, R), eye(m)];
+                C = [lqrd(Az(1:n-m, 1:n-m), Az(1:n-m, n-m+1:end), Q, R, CLK), eye(m)];
 
                 reg.Az = Az;
                 reg.Bz = Bz;
@@ -110,7 +110,7 @@ classdef Agent < ConsensusMAS.RefClass
                     obj.controller = @(x, u, z) -K*z;
                 
                 case ControllersEnum.GainScheduled
-                    K = @(x, u) lqr(Af(x, u), Bf(x, u), cs.Q, cs.R);
+                    K = @(x, u) lqrd(Af(x, u), Bf(x, u), cs.Q, cs.R, obj.CLK);
                     obj.controller = @(x, u, z) -K(x, u)*z;
                     
                 case ControllersEnum.Smc                  
@@ -285,10 +285,10 @@ classdef Agent < ConsensusMAS.RefClass
             
             % TODO
             base_weight = length(obj.leaders) + 1;
-            self_weight = base_weight * 10;
+            self_weight = 3;
 
             z(6) = (obj.x(6)*self_weight + z(6)*base_weight)/(base_weight+self_weight);
-            z(6) = obj.x(6);
+            %z(6) = obj.x(6);
            
             % setpoint
             sp_nans = isnan(obj.setpoint);

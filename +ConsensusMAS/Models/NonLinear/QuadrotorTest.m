@@ -1,5 +1,6 @@
 %% Setup
 import ConsensusMAS.*;
+Jinv = 1;
 
 % The agent dynamics
 numstates = 6;
@@ -9,20 +10,23 @@ states = @(x, u) [...
     -(u(1) + u(2))*sin(x(5)); ...
     x(4); ...
     +(u(1) + u(2))*cos(x(5)); ...
-    x(6); ...
-    u(1) - u(2) - x(6)];
+    x(6)*Jinv; ...
+    u(1) - u(2) - x(6)*Jinv];
 
 %K = @(id) (@(x, u) x);
 
 % Wind matrix
 wind_states = [2 4];
 
+
+f2x5 = @(u1, u2, x5) not0(  cos(x5)*(-(u1+u2))  );
+f4x5 = @(u1, u2, x5) not0(  sin(x5)*(-(u1+u2))  );
 Af = @(x, u) [0  1  0  0  0  0;
-              0  0  0  0  not0( -(u(1)+u(2))*cos(x(5)) )  0;
+              0  0  0  0  f2x5(u(1), u(2), x(5))  0;
               0  0  0  1  0  0;
-              0  0  0  0  not0( -(u(1)+u(2))*sin(x(5)) )  0;
-              0  0  0  0  0  1;
-              0  0  0  0  0  -1];
+              0  0  0  0  f4x5(u(1), u(2), x(5))  0;
+              0  0  0  0  0  Jinv;
+              0  0  0  0  0  -Jinv];
 
 Bf = @(x, u) ...
     [0 0;
@@ -33,12 +37,12 @@ Bf = @(x, u) ...
      1 -1];
 
 %% Controller Specific Info
-Q = [zeros(1,numstates-6) 3 zeros(1,numstates-1);
+Q = [zeros(1,numstates-6) 1 zeros(1,numstates-1);
      zeros(1,numstates-5) 1 zeros(1,numstates-2);
-     zeros(1,numstates-4) 3 zeros(1,numstates-3);
+     zeros(1,numstates-4) 1 zeros(1,numstates-3);
      zeros(1,numstates-3) 1 zeros(1,numstates-4);
-     zeros(1,numstates-2) 1 zeros(1,numstates-5);
-     zeros(1,numstates-1) 50 zeros(1,numstates-6)];
+     zeros(1,numstates-2) 9 zeros(1,numstates-5);
+     zeros(1,numstates-1) 9 zeros(1,numstates-6)];
 R = 1;
 
 % pole place
@@ -50,7 +54,6 @@ controller_struct.R = R;
 % sliding
 controller_struct.n = numstates;
 controller_struct.m = numinputs;
-controller_struct.k = 50;
 controller_struct.k = 10;
 
 targets = 128;             
@@ -79,17 +82,18 @@ scale_p = 5;
 scale_p_dot = 1;
 scale_theta = pi/8;
 scale_theta_dot = .1;
-scale_p = 200;
-scale_p_dot = 20;
+
+scale_p = 20;
+scale_p_dot = 5;
 scale_theta = pi/4;
-scale_theta_dot = 2;
+scale_theta_dot = 1;
 
 x_generator = @() [ ...
     scale_p*(rand()-1/2); 
     scale_p_dot*(rand()-1/2); 
     scale_p*(rand()-1/2); 
     scale_p_dot*(rand()-1/2); 
-    scale_theta*(rand()-1/2);
+    scale_theta*rand();
     scale_theta_dot*(rand()-1/2)];
 X_generator = @(num_agents) cell2mat(arrayfun(@(x) {x_generator()}, 1:num_agents));
     

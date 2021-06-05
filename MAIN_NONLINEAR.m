@@ -13,11 +13,12 @@ end
 
 % Load the model
 ts = 1/1e2;
-runtime = 20;
+runtime = 30;
 
-trigger_type = ImplementationsEnum.FixedTrigger;
-%controller_type = ControllersEnum.Smc;
-controller_type = ControllersEnum.GainScheduled;
+%trigger_type = ImplementationsEnum.FixedTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
+controller_type = ControllersEnum.Smc;
+%controller_type = ControllersEnum.GainScheduled;
 key = sprintf("%s-%s", string(trigger_type), string(controller_type));
 
 % Wind model
@@ -81,9 +82,9 @@ network_map(key) = network;
 %keys = network_map.keys
 %network = network_map('GlobalEventTrigger-Smc')
 
-%network.PlotGraph;
+%network.PlotGraph; 
+%network.PlotInputs;
 network.PlotStates;
-network.PlotInputs; 
 %network.PlotTriggers;
 %network.PlotTriggersStates;
 %network.PlotTriggersInputs;
