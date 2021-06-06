@@ -52,19 +52,11 @@ classdef Agent < ConsensusMAS.RefClass
     end
     
     methods
-        function obj = Agent(id, states, Af, Bf, controller_enum, cs, ...
-                                numstates, numinputs, x0, delta, setpoint, ...
-                                CLK, wind_states)
-            import ConsensusMAS.ControllersEnum;
-            
-            % TODO: remove numstates, numinputs and get from controller
-            % struct
-            
+        function obj = Agent(id, ms, ...
+                                controller_enum, cs, ...
+                                x0, delta, setpoint, CLK)
             % Class constructor
-            obj.id = id; % Agent id number
-            obj.CLK = CLK; % Agent sampling rate
-            obj.fx = states;
-            obj.controller_enum = controller_enum;
+            import ConsensusMAS.ControllersEnum;
             
             function reg = smc_regime(A, B)
                 %{
@@ -93,8 +85,12 @@ classdef Agent < ConsensusMAS.RefClass
                 %Q = eye(4).*[1 1 1 1];
                 Q = 1;
                 R = 1;
-                C = [lqrd(Az(1:n-m, 1:n-m), Az(1:n-m, n-m+1:end), Q, R, CLK), eye(m)];
-
+                A11 = Az(1:n-m, 1:n-m);
+                A12 = Az(1:n-m, n-m+1:end);
+                C = [lqrd(A11, A12, Q, R, CLK), eye(m)];
+                
+                [Az, Bz] = c2d(Az, Bz, CLK);
+                
                 reg.Az = Az;
                 reg.Bz = Bz;
                 reg.C = C;
@@ -102,20 +98,25 @@ classdef Agent < ConsensusMAS.RefClass
                 %reg = {Az, Bz, C, Tr};      
             end
             
-            switch (controller_enum)
-                % TODO: c_struct Q & R
-                
+            switch (controller_enum)                
                 case ControllersEnum.PolePlacement
-                    K = lqr(Af(cs.x_op, cs.u_op), Bf(cs.x_op, cs.u_op), cs.Q, cs.R);
+                    K = lqrd(...
+                        ms.Af(cs.x_op, cs.u_op), ...
+                        ms.Bf(cs.x_op, cs.u_op), ...
+                        cs.Q, cs.R, obj.CLK);
                     obj.controller = @(x, u, z) -K*z;
                 
                 case ControllersEnum.GainScheduled
-                    K = @(x, u) lqrd(Af(x, u), Bf(x, u), cs.Q, cs.R, obj.CLK);
+                    K = @(x, u) lqrd(...
+                        ms.Af(x, u), ...
+                        ms.Bf(x, u), ...
+                        cs.Q, cs.R, obj.CLK);
                     obj.controller = @(x, u, z) -K(x, u)*z;
                     
                 case ControllersEnum.Smc                  
                     obj.stepall = true;
-
+                    
+                    %{
                     % Input based on regime
                     %get_u = @(Az, Bz, C, Tr, x) -(C*Bz)^-1*(C*Az*(Tr*x) + cs.k*sign(C * (Tr * x)));
                     get_u = @(R, x) -(R.C*R.Bz)^-1*(R.C*R.Az*(R.Tr*x) + ...
@@ -125,32 +126,54 @@ classdef Agent < ConsensusMAS.RefClass
                     % with regime, z
                     obj.controller = @(x, u, z) get_u(...
                         smc_regime(Af(x, u), Bf(x, u)), z);
+                    %}
+                    
+                    k = 0.1;
+                    q = 0.5;
+                    h = 0.5;
+
+                    get_u = @(R, x) -(R.C*R.Bz)^-1*(R.C*R.Az*(R.Tr*x) + (1-q*h)*R.C*(R.Tr*x) + h*k*sign(R.C*(R.Tr*x)));
+                    obj.controller = @(x, u, z) get_u(...
+                        smc_regime(ms.Af(x, u), ms.Bf(x, u)), ...
+                        z);
                     
                 otherwise
                     obj.controller = @(x, u, z) obj.t;
             end
             
-            obj.numstates = numstates;
-            obj.numinputs = numinputs;
-                        
-            obj.x = x0; % Agent current state
-            obj.delta = delta; % Agent relative displacement
-            obj.setpoint = setpoint;
+            obj.id = id;                            % Agent id number
+            obj.CLK = CLK;                          % Agent sampling rate
+            obj.controller_enum = controller_enum;  % Agent controller
             
-            obj.xhat = x0; % Agent last broadcase
-            obj.u = zeros(obj.numinputs, 1); % Agent control input
-            obj.tx = zeros(size(x0)); % Agent current transmission
+            obj.numstates = ms.numstates;       % number of states
+            obj.numinputs = ms.numinputs;       % number of inputs
             
-            obj.transmissions_rx = []; % received vectors
+            obj.x = x0;                         % Agent current state
+            obj.xhat = x0;                      % Agent last broadcase
+            obj.u = zeros(obj.numinputs, 1);    % Agent control input
+            obj.delta = delta;                  % Agent relative displacement
+            obj.setpoint = setpoint;            % Non-network setpoints
             
+            obj.tx = zeros(size(x0));           % Agent current transmission
+            obj.transmissions_rx = [];          % received vectors
+            
+            % Agent trajectory, with euler approx
+            % x = x + (dx/dt)*ts;
+            if ~ms.linear
+                obj.fx = ms.states; 
+            else
+                [G, H] = c2d(ms.Af(0, 0), ms.Bf(0, 0), CLK);
+                obj.fx = @(x, u) ((G*x + H*u) - x)/CLK;
+            end
+            
+            % Wind
             global wind
             obj.wind = wind;
-            
-            obj.Dw = zeros(numstates, 2);
-            for i = 1:length(wind_states)
-                obj.Dw(wind_states(i), i) = 1/obj.m;
+            obj.wind_states = ms.wind_states;
+            obj.Dw = zeros(obj.numstates, 2);
+            for i = 1:length(obj.wind_states)
+                obj.Dw(obj.wind_states(i), i) = 1/obj.m;
             end
-            obj.wind_states = wind_states;
         end
         
         function name = get.name(obj)
@@ -282,14 +305,15 @@ classdef Agent < ConsensusMAS.RefClass
             %z = z / 1.2;
             %z(6) = z(6) + obj.xhat(6)*mean([obj.transmissions_rx.weight]);
             
-            
+            %{
             % TODO
             base_weight = length(obj.leaders) + 1;
             self_weight = 3;
 
-            z(6) = (obj.x(6)*self_weight + z(6)*base_weight)/(base_weight+self_weight);
-            %z(6) = obj.x(6);
-           
+            %z(6) = (obj.x(6)*self_weight + z(6)*base_weight)/(base_weight+self_weight);
+            z(6) = obj.x(6);
+            %}
+            
             % setpoint
             sp_nans = isnan(obj.setpoint);
             z = z .* sp_nans;
@@ -297,7 +321,17 @@ classdef Agent < ConsensusMAS.RefClass
             
             % Input
             obj.goal = z;
-            obj.u = obj.controller(obj.x, obj.u, z);
+            u_in = obj.u;
+            
+            % SMC control input jitter, need a better representation
+            import ConsensusMAS.ControllersEnum;
+            if (obj.controller_enum == ControllersEnum.Smc)
+                backtrack = 11;
+                u_prev = obj.U(:,max(length(obj.U)-backtrack, 1):end);
+                u_in = mean(u_prev, 2);
+            end
+            
+            obj.u = obj.controller(obj.x, u_in, z);
         end
         
         function step(obj)

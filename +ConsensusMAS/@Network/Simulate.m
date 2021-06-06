@@ -116,6 +116,6 @@ function Simulate(obj, type, varargin)
             break;
         end
         
-        obj.assign_formation();
+        %obj.assign_formation();
     end
 end

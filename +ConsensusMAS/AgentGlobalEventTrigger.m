@@ -4,6 +4,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     properties
         k;
         ERROR_THRESHOLD;
+        trigger_states;
     end
     
     properties (Dependent)
@@ -11,14 +12,16 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, states, Af, Bf, controller, c_struct, numstates, numinputs, x0, delta, setpoint, CLK, wind_states)
-            obj@ConsensusMAS.Agent(id, states, Af, Bf, controller, c_struct, numstates, numinputs, x0, delta, setpoint, CLK, wind_states);
+        function obj = AgentGlobalEventTrigger(id, model_struct, controller, c_struct, x0, delta, setpoint, CLK)
+            obj@ConsensusMAS.Agent(id, model_struct, controller, c_struct, x0, delta, setpoint, CLK);
             
             % Override
             obj.xhat = zeros(size(x0));
             
             % Event triggering constant
             obj.k = 0;
+            
+            obj.trigger_states = model_struct.trigger_states;
         end
         
         function set.L(obj, L)
@@ -59,16 +62,20 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
                     (obj.x - xj.x) + ...
                     (obj.delta - xj.delta));
             end
-            
+                        
             % Consensus
-            error_threshold = obj.k * norm(abs(z));
+            error_threshold = obj.k * norm(abs(z(obj.trigger_states)));
             error_threshold = error_threshold * ones(size(obj.x));
+            
+            
+            error_threshold = max(error_threshold, 1);
             %error_threshold = max(0.5, error_threshold);
         end
      
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
-            triggers = (norm(obj.error)* ones(size(obj.x)) > obj.error_threshold);
+            %triggers = (norm(obj.error(obj.trigger_states)) * ones(size(obj.x)) > obj.error_threshold);
+            triggers = (obj.error > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
             end  

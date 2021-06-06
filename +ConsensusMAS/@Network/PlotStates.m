@@ -24,7 +24,7 @@ function PlotStates(obj,varargin)
         xlim([time(1) time(end)]);
         
         if (length(obj.agents) < 20)
-            legend()
+            %legend()
         end
         
         

@@ -11,7 +11,7 @@ function PlotTriggers(obj)
         tx_time = time(logical(any(tx)));
 
         
-        plot(tx_time, agent.id*ones(1, length(tx_time)), '*')
+        plot(tx_time, agent.id*ones(1, length(tx_time)), '.')
         if length(tx_time) >= 1
             text(tx_time(end), agent.id, sprintf("(%d)", length(tx_time)))
         end
@@ -22,6 +22,7 @@ function PlotTriggers(obj)
     sgtitle('Agent Triggering Instants')
     ylabel('Agent ID')
     xlabel('Time (s)');
+    grid on;
 end   
 
 %{
