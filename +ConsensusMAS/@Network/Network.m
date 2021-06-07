@@ -6,11 +6,15 @@ classdef Network < ConsensusMAS.RefClass
         type;
         TOPS; % Network topologies vector
         SIZE; % network size
+        
         agents; % network agents
         virtual_agents;
+        
         agentstates;
         agentinputs;
         agent_generator;
+        
+        sim_struct;
         
         T; % times vector
         ts; % time steps
@@ -20,11 +24,13 @@ classdef Network < ConsensusMAS.RefClass
     properties (Dependent)
         ADJ; % adjacency matrix
         t; % current time instant
+        ss;
     end
     
     methods (Static)
         function gen = AgentGenerator(type, model_struct, ...
-                            controller, controller_struct, ts)
+                            controller, controller_struct, ...
+                            sim_struct, ts)
             
             % Curry agent creation for dynamic simulation
             import ConsensusMAS.*;
@@ -34,6 +40,7 @@ classdef Network < ConsensusMAS.RefClass
                         AgentFixedTrigger( ... 
                             n, model_struct, ...
                             controller, controller_struct, ...
+                            sim_struct, ...
                             x, delta, sp, ts);
                 
                 case ImplementationsEnum.GlobalEventTrigger
@@ -41,6 +48,23 @@ classdef Network < ConsensusMAS.RefClass
                         AgentGlobalEventTrigger( ... 
                             n, model_struct, ...
                             controller, controller_struct, ...
+                            sim_struct, ...
+                            x, delta, sp, ts);
+                        
+                case ImplementationsEnum.GlobalEventTriggerAug
+                    gen = @(n, x, delta, sp) ...
+                        AgentGlobalEventTriggerAug( ... 
+                            n, model_struct, ...
+                            controller, controller_struct, ...
+                            sim_struct, ...
+                            x, delta, sp, ts);
+                        
+                case ImplementationsEnum.LocalEventTrigger
+                    gen = @(n, x, delta, sp) ...
+                        AgentLocalEventTrigger( ... 
+                            n, model_struct, ...
+                            controller, controller_struct, ...
+                            sim_struct, ...
                             x, delta, sp, ts);
                     
                 case ImplementationsEnum.ETSMC
@@ -48,6 +72,7 @@ classdef Network < ConsensusMAS.RefClass
                         AgentSMC( ... 
                             n, model_struct, ...
                             controller, controller_struct, ...
+                            sim_struct, ...
                             x, 0, 0, ts);
                                        
                 otherwise
@@ -59,6 +84,7 @@ classdef Network < ConsensusMAS.RefClass
     methods
         function obj = Network(type, model_struct, ...
                 controller, controller_struct, ...
+                sim_struct, ...
                 X0, delta, setpoint, ts)
         
             % Network constructor
@@ -73,10 +99,13 @@ classdef Network < ConsensusMAS.RefClass
             obj.agentstates = model_struct.numstates;
             obj.agentinputs = model_struct.numinputs;
             
+            obj.sim_struct = sim_struct;
+            
             % Generate agents
             obj.agent_generator = Network.AgentGenerator(...
                 type, model_struct, ...
-                controller, controller_struct, ts);
+                controller, controller_struct, ...
+                sim_struct, ts);
             
             obj.agents = arrayfun(@(x) ...
                 obj.agent_generator(x, X0(:,x),  delta(x),  setpoint(x)), ...
@@ -99,6 +128,10 @@ classdef Network < ConsensusMAS.RefClass
         function t = get.t(obj)
             % Get latest time
             t = obj.T(end); 
+        end
+        
+        function ss = get.ss(obj)
+            ss = obj.sim_struct;
         end
         
         function set.ADJ(obj, ADJ)
@@ -229,6 +262,49 @@ classdef Network < ConsensusMAS.RefClass
             %}
         end
         
+        
+        function sim_step(obj)
+            %{
+            % Step accordingly
+            for agent = obj.virtual_agents
+                agent.save();
+                agent.broadcast();
+                agent.step();
+            end 
+            %}
+            
+            % Broadcast agents if needed
+            for agent = obj.agents
+                agent.check_trigger();
+            end
+
+            % Check for an incoming transmission
+            for agent = obj.agents
+                agent.check_receive()
+            end 
+
+            % Have agents save their data
+            for agent = obj.agents
+                agent.save();
+            end
+            
+            % Time
+            obj.t = obj.t + obj.ts;
+
+            % Step accordingly
+            for agent = obj.agents
+                agent.step();
+            end 
+
+            % Move agent recieve buffers
+            for agent = obj.agents
+                agent.shift_receive()
+            end
+
+            % Next wind stage
+            obj.wind.step()
+        end
+        
         % Simulate network
         Simulate(obj, varargin);
         SimulateDynamic(obj, varargin);
@@ -268,12 +344,11 @@ classdef Network < ConsensusMAS.RefClass
                   Xs(ii,1) = NaN;
               end
 
-                % 
+              % 
               actual = sum(Xs);
               plot(network.T, actual/max(actual), "DisplayName", cell2mat(key));
-           end
-          
-           
+           end          
+
            legend()
        end
        

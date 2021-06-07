@@ -2,22 +2,28 @@
 clear all; clc; 
 import ConsensusMAS.Scenarios.*;
 
-scenario = "random";
-%scenario = "currentx";
-scenario = "Report_VConsensusAlgorithmExploration";
 
+scenario = "Report_VConsensusAlgorithmExploration";
+scenario = "current";
+scenario = "random";
+
+
+dynamic = 0;
 
 switch scenario
     case "random"
-        % Fresh Scenario
+        % Fresh Scenario+
         model = "QuadrotorTest";
+        model = "HoverCraft";
+        model = "HoverCraft_8";
         run(path_model(model));
         
         % Get the vars
+        SIZE = 5;
         X0 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
         ts = 1/1e2;
-        runtime = 20;
+        runtime = 100;
 
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -25,6 +31,14 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
+        
+        %{
+        ADJ = [0 1 0 0 0;
+               0 0 1 0 0;
+               0 0 0 1 0;
+               0 0 0 0 1;
+               0 0 0 0 0];
+        %}
         
         % Go it
         run(path_model(model));
@@ -36,13 +50,15 @@ import ConsensusMAS.ImplementationsEnum;
 import ConsensusMAS.ControllersEnum; 
 
 % Trigger Type
-%trigger_type = ImplementationsEnum.FixedTrigger;
+trigger_type = ImplementationsEnum.FixedTrigger;
+trigger_type = ImplementationsEnum.LocalEventTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTriggerAug;
 trigger_type = ImplementationsEnum.GlobalEventTrigger;
 
 % Controller
+controller_type = ControllersEnum.PolePlacement;
 controller_type = ControllersEnum.Smc;
-%controller_type = ControllersEnum.GainScheduled;
-
+controller_type = ControllersEnum.GainScheduled;
 
 %% Run the simulation
 clc; import ConsensusMAS.*;
@@ -65,6 +81,7 @@ network = Network( ...
             model_struct, ...       % Model data
             controller_type, ...    % Controller type enum
             controller_struct, ...  % Controller data
+            sim_struct, ...         % simulation
             X0,  ...                % Matrix of initial states (len(x) * N)
             ref,  ...               % Relative setpoint funtion
             set,  ...               % Fixed setpoint function
@@ -89,8 +106,14 @@ network.ADJ = [0 0 0 0 0 1;
 network.add_leader(vl_states, vl_numstates, vl_x0);
 %}
 
-for i = 1:1
-    network.Simulate('Fixed', 'time', runtime);
+if ~dynamic
+    % Simulate with switching toplogies
+    for i = 1:1
+        network.Simulate('Fixed', 'time', runtime);
+    end
+else
+    % Simulate with switching toplogies
+    network.SimulateDynamic('Fixed', 'time', runtime);
 end
 
 % Save for later
@@ -108,9 +131,14 @@ network_map(key) = network;
 
 %network.PlotGraph; 
 %network.PlotInputs;
-network.PlotStates;
 network.PlotTriggers;
-%network.PlotTriggersStates;
+%network.PlotStates;
+
+tops = length(network.TOPS);
+network.TOPS = network.TOPS(max(1, tops-9):end);
+%network.PlotGraph
+
+network.PlotTriggersStates;
 %network.PlotTriggersInputs;
 %network.Plot3("state1", 1, "state2", 3);
 %network.PlotErrors;

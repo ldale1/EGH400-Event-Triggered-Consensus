@@ -38,84 +38,17 @@ function Simulate(obj, type, varargin)
         error("Unrecognised type")
     end
     
-    
-
-    % Begin
-    % Agents are initialised with
-    % x = x0, u = 0, xhat = 0            
-    %{
-    for agent = obj.agents
-        agent.sample();
-    end
-
-    for agent = obj.agents
-        agent.broadcast();
-    end
-
-    for agent = obj.agents
-        agent.setinput();
-    end
-
-    % Have agents save their data
-    for agent = obj.agents
-        agent.save();
-    end
-
-    % Step accordingly
-    for agent = obj.agents
-        agent.step();
-    end 
-    %}
 
     fprintf("Simulate begin...\n")
     
     % Simulate
-    while (true) 
+    while (true)
+        obj.sim_step;
+        %obj.assign_formation();
         
-        % Step accordingly
-        for agent = obj.virtual_agents
-            agent.save();
-            agent.broadcast();
-            agent.step();
-        end 
-        
-        
-        % Broadcast agents if needed
-        for agent = obj.agents
-            agent.check_trigger();
-        end
-        
-        % Check for an incoming transmission
-        for agent = obj.agents
-            agent.check_receive()
-        end 
-        
-        % Have agents save their data
-        for agent = obj.agents
-            agent.save();
-        end
-        
-        % Step accordingly
-        for agent = obj.agents
-            agent.step();
-        end 
-    
-        % Move agent recieve buffers
-        for agent = obj.agents
-            agent.shift_receive()
-        end
-        
-        % Next wind stage
-        obj.wind.step()
-        
-        % Time
-        obj.t = obj.t + obj.ts;
-  
         % Check the exit conditions
         if exit_func(obj.t, obj.consensus)
             break;
         end
-        
-        %obj.assign_formation();
     end
 end

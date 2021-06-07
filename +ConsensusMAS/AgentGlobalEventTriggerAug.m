@@ -1,4 +1,4 @@
-classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
+classdef AgentGlobalEventTriggerAug < ConsensusMAS.Agent
     % This class represents an event-triggered agent
     
     properties
@@ -12,7 +12,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
     end
     
     methods
-        function obj = AgentGlobalEventTrigger(id, model_struct, controller, c_struct, sim_struct, x0, delta, setpoint, CLK)
+        function obj = AgentGlobalEventTriggerAug(id, model_struct, controller, c_struct, sim_struct, x0, delta, setpoint, CLK)
             obj@ConsensusMAS.Agent(id, model_struct, controller, c_struct, sim_struct, x0, delta, setpoint, CLK);
             
             % Override
@@ -66,12 +66,16 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             % Consensus
             error_threshold = obj.k * norm(abs(z(obj.trigger_states)));
             error_threshold = error_threshold * ones(size(obj.x));
+            
+            
+            error_threshold = max(error_threshold, 1);
+            %error_threshold = max(0.5, error_threshold);
         end
      
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
-            triggers = (norm(obj.error(obj.trigger_states)) * ones(size(obj.x)) > obj.error_threshold);
-            %triggers = (obj.error > obj.error_threshold);
+            %triggers = (norm(obj.error(obj.trigger_states)) * ones(size(obj.x)) > obj.error_threshold);
+            triggers = (obj.error > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
             end  

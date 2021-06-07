@@ -44,40 +44,50 @@ function SimulateDynamic(obj, type, varargin)
     end
     
     % Iterations without spawning agent
+    global x_generator;
     spawn_limit = 5;
     unspawned = 0;
     pseudo_chance = 5; % inverse of this
     
     
-    global x_generator
+    number_lanes = 1;
+    lane_gap = 20;
+    interlane_gap = 0;
+    
+    %sp = @(obj, lane)
+    function sp = getSetPoint(numstates, y_state, vy_state, lane)
+        sp = NaN * zeros(numstates, 1);
         
+        %sp(y_state) = lane;
+        %sp(vy_state) = 0;
+        sp(6) = 0;
+    end
+    
     % Simulate
     while (true)
-        
-        
         ALL_X = [obj.agents.x];
-        agent_lanes = round(ALL_X(4,:));
-        
+        agent_lanes = round(ALL_X(obj.ss.y_state,:) / lane_gap)*lane_gap;
         
         % Between lanes 1 and 5
-        agent_lanes = max(agent_lanes, 1);
-        agent_lanes = min(agent_lanes, 5);
+        agent_lanes = max(agent_lanes, 1*lane_gap);
+        agent_lanes = min(agent_lanes, number_lanes*lane_gap);
         
         % Make a set
-        lanes = unique(agent_lanes);
+        lanes = unique(agent_lanes) ;
         
-        
+        %{
         if (unspawned > spawn_limit) && (mod(randi(pseudo_chance), pseudo_chance) == 0)
             
-            ref = [0; 0; 0; 0; 0; 0; 0; 0];
-            set = [NaN; NaN; NaN; 0; 0; 0; NaN; NaN];
+            ref = zeros(obj.agentstates, 1); %[0; 0; 0; 0; 0; 0; 0; 0];
+            set = getSetPoint(obj.agentstates, obj.ss.y_state, obj.ss.vy_state, 0);
             
             obj.SIZE = obj.SIZE + 1;
             
             new_x = x_generator();
+            
             counts = hist(agent_lanes, 1:5);
             [~, min_lane] = min(counts);
-            new_x(4) = min_lane + (rand()-0.5)/2;
+            new_x(obj.ss.y_state) = min_lane + (rand()-0.5)/2;
 
             obj.agents = [...
                 obj.agents, ...
@@ -87,7 +97,7 @@ function SimulateDynamic(obj, type, varargin)
         else
             unspawned = unspawned + 1;
         end
-        
+        %}
         
         % Empty adjacency, fill it
         ADJ = zeros(obj.SIZE);
@@ -97,36 +107,50 @@ function SimulateDynamic(obj, type, varargin)
             
             % What are their current values
             X = [in_lane.x];
+            X = X(obj.ss.x_state,:);
             
             % Get the state indeces
             [~, ind] = sort(X, 2);
             
             % Sort indeces by state 1
-            sort_ind = ind(1,:);
+            sort_ind = ind;
             for i = 1:length(in_lane)
                 base = in_lane(sort_ind(i));
 
                 % Give them a separation
                 if (i == 1)
-                    base.delta = [0; 0; 0; 0; 0; 0; 0; 0];
+                    base.delta = zeros(base.numstates, 1);
                 else
                     % Add communication with the previous agent
                     prev = in_lane(sort_ind(i - 1));
                     ADJ(base.id, prev.id) = 1;
                     ADJ(prev.id, base.id) = 1;
                     
-                    % Relative offsets
-                    mindelta = max(abs(prev.x - base.x), [3; 0; 0; 0; 0; 0; 0; 0]) .* [1; 0; 0; 0; 0; 0; 0; 0];
-                    base.delta = prev.delta - mindelta;
+                    % Relative offsets - we are only doing this in the x 
+                    x_diff = abs(prev.x(prev.ss.x_state) - base.x(base.ss.x_state));
+                    min_x_delta = max(x_diff, interlane_gap);
+                    
+                    min_x_delta = interlane_gap;
+                    
+                    
+                    % For the current agent
+                    % delta = max(abs(prev.x - base.x), [3; 0; 0; 0; 0; 0; 0; 0]) .* [1; 0; 0; 0; 0; 0; 0; 0];
+                    basedelta = zeros(base.numstates, 1);
+                    basedelta(base.ss.x_state) = prev.delta(prev.ss.x_state) - min_x_delta;
+                    base.delta = basedelta;
                 end
-                base.setpoint = [NaN; NaN; NaN; agent_lanes(base.id); 0; 0; NaN; NaN];
+                
+                %base.setpoint = [NaN; NaN; NaN; agent_lanes(base.id); 0; 0; NaN; NaN];
+                base.setpoint = getSetPoint(base.numstates, base.ss.y_state, base.ss.vy_state, agent_lanes(base.id));
             end
         end
         
         if any(size(ADJ) ~= size(obj.ADJ)) || any(reshape(ADJ ~= obj.ADJ, [], 1))
             obj.ADJ = ADJ;
         end
-         
+        
+        obj.sim_step;
+        %{
         % Broadcast agents if needed
         for agent = obj.agents
             agent.check_trigger();
@@ -147,12 +171,14 @@ function SimulateDynamic(obj, type, varargin)
             agent.step();
         end 
         
+        %{
         % exogenous disturbanece
         for agent = obj.agents
             wind = obj.ts * agent.Dw * -obj.wind_model.forces(agent);
             agent.x = agent.x + wind;
         end
-
+        %}
+        
         % Move agent recieve buffers
         for agent = obj.agents
             agent.shift_receive()
@@ -162,6 +188,7 @@ function SimulateDynamic(obj, type, varargin)
         obj.wind_model.step()
 
         obj.t = obj.t + obj.ts;
+        %}
 
         % Check the exit conditions
         if exit_func(obj.t, obj.consensus)

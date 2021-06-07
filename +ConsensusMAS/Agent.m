@@ -35,8 +35,10 @@ classdef Agent < ConsensusMAS.RefClass
         TX; % Trigger vector tracking
         ERROR; % Error vector tracking
         
+        sim_struct;
+        
         wind;
-        wind_states;
+        %wind_states;
         Dw; % Wind disturbance matrix
         S = 0.1; % Surface area
         Cd = 1; % Drag coefficient
@@ -49,14 +51,25 @@ classdef Agent < ConsensusMAS.RefClass
         name; % Agent name
         %e;
         error; % Deviation from last broadcast
+        
+        ss;
     end
     
     methods
         function obj = Agent(id, ms, ...
                                 controller_enum, cs, ...
+                                ss, ...
                                 x0, delta, setpoint, CLK)
             % Class constructor
             import ConsensusMAS.ControllersEnum;
+            
+            obj.id = id;                            % Agent id number
+            obj.CLK = CLK;                          % Agent sampling rate
+            obj.controller_enum = controller_enum;  % Agent controller
+            obj.sim_struct = ss;
+            
+            obj.numstates = ms.numstates;       % number of states
+            obj.numinputs = ms.numinputs;       % number of inputs
             
             function reg = smc_regime(A, B)
                 %{
@@ -128,7 +141,7 @@ classdef Agent < ConsensusMAS.RefClass
                         smc_regime(Af(x, u), Bf(x, u)), z);
                     %}
                     
-                    k = 0.1;
+                    k = cs.k;
                     q = 0.5;
                     h = 0.5;
 
@@ -140,13 +153,6 @@ classdef Agent < ConsensusMAS.RefClass
                 otherwise
                     obj.controller = @(x, u, z) obj.t;
             end
-            
-            obj.id = id;                            % Agent id number
-            obj.CLK = CLK;                          % Agent sampling rate
-            obj.controller_enum = controller_enum;  % Agent controller
-            
-            obj.numstates = ms.numstates;       % number of states
-            obj.numinputs = ms.numinputs;       % number of inputs
             
             obj.x = x0;                         % Agent current state
             obj.xhat = x0;                      % Agent last broadcase
@@ -169,16 +175,21 @@ classdef Agent < ConsensusMAS.RefClass
             % Wind
             global wind
             obj.wind = wind;
-            obj.wind_states = ms.wind_states;
+            %obj.wind_states = ss.wind_states;
             obj.Dw = zeros(obj.numstates, 2);
-            for i = 1:length(obj.wind_states)
-                obj.Dw(obj.wind_states(i), i) = 1/obj.m;
+            for i = 1:length(ss.wind_states)
+                obj.Dw(ss.wind_states(i), i) = 1/obj.m;
             end
         end
         
         function name = get.name(obj)
             % Agent display name
             name = sprintf("Agent %d", obj.id);
+        end
+        
+        function ss = get.ss(obj)
+            % Agent display name
+            ss = obj.sim_struct;;
         end
         
         %{
@@ -299,6 +310,9 @@ classdef Agent < ConsensusMAS.RefClass
             % Consensus goal
             z = obj.ConsensusTarget();
             
+            %remultiplier = length(obj.leaders) + 1;
+            %z(2) = (z(2)* remultiplier + (obj.x(2) - remultiplier*10))/(remultiplier + 1);
+            %z(4) = (z(4)* remultiplier + (obj.x(4) - 0))/(remultiplier + 1);
             
             %wf = obj.wind.forces(obj);
             %z = z + 0.2 * any(wf) * (obj.x - (z + wf));
@@ -318,7 +332,7 @@ classdef Agent < ConsensusMAS.RefClass
             sp_nans = isnan(obj.setpoint);
             z = z .* sp_nans;
             z(~sp_nans) = obj.x(~sp_nans) - obj.setpoint(~sp_nans);
-            
+
             % Input
             obj.goal = z;
             u_in = obj.u;

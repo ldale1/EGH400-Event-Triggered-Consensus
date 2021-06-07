@@ -4,6 +4,7 @@ classdef ImplementationsEnum
     enumeration
         FixedTrigger,
         GlobalEventTrigger,
+        GlobalEventTriggerAug,
         LocalEventTrigger,
         %FiniteA,
         %FiniteB,
