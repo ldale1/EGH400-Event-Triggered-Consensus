@@ -49,8 +49,8 @@ ref = @(id) zeros(model_struct.numstates, 1);
 set = @(id) NaN*zeros(model_struct.numstates, 1);
 
 % Random generator
-scale_x1 = 10;
-scale_x2 = 10;
+scale_x1 = 100;
+scale_x2 = 100;
 x_generator = @() [ ...
     scale_x1*(rand()-1/2); 
     scale_x2*(rand()-1/2)];

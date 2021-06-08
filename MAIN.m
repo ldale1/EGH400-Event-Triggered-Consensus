@@ -1,11 +1,11 @@
 %% Model
-clear all; clc; 
+clc; 
 import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
-scenario = "current";
 scenario = "random";
+scenario = "current";
 
 
 dynamic = 0;
@@ -13,9 +13,10 @@ dynamic = 0;
 switch scenario
     case "random"
         % Fresh Scenario+
-        model = "QuadrotorTest";
         model = "HoverCraft";
         model = "HoverCraft_8";
+        model= "Linear1D";
+        model = "QuadrotorTest";
         run(path_model(model));
         
         % Get the vars
@@ -23,15 +24,16 @@ switch scenario
         X0 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
         ts = 1/1e2;
-        runtime = 100;
-
+        runtime = 15;
+        
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
         
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        
+        %ts = ts /10;
+        %runtime = runtime + 20;
         %{
         ADJ = [0 1 0 0 0;
                0 0 1 0 0;
@@ -48,17 +50,24 @@ end
 %% Operating Regime 
 import ConsensusMAS.ImplementationsEnum;
 import ConsensusMAS.ControllersEnum; 
+import ConsensusMAS.WindModelEnum;
 
 % Trigger Type
 trigger_type = ImplementationsEnum.FixedTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTriggerAug;
 trigger_type = ImplementationsEnum.GlobalEventTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
 
 % Controller
 controller_type = ControllersEnum.PolePlacement;
-controller_type = ControllersEnum.Smc;
 controller_type = ControllersEnum.GainScheduled;
+controller_type = ControllersEnum.Smc;
+
+% Wind
+wind_type = WindModelEnum.Sinusoid;
+wind_type = WindModelEnum.Constant;
+wind_type = WindModelEnum.None;
 
 %% Run the simulation
 clc; import ConsensusMAS.*;
@@ -70,7 +79,7 @@ end
 % Wind model
 global wind;
 wind = Wind( ...
-    WindModelEnum.None,  ...    % Which model we using.. ?
+    wind_type,  ...    % Which model we using.. ?
     27.47, 153.02, 1000, ...    % Lat, long, altitude (brisbane)
     0, ts ...                   % Start time and step
 );
@@ -124,7 +133,10 @@ network_map(key) = network;
 %plot(network.virtual_agents.X(1,:))
 %plot(network.virtual_agents.X(3,:))
 
-%network.NetworkCompare(network_map)
+%network.NetworkCompareError(network_map)
+%network.NetworkCompareAgents(network_map, 'plottype', 'reuse')
+
+%network.NetworkCompareAgents(network_map)
 
 %keys = network_map.keys
 %network = network_map('GlobalEventTrigger-Smc')
@@ -132,16 +144,19 @@ network_map(key) = network;
 %network.PlotGraph; 
 %network.PlotInputs;
 network.PlotTriggers;
-%network.PlotStates;
+network.PlotStates;
 
 tops = length(network.TOPS);
 network.TOPS = network.TOPS(max(1, tops-9):end);
 %network.PlotGraph
 
-network.PlotTriggersStates;
+%network.PlotTriggersStates;
+%network.PlotErrors;
+
+
 %network.PlotTriggersInputs;
 %network.Plot3("state1", 1, "state2", 3);
-%network.PlotErrors;
+%
 %network.PlotErrorsNorm("subplots", "none");
 %network.PlotErrorsNorm("subplots", "states");
 %network.Animate("title", "tester", "states", [1, 3]);

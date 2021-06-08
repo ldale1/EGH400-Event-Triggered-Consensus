@@ -43,6 +43,14 @@ classdef Network < ConsensusMAS.RefClass
                             sim_struct, ...
                             x, delta, sp, ts);
                 
+                case ImplementationsEnum.GlobalEventTrigger_Base
+                    gen = @(n, x, delta, sp) ...
+                        AgentGlobalEventTrigger_Base( ... 
+                            n, model_struct, ...
+                            controller, controller_struct, ...
+                            sim_struct, ...
+                            x, delta, sp, ts);        
+                        
                 case ImplementationsEnum.GlobalEventTrigger
                     gen = @(n, x, delta, sp) ...
                         AgentGlobalEventTrigger( ... 
@@ -51,9 +59,9 @@ classdef Network < ConsensusMAS.RefClass
                             sim_struct, ...
                             x, delta, sp, ts);
                         
-                case ImplementationsEnum.GlobalEventTriggerAug
+                case ImplementationsEnum.GlobalEventTrigger_Aug
                     gen = @(n, x, delta, sp) ...
-                        AgentGlobalEventTriggerAug( ... 
+                        AgentGlobalEventTrigger_Aug( ... 
                             n, model_struct, ...
                             controller, controller_struct, ...
                             sim_struct, ...
@@ -150,7 +158,9 @@ classdef Network < ConsensusMAS.RefClass
                 agent.transmissions_rx = [];
                 
                 switch obj.type                        
-                    case ImplementationsEnum.GlobalEventTrigger
+                    case {ImplementationsEnum.GlobalEventTrigger, ...
+                            ImplementationsEnum.GlobalEventTrigger_Base, ...
+                            ImplementationsEnum.GlobalEventTrigger_Aug}
                         agent.L = L;
                         
                     case ImplementationsEnum.LocalEventTrigger
@@ -330,27 +340,134 @@ classdef Network < ConsensusMAS.RefClass
     end
     
     methods(Static)
-       colors = GetColors(ncolors);
+        colors = GetColors(ncolors);
        
-       
-       function NetworkCompare(network_map)
-           figure(), hold on;
-           for key = network_map.keys
-              network = network_map(cell2mat(key));
-              
-              Xs = zeros(network.SIZE, length(network.T));
-              for ii = 1:network.SIZE
-                  Xs(ii,:) = sum(network.agents(ii).ERROR.^2);
-                  Xs(ii,1) = NaN;
-              end
+        function NetworkCompareError(network_map)
+            ind = 1;
+            plots = {};
 
-              % 
-              actual = sum(Xs);
-              plot(network.T, actual/max(actual), "DisplayName", cell2mat(key));
-           end          
+            plots_peak = 0;
+            for key = network_map.keys
+                network = network_map(cell2mat(key));
 
-           legend()
-       end
+                Xs = zeros(network.SIZE, length(network.T));
+                for ii = 1:network.SIZE
+                    Xs(ii,:) = sum(network.agents(ii).ERROR.^2);
+                    Xs(ii,1) = 0;
+                end
+
+                % Sqrt the sum squares
+                actual = sqrt(sum(Xs));
+
+                % Save for normalisation
+                plots(ind) = {[network.T', actual']};
+                ind = ind + 1;
+
+                plots_peak = max(plots_peak, max(actual));
+                %plot(network.T, actual/max(actual), "DisplayName", cell2mat(key));
+            end      
+
+            figure(), hold on;
+            for i = 1:length(plots)
+                store = cell2mat(plots(i));
+                time = store(:,1);
+                vals = store(:,2)/plots_peak;
+                plot(...
+                    time, vals ...
+                );
+            end
+            legend(strrep(network_map.keys,'_',''))
+            %legend(network_map.keys);
+            grid on;
+
+            title("Error Norm Comparison")
+            xlabel("Time (s)")
+            ylabel("Error L2 Norm")
+        end
        
-   end
+       
+        function NetworkCompareAgents(network_map, varargin)
+            %figure(), hold on;
+            %{
+            for key = network_map.keys
+                network = network_map(cell2mat(key));
+
+                Xs = zeros(network.agentstates, length(network.T));
+                for ii = 1:network.agentstates
+                    xs = zeros(network.SIZE, length(network.T));
+
+                    for iii = 1:network.SIZE
+                        xs(iii,:) = network.agents(iii).X(ii,:);
+                    end
+
+                    Xs(ii,:) = std(xs);
+                end
+
+                plot(network.T, Xs);
+            end
+            grid on;
+            %}
+            i = 1;
+            plots = cell(length(network_map), 1);
+            plots_peak = 0;
+            for key = network_map.keys
+                network = network_map(cell2mat(key));
+                Xs = zeros(network.agentstates, length(network.T));
+                for ii = 1:network.agentstates
+                    xs = zeros(network.SIZE, length(network.T));
+                    for iii = 1:network.SIZE
+                        xs(iii,:) = network.agents(iii).X(ii,:);
+                    end
+                    Xs(ii,:) = std(xs);
+                end
+
+                consensus_l2 = sqrt(sum(Xs.^2));
+                
+                plots_peak = max(plots_peak, max(consensus_l2));
+                plots(i) = {[network.T', consensus_l2']};
+                i = i + 1;
+            end
+            
+            
+            plottype = "none";
+            for k = 1:length(varargin)
+                if (strcmp(varargin{k}, "plottype"))
+                    k = k + 1;
+                    plottype = varargin{k};
+                end
+            end
+            
+            switch plottype
+                case "reuse"
+                    plotstyle = "--";
+                    legend_extra = "-Consensus";
+                    gcf; hold on;
+                    
+                otherwise
+                    plotstyle = "-";
+                    legend_extra = "";
+                    figure(), hold on;
+                    
+            end
+             
+            
+            network_map_keys = network_map.keys;
+            for i = 1:length(plots)
+                store = cell2mat(plots(i));
+                time = store(:,1);
+                vals = store(:,2)/plots_peak;
+                legend_name = strrep(cell2mat(network_map_keys(i)) ,'_', '') + legend_extra;
+                plot(...
+                    time, vals , plotstyle, 'DisplayName', legend_name  ...
+                );
+            end
+            
+            %legend(strrep(network_map.keys,'_','') + legend_extra);
+            grid on;
+
+            title("Consensus Norm Comparison")
+            xlabel("Time (s)")
+            ylabel("Consensus L2 Norm")
+        end
+    end
 end

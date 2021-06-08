@@ -29,7 +29,6 @@ classdef Wind < ConsensusMAS.RefClass
             obj.ts = ts; % time step
             
             
-            obj.set_velocities()
         end
         
         function forces = forces(obj, agent)
@@ -64,11 +63,12 @@ classdef Wind < ConsensusMAS.RefClass
                 case WindModelEnum.Constant
                     forces = [1; 1];
                     
+                    
                 case WindModelEnum.Sinusoid
                     forces = [sin(obj.time); cos(obj.time)];
                 
                 otherwise
-                    forces = [0; 0];       
+                    forces = [0; 0];     
             end
             
             forces = agent.Dw * forces;

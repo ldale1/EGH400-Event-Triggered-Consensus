@@ -6,7 +6,6 @@ function PlotErrorsNorm(obj, varargin)
     time = obj.T;
     
     
-    %{
     Xs = zeros(obj.SIZE, length(obj.T));
     for i = 1:obj.agentstates
         
@@ -30,23 +29,11 @@ function PlotErrorsNorm(obj, varargin)
         plot(time, standard, "DisplayName", sprintf("State %d", i));
         
     end
-    %}
-    Xs = zeros(obj.SIZE, length(obj.T));
-    
-        
-    for ii = 1:obj.SIZE
-        Xs(ii,:) = sum(obj.agents(ii).ERROR.^2);
-        Xs(ii,1) = NaN;
-    end
+
     
         % 
     figure()
     actual = sum(Xs);
     plot(time, actual/max(actual), "DisplayName", sprintf("State %d", i));
-
-       
-    
-    
-    
 end
 

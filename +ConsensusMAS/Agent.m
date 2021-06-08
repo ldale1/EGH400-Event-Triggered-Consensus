@@ -34,6 +34,7 @@ classdef Agent < ConsensusMAS.RefClass
         U; % Input vector tracking
         TX; % Trigger vector tracking
         ERROR; % Error vector tracking
+        SLIDE %
         
         sim_struct;
         
@@ -45,6 +46,8 @@ classdef Agent < ConsensusMAS.RefClass
         m = 1; % mass
         
         goal;
+        
+        setinput_ = 0;
     end
     
     properties (Dependent)
@@ -71,6 +74,7 @@ classdef Agent < ConsensusMAS.RefClass
             obj.numstates = ms.numstates;       % number of states
             obj.numinputs = ms.numinputs;       % number of inputs
             
+            
             function reg = smc_regime(A, B)
                 %{
                 get_Tr = @(A, B, Tr, m, n)    
@@ -96,12 +100,13 @@ classdef Agent < ConsensusMAS.RefClass
                 Bz = Tr * B;
                 
                 %Q = eye(4).*[1 1 1 1];
-                Q = 1;
-                R = 1;
+                Q = eye(4).*[1 1 1 1];
+                R = 25;
                 A11 = Az(1:n-m, 1:n-m);
                 A12 = Az(1:n-m, n-m+1:end);
-                C = [lqrd(A11, A12, Q, R, CLK), eye(m)];
-                
+                C = [lqrd(A11, A12, Q, R, CLK), eye(m)];                
+
+                obj.SLIDE = [obj.SLIDE, C*obj.x];
                 [Az, Bz] = c2d(Az, Bz, CLK);
                 
                 reg.Az = Az;
@@ -145,7 +150,11 @@ classdef Agent < ConsensusMAS.RefClass
                     q = 0.5;
                     h = 0.5;
 
-                    get_u = @(R, x) -(R.C*R.Bz)^-1*(R.C*R.Az*(R.Tr*x) + (1-q*h)*R.C*(R.Tr*x) + h*k*sign(R.C*(R.Tr*x)));
+                    get_u = @(R, x) -(R.C*R.Bz)^-1*(...
+                                R.C*R.Az*(R.Tr*x) - ...
+                                (1-CLK)*R.C*(R.Tr*x) + ...
+                                CLK*3*sign(R.C*(R.Tr*x)));
+                    
                     obj.controller = @(x, u, z) get_u(...
                         smc_regime(ms.Af(x, u), ms.Bf(x, u)), ...
                         z);
@@ -188,8 +197,7 @@ classdef Agent < ConsensusMAS.RefClass
         end
         
         function ss = get.ss(obj)
-            % Agent display name
-            ss = obj.sim_struct;;
+            ss = obj.sim_struct;
         end
         
         %{
@@ -310,8 +318,32 @@ classdef Agent < ConsensusMAS.RefClass
             % Consensus goal
             z = obj.ConsensusTarget();
             
-            %remultiplier = length(obj.leaders) + 1;
-            %z(2) = (z(2)* remultiplier + (obj.x(2) - remultiplier*10))/(remultiplier + 1);
+            %virtual_weight = 1;
+            remultiplier = length(obj.leaders) + 1;
+            
+            %z(2) = (z(2)*remultiplier + (obj.xhat(2) - z2_adj) )...
+            %        /(remultiplier + 1);
+                
+            %z(2) = z(2) - 15/26506;%/1.7311;
+            
+            
+            
+            
+            %z2_adj = obj.xhat(2) + 3;
+            %z2_adj = -z(2) - 1;
+            
+            
+            
+            %{
+            if obj.iters > 8*100
+                %z(2) = (z(2)*remultiplier + (-1) )...
+                %        /(remultiplier + 1);
+                %z(2) = z(2) + (obj.x(2) - 1);
+                z(2) = z(2) - 1/2;
+            end
+            %z(2) = z(2) - 1/2;
+            %}
+            
             %z(4) = (z(4)* remultiplier + (obj.x(4) - 0))/(remultiplier + 1);
             
             %wf = obj.wind.forces(obj);
@@ -361,8 +393,8 @@ classdef Agent < ConsensusMAS.RefClass
             obj.x = obj.x + obj.fx(obj.x, obj.u)*obj.CLK;
             
             % exogenous disturbanece
-            %obj.x = obj.x - obj.wind.forces(obj)*obj.CLK;
-        
+            obj.x = obj.x - obj.wind.forces(obj)*obj.CLK;
+            
 
             % Add measurement noise
             %snr = 50;
