@@ -59,8 +59,13 @@ controller_struct.R = R;
 
 
 % sliding
-controller_struct.k = 1.5;
+Qsmc = 1;
+Rsmc = 1;
 
+controller_struct.Qsmc = Qsmc;
+controller_struct.Rsmc = Rsmc;
+controller_struct.k = 5;
+controller_struct.tau = 3;
 
 %% Simulation variables
 

@@ -68,7 +68,7 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             error_threshold = error_threshold * ones(size(obj.x));
             
             
-            error_threshold = max(error_threshold, 0.2);
+            error_threshold = max(error_threshold, 0);%[0.05; 0.1; 0.05; 0.1; 0.1; 0.2]);
             %error_threshold = max(0.5, error_threshold);
             
             

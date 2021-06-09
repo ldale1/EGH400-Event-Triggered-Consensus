@@ -50,7 +50,13 @@ controller_struct.R = R;
 
 
 % SMC
-controller_struct.k = 1;
+Qsmc = 1;
+Rsmc = 1;
+
+controller_struct.Qsmc = Qsmc;
+controller_struct.Rsmc = Rsmc;
+controller_struct.k = 5;
+controller_struct.tau = 3;
 
 
 %% Starting

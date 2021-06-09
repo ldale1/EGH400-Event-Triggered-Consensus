@@ -4,19 +4,19 @@ classdef Network < ConsensusMAS.RefClass
     
     properties
         type;
-        TOPS; % Network topologies vector
-        SIZE; % network size
+        TOPS;           % Network topologies vector
+        SIZE;           % network size
         
-        agents; % network agents
+        agents;         % network agents
         virtual_agents;
         
-        agentstates;
-        agentinputs;
-        agent_generator;
+        agentstates;        % How many states on agents
+        agentinputs;        % How many inputs on agents
+        agent_generator;    % Agent factory
         
-        sim_struct;
+        sim_struct;         % Agent simulation data
         
-        T; % times vector
+        T;  % times vector
         ts; % time steps
         
         wind;
@@ -207,11 +207,6 @@ classdef Network < ConsensusMAS.RefClass
         end
         
         function add_leader(obj, states, numstates, x0)
-            %{
-            Agent(id, states, Af, Bf, controller_enum, cs, ...
-                  numstates, numinputs, x0, delta, setpoint, ...
-                  CLK, wind_states)
-            %}
             import ConsensusMAS.VirtualLeader;
             
             virtual_leader = VirtualLeader(99999, states, NaN,  NaN, NaN,  NaN, ...
@@ -220,7 +215,6 @@ classdef Network < ConsensusMAS.RefClass
             virtual_leader.save(); 
             
             for agent = obj.agents
-                %virtual_leader.addReceiver(agent, 1/(length(obj.agents)));
                 virtual_leader.addReceiver(agent, 1);
             end
              
@@ -303,8 +297,13 @@ classdef Network < ConsensusMAS.RefClass
 
             % Step accordingly
             for agent = obj.agents
+                agent.set_controller();
+            end
+            
+            % Step accordingly
+            for agent = obj.agents
                 agent.step();
-            end 
+            end
 
             % Move agent recieve buffers
             for agent = obj.agents
@@ -447,7 +446,6 @@ classdef Network < ConsensusMAS.RefClass
                     plotstyle = "-";
                     legend_extra = "";
                     figure(), hold on;
-                    
             end
              
             

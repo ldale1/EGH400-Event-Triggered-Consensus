@@ -4,8 +4,8 @@ import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
-scenario = "random";
 scenario = "current";
+scenario = "random";
 
 
 dynamic = 0;
@@ -13,18 +13,21 @@ dynamic = 0;
 switch scenario
     case "random"
         % Fresh Scenario+
-        model = "HoverCraft";
         model = "HoverCraft_8";
-        model= "Linear1D";
+        model= "LinearTest";
+        model = "HoverCraft";
         model = "QuadrotorTest";
-        run(path_model(model));
+        model= "Linear2D";
+        model= "Linear1D";
+        
+        run(path_model(model)); 
         
         % Get the vars
-        SIZE = 5;
+        SIZE = 1;
         X0 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
         ts = 1/1e2;
-        runtime = 15;
+        runtime = 2*pi;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -32,7 +35,8 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        %ts = ts /10;
+        runtime = runtime*3;
+        %ts = ts/10;
         %runtime = runtime + 20;
         %{
         ADJ = [0 1 0 0 0;
@@ -53,11 +57,11 @@ import ConsensusMAS.ControllersEnum;
 import ConsensusMAS.WindModelEnum;
 
 % Trigger Type
-trigger_type = ImplementationsEnum.FixedTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
+trigger_type = ImplementationsEnum.FixedTrigger;
 
 % Controller
 controller_type = ControllersEnum.PolePlacement;
@@ -65,9 +69,10 @@ controller_type = ControllersEnum.GainScheduled;
 controller_type = ControllersEnum.Smc;
 
 % Wind
-wind_type = WindModelEnum.Sinusoid;
 wind_type = WindModelEnum.Constant;
 wind_type = WindModelEnum.None;
+wind_type = WindModelEnum.Sinusoid;
+
 
 %% Run the simulation
 clc; import ConsensusMAS.*;
@@ -125,10 +130,10 @@ else
     network.SimulateDynamic('Fixed', 'time', runtime);
 end
 
-% Save for later
+% Save fo   r later
 network_map(key) = network;
 
-
+    
 %figure, hold on, grid on;
 %plot(network.virtual_agents.X(1,:))
 %plot(network.virtual_agents.X(3,:))
@@ -142,9 +147,9 @@ network_map(key) = network;
 %network = network_map('GlobalEventTrigger-Smc')
 
 %network.PlotGraph; 
-%network.PlotInputs;
-network.PlotTriggers;
-network.PlotStates;
+network.PlotInputs;
+%network.PlotTriggers;
+network.PlotStates('disturbance', 1);
 
 tops = length(network.TOPS);
 network.TOPS = network.TOPS(max(1, tops-9):end);
@@ -160,3 +165,6 @@ network.TOPS = network.TOPS(max(1, tops-9):end);
 %network.PlotErrorsNorm("subplots", "none");
 %network.PlotErrorsNorm("subplots", "states");
 %network.Animate("title", "tester", "states", [1, 3]);
+
+%figure
+%plot(network.T(1:end-1), network.agents(1).SLIDE)

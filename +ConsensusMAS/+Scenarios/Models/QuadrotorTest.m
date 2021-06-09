@@ -48,12 +48,12 @@ sim_struct.wind_states = [2 4];
 clear controller_struct
 
 % Q_6 is important
-Q = eye(model_struct.numstates) .* [1; 15; 1; 15; 1; 10];
+Q = 100*eye(model_struct.numstates) .* [15; 15; 15; 15; 1; 1];
 
 
 % Lower R causes theta to adjust faster, as inputs aren't penalised
 %         this also means more events are triggered!
-R = 25;
+R = 1;
 
 % pole place
 controller_struct.x_op = [0 0 0 0 pi/4 0];
@@ -62,7 +62,13 @@ controller_struct.Q = Q;
 controller_struct.R = R;
 
 % sliding
-controller_struct.k = 1.5;
+Qsmc = eye(4).*[8; 1; 1; 1];
+Rsmc = 1;
+
+controller_struct.Qsmc = Qsmc;
+controller_struct.Rsmc = Rsmc;
+controller_struct.k = 250;
+controller_struct.tau = 5;
 
 %{
 %controller_struct.n = numstates;
@@ -81,6 +87,8 @@ controller_struct.target_u = @(target) [0; 0; 0];
 
 % Interagent delta, and also setpoint
 ref = @(id) zeros(model_struct.numstates, 1);
+set = @(id) [zeros(model_struct.numstates-1, 1); 0];
+set = @(id) [0; 0; 0; 0; 0; 0];
 set = @(id) [NaN*zeros(model_struct.numstates-1, 1); 0];
 
 % Random generator
@@ -96,10 +104,10 @@ scale_theta = pi/8;
 scale_theta_dot = .1;
 %}
 
-scale_p = 100;
-scale_p_dot = 5;
+scale_p = 10;
+scale_p_dot = 0;
 scale_theta = pi/4;
-scale_theta_dot = 0.5;
+scale_theta_dot = 0;
 
 global x_generator;
 
@@ -109,7 +117,7 @@ if ~dynamic
         scale_p_dot*(rand()-1/2); 
         scale_p*(rand()-1/2); 
         scale_p_dot*(rand()-1/2); 
-        scale_theta*(1+(rand()-0.5)/10);
+        scale_theta*(1+(rand()-0.5)/2);
         scale_theta_dot*(rand()-1/2)];
 else
     x_generator = @() [ ...
