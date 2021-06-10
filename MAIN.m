@@ -4,9 +4,9 @@ import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
-scenario = "current";
+scenario = "smc_ex";
 scenario = "random";
-
+scenario = "current";
 
 dynamic = 0;
 
@@ -23,11 +23,17 @@ switch scenario
         run(path_model(model)); 
         
         % Get the vars
-        SIZE = 1;
+        SIZE = 4;
         X0 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
-        ts = 1/1e2;
-        runtime = 2*pi;
+        
+        ADJ = [0 1 1 1;
+               1 0 1 1;
+               1 1 0 1;
+               0 0 0 0];
+           
+        ts = 1/1e3;
+        runtime = 6*pi;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -35,7 +41,7 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        runtime = runtime*3;
+        %runtime = runtime*10;
         %ts = ts/10;
         %runtime = runtime + 20;
         %{
@@ -59,9 +65,9 @@ import ConsensusMAS.WindModelEnum;
 % Trigger Type
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
-trigger_type = ImplementationsEnum.GlobalEventTrigger;
 trigger_type = ImplementationsEnum.FixedTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
+trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
 
 % Controller
 controller_type = ControllersEnum.PolePlacement;
@@ -147,19 +153,19 @@ network_map(key) = network;
 %network = network_map('GlobalEventTrigger-Smc')
 
 %network.PlotGraph; 
-network.PlotInputs;
+%network.PlotInputs;
 %network.PlotTriggers;
-network.PlotStates('disturbance', 1);
+%network.PlotStates('disturbance', 1);
 
 tops = length(network.TOPS);
 network.TOPS = network.TOPS(max(1, tops-9):end);
 %network.PlotGraph
 
-%network.PlotTriggersStates;
-%network.PlotErrors;
+network.PlotTriggersStates;
+network.PlotErrors;
 
 
-%network.PlotTriggersInputs;
+network.PlotTriggersInputs;
 %network.Plot3("state1", 1, "state2", 3);
 %
 %network.PlotErrorsNorm("subplots", "none");
@@ -168,3 +174,6 @@ network.TOPS = network.TOPS(max(1, tops-9):end);
 
 %figure
 %plot(network.T(1:end-1), network.agents(1).SLIDE)
+
+
+

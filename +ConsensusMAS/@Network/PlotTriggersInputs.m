@@ -38,5 +38,6 @@ function PlotTriggersInputs(obj)
         
         ylabel('Value');
         xlabel('Time (s)');
+        grid on;
     end  
 end

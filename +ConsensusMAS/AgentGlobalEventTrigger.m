@@ -34,26 +34,8 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             % Quantise
             error = floor(abs(error)*1000)/1000;
         end
+
         
-        %{
-        function step(obj)      
-            step@ConsensusMAS.Agent(obj);
-            
-            % Project forwards, without input
-            [G, H] = c2d(obj.ms.Af(obj.xhat, obj.u), obj.ms.Bf(obj.xhat, obj.u), obj.CLK);
-            obj.xhat = G*obj.xhat + H*obj.u;
-            %obj.xhat = obj.xhat + obj.ms.Af(obj.xhat, obj.u)*obj.xhat*obj.CLK;
-            
-            % Estimate other agents
-            for i = 1:length(obj.transmissions_rx)
-                leader = obj.transmissions_rx(i).agent;
-                transmission = obj.transmissions_rx(i).xhat;
-                [Gl, Hl] = c2d(leader.ms.Af(transmission, leader.u), leader.ms.Bf(transmission, leader.u), leader.CLK);
-                obj.transmissions_rx(i).xhat = ...
-                    Gl*transmission + Hl*leader.u;
-            end
-        end
-        %}
         
         function step(obj)      
             step@ConsensusMAS.Agent(obj);

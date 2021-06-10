@@ -35,8 +35,28 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             error = floor(abs(error)*1000)/1000;
         end
         
+        %{
         function step(obj)      
             step@ConsensusMAS.Agent(obj);
+            
+            % Project forwards, without input
+            obj.xhat = obj.xhat + obj.fx(obj.xhat, zeros(obj.numinputs, 1))*obj.CLK;
+            
+            % Estimate other agents
+            for i = 1:length(obj.transmissions_rx)
+                leader = obj.transmissions_rx(i).agent;
+                transmission = obj.transmissions_rx(i).xhat;
+                obj.transmissions_rx(i).xhat = ...
+                    transmission + ...
+                    leader.fx(transmission, zeros(leader.numinputs, 1))*leader.CLK;
+            end
+        end
+        %}
+        
+        function step(obj)      
+            step@ConsensusMAS.Agent(obj);
+            
+            
             
             % Project forwards, without input
             obj.xhat = obj.xhat + obj.fx(obj.xhat, zeros(obj.numinputs, 1))*obj.CLK;
@@ -68,7 +88,7 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             error_threshold = error_threshold * ones(size(obj.x));
             
             
-            error_threshold = max(error_threshold, 0);%[0.05; 0.1; 0.05; 0.1; 0.1; 0.2]);
+            error_threshold = max(error_threshold, [0.005; 0.03]);%[0.05; 0.1; 0.05; 0.1; 0.1; 0.2]);
             %error_threshold = max(0.5, error_threshold);
             
             

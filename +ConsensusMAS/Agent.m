@@ -80,7 +80,7 @@ classdef Agent < ConsensusMAS.RefClass
                 [Tr, ~] = qr(B);
                 Tr = Tr';
                 Tr = [Tr(m+1:n,:);Tr(1:m,:)];
-
+                Tr = eye(2);
                 % Transform
                 Az = Tr * A * (Tr');
                 Bz = Tr * B;
@@ -280,12 +280,34 @@ classdef Agent < ConsensusMAS.RefClass
         
         function z = ConsensusTarget(obj)
             z = zeros(obj.numstates, 1);
+            
+            if obj.iters > 10*100 && obj.id == 1
+                %obj.transmissions_rx.xhat(2)*1e3
+                a = 1;
+            end
+            
             for transmission = obj.transmissions_rx                
                 % Consensus summation
+                %{
                 z = z + transmission.weight*(...
                     (obj.xhat - transmission.xhat) + ... % Difference of states
                     (obj.delta - transmission.agent.delta) ... % Relative Offset
                 );
+                %}
+            
+                z = z + transmission.weight*(...
+                    (obj.x - transmission.xhat) + ... % Difference of states
+                    (obj.delta - transmission.agent.delta) ... % Relative Offset
+                );
+            end
+            
+            % setpoint
+            sp_nans = isnan(obj.setpoint);
+            z = z .* sp_nans;
+            z(~sp_nans) = obj.x(~sp_nans) - obj.setpoint(~sp_nans);
+            
+            if obj.iters > 1600
+                z;
             end
         end
         
@@ -333,10 +355,7 @@ classdef Agent < ConsensusMAS.RefClass
                 z(6) = obj.x(6);
                 %}
 
-                % setpoint
-                sp_nans = isnan(obj.setpoint);
-                z = z .* sp_nans;
-                z(~sp_nans) = obj.x(~sp_nans) - obj.setpoint(~sp_nans);
+                
                 
                 %{
                 z = z * (remultiplier/(remultiplier + 1));
@@ -380,8 +399,12 @@ classdef Agent < ConsensusMAS.RefClass
             
             % exogenous disturbanece
             obj.d = obj.wind.forces(obj);
-            obj.x = obj.x - obj.d*obj.CLK;
             
+            if ~(obj.id == 4)
+                obj.x = obj.x - obj.d*obj.CLK;
+            end
+            
+           
 
             % Add measurement noise
             %snr = 50;

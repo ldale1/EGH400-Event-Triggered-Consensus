@@ -65,7 +65,7 @@ classdef Wind < ConsensusMAS.RefClass
                     
                     
                 case WindModelEnum.Sinusoid
-                    forces = [2*sin(obj.time); 0*cos(obj.time)];
+                    forces = [agent.id/2*sin(obj.time); 0*cos(obj.time)];
                 
                 otherwise
                     forces = [0; 0];     
@@ -86,8 +86,9 @@ classdef Wind < ConsensusMAS.RefClass
         
         function step(obj)
             obj.time = obj.time + obj.ts;
-            
-            obj.set_velocities()
+            if (obj.model_enum == ConsensusMAS.WindModelEnum.Basic)
+                obj.set_velocities();
+            end
         end
     end
     

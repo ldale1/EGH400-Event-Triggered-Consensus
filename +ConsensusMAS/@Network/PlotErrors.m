@@ -25,6 +25,7 @@ function PlotErrors(obj)
             % Label axes
             xlabel('Time (s)')
             ylabel(agent.name + ' Error');
+            grid on;
         end
     end
 end

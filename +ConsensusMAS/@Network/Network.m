@@ -20,6 +20,8 @@ classdef Network < ConsensusMAS.RefClass
         ts; % time steps
         
         wind;
+        
+        controller;
     end
     properties (Dependent)
         ADJ; % adjacency matrix
@@ -106,6 +108,8 @@ classdef Network < ConsensusMAS.RefClass
             obj.ts = ts;
             obj.agentstates = model_struct.numstates;
             obj.agentinputs = model_struct.numinputs;
+            
+            obj.controller = controller;
             
             obj.sim_struct = sim_struct;
             
@@ -325,6 +329,7 @@ classdef Network < ConsensusMAS.RefClass
         % Basic Figures
         PlotInputs(obj, varargin);
         PlotStates(obj, varargin);
+        PlotCompact(obj, varargin);
         PlotTriggers(obj, varargin);
         
         % Complex Subplot Figures
