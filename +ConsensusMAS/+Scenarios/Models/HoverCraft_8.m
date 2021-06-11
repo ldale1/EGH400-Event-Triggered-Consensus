@@ -64,8 +64,8 @@ Rsmc = 1;
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 5;
-controller_struct.tau = 3;
+controller_struct.k = 1;
+controller_struct.tau = 1;
 
 %% Simulation variables
 

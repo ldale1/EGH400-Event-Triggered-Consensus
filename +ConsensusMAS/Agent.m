@@ -40,6 +40,7 @@ classdef Agent < ConsensusMAS.RefClass
         
         
         band = 0;
+        sliding_gain = 1;
         SLIDE;
         
         d;
@@ -62,7 +63,7 @@ classdef Agent < ConsensusMAS.RefClass
         ss;         % sim_struct shortcut
         ms;         % model_struct shortcut
         cs;
-        u_rolling;  % Rolling mean u
+        u_eq;       % Rolling mean u
     end
     
     methods
@@ -102,11 +103,7 @@ classdef Agent < ConsensusMAS.RefClass
                 C = [lqrd(A11, A12, Q, R, CLK), eye(m)];
                 
                 obj.SLIDE = [obj.SLIDE, C*(obj.ConsensusTarget)];
-                
-                if obj.iters > 19.5*1000
-                    a = 1;
-                end
-                
+ 
                 % Make them discrete
                 [Az, Bz] = c2d(A, B, CLK);
                                 
@@ -114,6 +111,9 @@ classdef Agent < ConsensusMAS.RefClass
                 reg.Az = Az;
                 reg.Bz = Bz;
                 reg.C = C*Tr;
+                
+                inv = (C*Tr*Bz)^-1/obj.CLK;
+                obj.sliding_gain = abs(sum(inv(1,:)));
             end
             
             switch (controller_enum)                
@@ -200,10 +200,31 @@ classdef Agent < ConsensusMAS.RefClass
             cs = obj.controller_struct;
         end
         
-        function u = get.u_rolling(obj)
+        
+        function sld = sliding(obj, varargin)
+            tolerance = 1;
+            if nargin == 2
+                tolerance = varargin{1};
+            end
+            sld = all(abs(obj.s) < obj.band*tolerance);
+        end
+        
+        function u = get.u_eq(obj)
             backtrack = 10 * 1/(100*obj.CLK) + 1;
-            u_ind = max(length(obj.U)-backtrack, 1);
-            u = mean(obj.U(:,u_ind:end), 2);
+            u = obj.U(:,max(length(obj.U)-backtrack, 1):end);
+            
+            for i = 1:obj.numinputs
+                low = mean(u(u < 0));
+                high = mean(u(u > 0));
+                
+                if ~isnan(low) && ~isnan(high)
+                    u(i) = (low + high)/2;
+                elseif isnan(high)
+                    u(i) = low;
+                else% isnan(low)
+                    u(i) = high;
+                end
+            end
         end
         
         function error = get.error(obj) 
@@ -282,15 +303,11 @@ classdef Agent < ConsensusMAS.RefClass
         function sample(obj)
             % Set the broadcas
             if (obj.controller_enum == ConsensusMAS.ControllersEnum.Smc) ...
-                    && (all(abs(obj.s) < obj.band)) 
+                    && (obj.sliding(1.05))
                 samples = size(obj.X, 2);
                 if samples > 1
                     avgd = any(obj.ms.Bf(obj.x, obj.u), 2);
-                    
-                    
                     x_avg = mean(obj.X(:,samples-1:samples), 2);
-                    
-                    
                     obj.xhat = x_avg .* obj.tx .* avgd + obj.x .* ~avgd + obj.xhat .* ~obj.tx;
                 else
                     obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
@@ -385,8 +402,8 @@ classdef Agent < ConsensusMAS.RefClass
                 z = obj.ConsensusTarget();
                 
                 % SMC control input jitter, need a better representation
-                if (obj.controller_enum == ControllersEnum.Smc)
-                    u_in = obj.u_rolling;
+                if (obj.controller_enum == ControllersEnum.Smc) && (obj.sliding)
+                    u_in = obj.u_eq;
                 else
                     u_in = obj.u;
                 end

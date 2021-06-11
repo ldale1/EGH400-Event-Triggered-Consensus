@@ -22,6 +22,11 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             obj.k = 0;
             
             obj.trigger_states = model_struct.trigger_states;
+            
+            % Checks
+            if (obj.controller_enum ~= ConsensusMAS.ControllersEnum.Smc)
+                warn("Should only be used with SMC");
+            end
         end
         
         function set.L(obj, L)
@@ -87,17 +92,17 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             error_threshold = obj.k * norm(abs(z(obj.trigger_states)));
             error_threshold = error_threshold * ones(size(obj.x));
             
+            if (obj.sliding(1.1))
+                A = obj.ms.Af(obj.x, obj.u_eq);
+                B = obj.ms.Bf(obj.x, obj.u_eq);
+            else
+                A = obj.ms.Af(obj.x, obj.u);
+                B = obj.ms.Bf(obj.x, obj.u);
+            end
             
-            A = obj.ms.Af(obj.x, obj.u_rolling);
-            B = obj.ms.Bf(obj.x, obj.u_rolling);
             [~, H] = c2d(A, B, obj.CLK);
-            %mins = (abs(sum(H,2)) * 1.5) * obj.cs.k;
-            mins = (abs(sum(H,2)) + sum(abs(H),2) * 0.033 ) * obj.cs.k * 0.8;
+            mins = (abs(sum(H,2)) + sum(abs(H),2) * 0.1 ) * obj.cs.k * obj.sliding_gain;
             error_threshold = max(error_threshold, mins);
-            
-            %error_threshold = max(0.5, error_threshold);
-            
-            
         end
      
         function triggers = triggers(obj)

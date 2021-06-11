@@ -29,8 +29,8 @@ switch scenario
         
         %ADJ = [0 1 1 1; 1 0 1 1; 1 1 0 1; 0 0 0 0];
            
-        ts = 1/1e4;
-        runtime = 15;
+        ts = 1/1e3;
+        runtime = 30;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -163,7 +163,11 @@ network.PlotInputs;
 network.PlotTriggers;
 %network.PlotTriggersStates;
 network.PlotStates('disturbance', 0);
-network.PlotErrors;
+
+
+%network.PlotErrors;
+
+
 
 %network.PlotTriggersInputs; 
 %network.Plot3("state1", 1, "state2", 3);
