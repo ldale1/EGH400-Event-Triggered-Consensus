@@ -20,12 +20,14 @@ function PlotStates(obj,varargin)
         for agent = obj.agents
             if strcmp(plottype, "plot")
                 plot(time, agent.X(i,:), 'DisplayName', sprintf("%s", agent.name))
-                if any(agent.D(i,:))
+                
+                if any(agent.D(i,:)) && w_disturbance
                     plot(time, agent.D(i,:), '--', 'DisplayName', sprintf("%s disturbance", agent.name))
                 end
             elseif strcmp(plottype, "stairs")
-                stairs(time,  agent.X(i,:), 'DisplayName', agent.name)
-                if any(agent.D(i,:), 'DisplayName', sprintf("%s", agent.name))
+                stairs(time,  agent.X(i,:), 'DisplayName', sprintf("%s", agent.name))
+                
+                if any(agent.D(i,:)) && w_disturbance
                     stairs(time, agent.D(i,:), '--', 'DisplayName', sprintf("%s disturbance", agent.name))
                 end
             else

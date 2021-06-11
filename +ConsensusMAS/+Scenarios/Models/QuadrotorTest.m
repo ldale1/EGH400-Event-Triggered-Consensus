@@ -62,13 +62,13 @@ controller_struct.Q = Q;
 controller_struct.R = R;
 
 % sliding
-Qsmc = eye(4).*[8; 1; 1; 1];
+Qsmc = 1; %eye(4).*[8; 1; 1; 1];
 Rsmc = 1;
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 250;
-controller_struct.tau = 5;
+controller_struct.k = 3;
+controller_struct.tau = 1;
 
 %{
 %controller_struct.n = numstates;

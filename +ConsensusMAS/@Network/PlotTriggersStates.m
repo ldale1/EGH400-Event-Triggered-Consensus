@@ -7,10 +7,15 @@ function PlotTriggersStates(obj, varargin)
     colors = GetColors(obj.SIZE);
     
     plottype = "plot";
+    w_disturbance = 0;
     for k = 1:length(varargin)
         if (strcmp(varargin{k},"plottype"))
             k = k + 1;
             plottype = varargin{k};
+        end
+        if (strcmp(varargin{k}, "disturbance"))
+            k = k + 1;
+            w_disturbance = varargin{k};
         end
     end
     
@@ -21,9 +26,23 @@ function PlotTriggersStates(obj, varargin)
             % states
             states = agent.X(i,:);
             
+            plotstyle = '-';
+            lw = 1;
+            legend_add = "";
+            if agent.id == 1
+                plotstyle = "-";
+                lw = 1.5;
+                legend_add = " (virtual)";
+            end
+            
+            
             if strcmp(plottype, "plot")
-                plot(time, states, ...
-                    'DisplayName', agent.name, ...
+                if any(agent.D(i,:)) && w_disturbance && agent.id == 1
+                    plot(time, agent.D(i,:), '--', 'DisplayName', "MAS disturbance")
+                end
+                
+                plot(time, states, plotstyle, ...
+                    'DisplayName', agent.name + legend_add, ...
                     'Color', colors(agent.id, :))
             elseif strcmp(plottype, "stairs")
                 stairs(time, states, ...
@@ -39,7 +58,7 @@ function PlotTriggersStates(obj, varargin)
             tx_vals = states(logical(triggers));
             tx_time = time(logical(triggers));
             plot(tx_time, tx_vals, '*', ...
-                'Markersize', 2, ...
+                'Markersize', 3, ...
                 'HandleVisibility', 'off', ...
                 'Color', colors(agent.id, :))
         end

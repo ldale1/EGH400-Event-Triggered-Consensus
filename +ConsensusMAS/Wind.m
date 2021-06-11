@@ -39,7 +39,7 @@ classdef Wind < ConsensusMAS.RefClass
             switch (obj.model_enum)
                 case WindModelEnum.Basic
                     Cd = agent.Cd;
-                    S  = agent.S;
+                    S  = agent.sa;
                     states_vz = agent.x(agent.wind_states);
                     
                     % Do we have the right states
@@ -65,7 +65,7 @@ classdef Wind < ConsensusMAS.RefClass
                     
                     
                 case WindModelEnum.Sinusoid
-                    forces = [agent.id/2*sin(obj.time); 0*cos(obj.time)];
+                    forces = [0.5*sin(obj.time); 0*cos(obj.time)];
                 
                 otherwise
                     forces = [0; 0];     

@@ -63,17 +63,11 @@ trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
 trigger_type = ImplementationsEnum.GlobalEventTrigger;
 trigger_type = ImplementationsEnum.FixedTrigger;
 
-% Controller
-controller_type = ControllersEnum.PolePlacement;
-controller_type = ControllersEnum.Smc;
-controller_type = ControllersEnum.GainScheduled;
-
 % Wind
 wind_type = WindModelEnum.Constant;
+
 wind_type = WindModelEnum.Sinusoid;
 wind_type = WindModelEnum.None;
-
-
 
 
 
@@ -140,9 +134,9 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
                 'LineWidth', 2, 'DisplayName', 'State Trajectories'); 
             legend('AutoUpdate','off')
 
-            plot(2.7, -2.7, 'o', ...
+            plot(2.0, -2.0, 'o', ...
                 'MarkerSize', 16, 'LineWidth', 2)
-            text(2.5, -2.75, 'Sliding', ...
+            text(1.8, -2.05, 'Sliding', ...
                 'HorizontalAlignment', 'right', 'VerticalAlignment', 'Top')
 
             plot(4.97, -2.75, 'o', ...
@@ -157,6 +151,13 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
             ax = gca;
             ax.XAxisLocation = 'origin';
             ax.YAxisLocation = 'origin';
+            
+            figure()
+            plot(network.T(1:end-1), network.agents(1).SLIDE)
+            grid on
+            xlabel('Time (s)')
+            ylabel('Value')
+            title('Sliding Variable')
 
         otherwise
             % Custom plot
@@ -179,10 +180,6 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
             ylabel('x_2','fontweight','bold')
             ax = gca;
             ax.XAxisLocation = 'origin';
-            ax.YAxisLocation = 'origin';
-            
+            ax.YAxisLocation = 'origin';  
     end
-
-
-
 end

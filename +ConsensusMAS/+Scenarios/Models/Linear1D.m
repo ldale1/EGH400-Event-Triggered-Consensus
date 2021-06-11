@@ -39,13 +39,13 @@ controller_struct.Q = Q;        % LQR
 controller_struct.R = R;
 
 % SMC
-Qsmc = 2;
+Qsmc = 1;
 Rsmc = 1;
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 2;
-controller_struct.tau = 4;
+controller_struct.k = 1;
+controller_struct.tau = 1;
 
 
 %% Starting
@@ -53,21 +53,15 @@ controller_struct.tau = 4;
 % Interagent delta, and also setpoint
 ref = @(id) zeros(model_struct.numstates, 1);
 set = @(id) NaN*zeros(model_struct.numstates, 1);
+%set = @(id) zeros(model_struct.numstates, 1);
 
 % Random generator
 scale_x1 = 10;
-scale_x2 = 10;
+scale_x2 = 20;
 x_generator = @() [ ...
     scale_x1*(rand()-1/2); 
-    scale_x2*(rand()-1/2)];
+    2+scale_x2*(rand()-1/2)];
 X_generator = @(num_agents) cell2mat(arrayfun(@(x) {x_generator()}, 1:num_agents));
-
-
-
-
-
-
-
 
 
 

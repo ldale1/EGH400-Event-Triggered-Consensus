@@ -4,9 +4,8 @@ import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
-scenario = "smc_ex";
-scenario = "random";
 scenario = "current";
+scenario = "random";
 
 dynamic = 0;
 
@@ -16,24 +15,22 @@ switch scenario
         model = "HoverCraft_8";
         model= "LinearTest";
         model = "HoverCraft";
-        model = "QuadrotorTest";
         model= "Linear2D";
         model= "Linear1D";
+        model= "NonlinearTest";
+        model = "QuadrotorTest";
         
         run(path_model(model)); 
         
         % Get the vars
-        SIZE = 4;
+        SIZE = 5;
         X0 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
         
-        ADJ = [0 1 1 1;
-               1 0 1 1;
-               1 1 0 1;
-               0 0 0 0];
+        %ADJ = [0 1 1 1; 1 0 1 1; 1 1 0 1; 0 0 0 0];
            
-        ts = 1/1e3;
-        runtime = 6*pi;
+        ts = 1/1e4;
+        runtime = 15;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -41,8 +38,9 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        %runtime = runtime*10;
-        %ts = ts/10;
+        
+        runtime = runtime*4;
+        ts = ts;
         %runtime = runtime + 20;
         %{
         ADJ = [0 1 0 0 0;
@@ -65,8 +63,8 @@ import ConsensusMAS.WindModelEnum;
 % Trigger Type
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
-trigger_type = ImplementationsEnum.FixedTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger;
+trigger_type = ImplementationsEnum.FixedTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
 
 % Controller
@@ -76,8 +74,8 @@ controller_type = ControllersEnum.Smc;
 
 % Wind
 wind_type = WindModelEnum.Constant;
-wind_type = WindModelEnum.None;
 wind_type = WindModelEnum.Sinusoid;
+wind_type = WindModelEnum.None;
 
 
 %% Run the simulation
@@ -90,7 +88,7 @@ end
 % Wind model
 global wind;
 wind = Wind( ...
-    wind_type,  ...    % Which model we using.. ?
+    wind_type,  ...             % Which model we using.. ?
     27.47, 153.02, 1000, ...    % Lat, long, altitude (brisbane)
     0, ts ...                   % Start time and step
 );
@@ -136,7 +134,7 @@ else
     network.SimulateDynamic('Fixed', 'time', runtime);
 end
 
-% Save fo   r later
+% Save fo later
 network_map(key) = network;
 
     
@@ -153,19 +151,21 @@ network_map(key) = network;
 %network = network_map('GlobalEventTrigger-Smc')
 
 %network.PlotGraph; 
-%network.PlotInputs;
-%network.PlotTriggers;
-%network.PlotStates('disturbance', 1);
+%
+%
+%network.PlotStates('disturbance', 0);
 
-tops = length(network.TOPS);
-network.TOPS = network.TOPS(max(1, tops-9):end);
+%tops = length(network.TOPS);
+%network.TOPS = network.TOPS(max(1, tops-9):end);
 %network.PlotGraph
 
-network.PlotTriggersStates;
+network.PlotInputs;
+network.PlotTriggers;
+%network.PlotTriggersStates;
+network.PlotStates('disturbance', 0);
 network.PlotErrors;
 
-
-network.PlotTriggersInputs;
+%network.PlotTriggersInputs; 
 %network.Plot3("state1", 1, "state2", 3);
 %
 %network.PlotErrorsNorm("subplots", "none");
@@ -175,5 +175,9 @@ network.PlotTriggersInputs;
 %figure
 %plot(network.T(1:end-1), network.agents(1).SLIDE)
 
+band = ts*controller_struct.k/(1-ts*controller_struct.tau);
+band * 1e3
 
-
+figure
+plot(network.T(1:end-1), network.agents(1).SLIDE)
+grid on;
