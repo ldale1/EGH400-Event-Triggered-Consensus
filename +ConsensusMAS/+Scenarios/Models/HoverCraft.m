@@ -67,13 +67,13 @@ controller_struct.Q = Q;
 controller_struct.R = R;
 
 % sliding
-Qsmc = 10;
+Qsmc = 1;
 Rsmc = 1;
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 5;
-controller_struct.tau = 3;
+controller_struct.k = 15;
+controller_struct.tau = 1;
 %{
 %controller_struct.n = numstates;
 %controller_struct.m = numinputs;
@@ -90,7 +90,7 @@ controller_struct.target_u = @(target) [0; 0; 0];
 % Interagent delta, and also setpoint
 ref = @(id) zeros(size(model_struct.numstates, 1), 1);
 set = @(id) [0; 0; 0; 0; 0; NaN];
-set = @(id) NaN * zeros(size(model_struct.numstates, 1), 1);
+set = @(id) [NaN*zeros(model_struct.numstates-1, 1); 0];
 
 %{
 scale_p = 100;
@@ -99,9 +99,9 @@ scale_theta = pi/4;
 scale_theta_dot = 0.5;
 %}
 
-scale_p = 20;
+scale_p = 8;
 scale_p_dot = 5;
-scale_theta = pi;
+scale_theta = pi/4;
 scale_theta_dot = 0.5;
 
 global x_generator;
@@ -112,7 +112,7 @@ if ~dynamic
         scale_p_dot*(rand()-1/2); 
         scale_p*(rand()-1/2); 
         scale_p_dot*(rand()-1/2); 
-        scale_theta*(rand()-1/2);
+        scale_theta * ((rand()-0.5)/3+1) * sign(rand()-1/2);
         scale_theta_dot*(rand()-1/2)];
 else
     x_generator = @() [ ...

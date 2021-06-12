@@ -34,7 +34,7 @@ switch scenario
         
         
         ts = 1/1e2;
-        runtime = 10;
+        runtime = 20;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -68,8 +68,8 @@ import ConsensusMAS.WindModelEnum;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
 trigger_type = ImplementationsEnum.FixedTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
 
 % Controller
 controller_type = ControllersEnum.PolePlacement;
@@ -156,14 +156,14 @@ network_map(key) = network;
 %network.PlotGraph; 
 %network.PlotInputs;
 %network.PlotTriggers;
-%network.PlotStates('disturbance', 0);
+%network.PlotStates('disturbance', 1);
 
 %tops = length(network.TOPS);
 %network.TOPS = network.TOPS(max(1, tops-9):end);
 %network.PlotGraph
 
 network.PlotTriggersStates('disturbance', 1);
-%network.PlotErrors;
+network.PlotErrors;
 
 
 %network.PlotTriggersInputs;
@@ -177,4 +177,6 @@ network.PlotTriggersStates('disturbance', 1);
 %plot(network.T(1:end-1), network.agents(1).SLIDE)
 
 
-
+figure
+plot(network.T(1:end-1), network.agents(2).SLIDE)
+grid on;

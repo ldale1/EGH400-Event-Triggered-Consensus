@@ -4,10 +4,9 @@ import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
-scenario = "quadplot";
-scenario = "current";
 scenario = "random";
-scenario = "quad_gog";
+scenario = "current";
+scenario = "quadplot";
 
 dynamic = 0;
 
@@ -19,8 +18,8 @@ switch scenario
         model= "Linear2D";
         model= "Linear1D";
         model= "NonlinearTest";
-        model = "HoverCraft";
         model = "QuadrotorTest";
+        model = "HoverCraft";
         
         run(path_model(model)); 
         
@@ -40,7 +39,7 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        ts = 1/1e3;
+        %ts = 1/1e2;
         %runtime = 10;
         %ts = ts;
         %runtime = runtime + 20;

@@ -28,7 +28,7 @@ classdef Wind < ConsensusMAS.RefClass
             obj.time = time; % sim time
             obj.ts = ts; % time step
             
-            
+            obj.set_velocities();
         end
         
         function forces = forces(obj, agent)
@@ -40,7 +40,7 @@ classdef Wind < ConsensusMAS.RefClass
                 case WindModelEnum.Basic
                     Cd = agent.Cd;
                     S  = agent.sa;
-                    states_vz = agent.x(agent.wind_states);
+                    states_vz = agent.x(agent.ss.wind_states);
                     
                     % Do we have the right states
                     switch (length(states_vz))
@@ -65,7 +65,7 @@ classdef Wind < ConsensusMAS.RefClass
                     
                     
                 case WindModelEnum.Sinusoid
-                    forces = [0.5*sin(obj.time); 0*cos(obj.time)];
+                    forces = [0.5*sin(obj.time/2); 0.5*cos(obj.time)];
                 
                 otherwise
                     forces = [0; 0];     

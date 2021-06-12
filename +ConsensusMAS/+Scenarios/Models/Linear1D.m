@@ -45,7 +45,7 @@ Rsmc = 1;
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
 controller_struct.k = 1;
-controller_struct.tau = 1;
+controller_struct.tau = 99;
 
 
 %% Starting
@@ -53,7 +53,7 @@ controller_struct.tau = 1;
 % Interagent delta, and also setpoint
 ref = @(id) zeros(model_struct.numstates, 1);
 set = @(id) NaN*zeros(model_struct.numstates, 1);
-%set = @(id) zeros(model_struct.numstates, 1);
+set = @(id) zeros(model_struct.numstates, 1);
 
 % Random generator
 scale_x1 = 10;

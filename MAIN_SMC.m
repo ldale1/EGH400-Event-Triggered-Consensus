@@ -35,7 +35,7 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        runtime = runtime*2;
+        runtime = runtime;
         %ts = ts/10;
         %runtime = runtime + 20;
         %{

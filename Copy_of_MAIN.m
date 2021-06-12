@@ -4,10 +4,8 @@ import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
-scenario = "quadplot";
-scenario = "current";
 scenario = "random";
-scenario = "quad_gog";
+scenario = "current";
 
 dynamic = 0;
 
@@ -19,8 +17,8 @@ switch scenario
         model= "Linear2D";
         model= "Linear1D";
         model= "NonlinearTest";
-        model = "HoverCraft";
         model = "QuadrotorTest";
+        model = "HoverCraft";
         
         run(path_model(model)); 
         
@@ -35,14 +33,14 @@ switch scenario
         runtime = 15  * 1;
         
         % Save for later
-        scenario_save("current", model, X0, ADJ, ts, runtime);
+        scenario_save("hover_ex", model, X0, ADJ, ts, runtime);
         
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        ts = 1/1e3;
-        %runtime = 10;
-        %ts = ts;
+        
+        runtime = 10;
+        ts = ts;
         %runtime = runtime + 20;
         %{
         ADJ = [0 1 0 0 0;
@@ -76,9 +74,9 @@ controller_type = ControllersEnum.Smc;
 
 % Wind
 wind_type = WindModelEnum.Constant;
+wind_type = WindModelEnum.None;
 wind_type = WindModelEnum.Sinusoid;
 wind_type = WindModelEnum.Basic;
-wind_type = WindModelEnum.None;
 
 %% Run the simulation
 clc; import ConsensusMAS.*;

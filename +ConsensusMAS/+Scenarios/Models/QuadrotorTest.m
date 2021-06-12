@@ -48,7 +48,7 @@ sim_struct.wind_states = [2 4];
 clear controller_struct
 
 % Q_6 is important
-Q = 100*eye(model_struct.numstates) .* [15; 15; 15; 15; 1; 1];
+Q = 100*eye(model_struct.numstates) .* [1; 5; 1; 5; 1; 5];
 
 
 % Lower R causes theta to adjust faster, as inputs aren't penalised
@@ -62,12 +62,14 @@ controller_struct.Q = Q;
 controller_struct.R = R;
 
 % sliding
-Qsmc = 1; %eye(4).*[8; 1; 1; 1];
+Qsmc = 2; %eye(4).*[8; 1; 1; 1];
 Rsmc = 1;
+
+% 2 6 is good
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 3;
+controller_struct.k = 6;
 controller_struct.tau = 1;
 
 %{

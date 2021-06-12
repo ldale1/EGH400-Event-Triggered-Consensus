@@ -34,7 +34,7 @@ classdef Agent < ConsensusMAS.RefClass
         
         wind;       % Wind object
         Dw;         % Wind disturbance matrix
-        sa = 0.1;    % Surface area
+        sa = 0.5;    % Surface area
         Cd = 1;     % Drag coefficient
         m = 1;      % mass
         
@@ -112,7 +112,7 @@ classdef Agent < ConsensusMAS.RefClass
                 reg.Bz = Bz;
                 reg.C = C*Tr;
                 
-                inv = (C*Tr*Bz)^-1/obj.CLK;
+                inv = (C*Tr*Bz)^-1*obj.CLK;
                 obj.sliding_gain = abs(sum(inv(1,:)));
             end
             
@@ -202,20 +202,21 @@ classdef Agent < ConsensusMAS.RefClass
         
         
         function sld = sliding(obj, varargin)
-            tolerance = 1;
+            tolerance = 50;
             if nargin == 2
-                tolerance = varargin{1};
+                tolerance = 50;
             end
-            sld = all(abs(obj.s) < obj.band*tolerance);
+            sld = mean(abs(obj.s)) < obj.band*tolerance;
         end
         
         function u = get.u_eq(obj)
-            backtrack = 10 * 1/(100*obj.CLK) + 1;
-            u = obj.U(:,max(length(obj.U)-backtrack, 1):end);
+            backtrack = 6 * 1/(100*obj.CLK) + 1;
+            u_s = obj.U(:,max(length(obj.U)-backtrack, 1):end);
             
+            u = zeros(obj.numinputs, 1);
             for i = 1:obj.numinputs
-                low = mean(u(u < 0));
-                high = mean(u(u > 0));
+                low = mean(u_s(u_s < 0));
+                high = mean(u_s(u_s > 0));
                 
                 if ~isnan(low) && ~isnan(high)
                     u(i) = (low + high)/2;
@@ -232,7 +233,7 @@ classdef Agent < ConsensusMAS.RefClass
             error = obj.xhat - obj.x;
             
             % Quantise
-            error = floor(abs(error)*1000)/1000;
+            error = floor(abs(error)*1e7)/1e7;
         end
     end
     
@@ -303,12 +304,14 @@ classdef Agent < ConsensusMAS.RefClass
         function sample(obj)
             % Set the broadcas
             if (obj.controller_enum == ConsensusMAS.ControllersEnum.Smc) ...
-                    && (obj.sliding(1.05))
+                    && (obj.sliding(15))
                 samples = size(obj.X, 2);
                 if samples > 1
                     avgd = any(obj.ms.Bf(obj.x, obj.u), 2);
                     x_avg = mean(obj.X(:,samples-1:samples), 2);
-                    obj.xhat = x_avg .* obj.tx .* avgd + obj.x .* ~avgd + obj.xhat .* ~obj.tx;
+                    obj.xhat =  obj.tx .* ...
+                                 ((x_avg .* avgd) + (obj.x .* ~avgd)) + ...
+                                 (obj.xhat .* ~obj.tx);
                 else
                     obj.xhat = obj.x .* obj.tx + obj.xhat .* ~obj.tx;
                 end
@@ -373,11 +376,19 @@ classdef Agent < ConsensusMAS.RefClass
             z(6) = z(6)*rescaler;
             %}
             
-            %remultiplier = length(obj.leaders) + 1; 
-            %rescaler = (remultiplier / (remultiplier + 1));
-            %z(2) = z(2)*rescaler + (obj.x(2) - -3.26)/(remultiplier + 1);
-            %z(4) = z(4)*rescaler + (obj.x(4) - -3.88)/(remultiplier + 1);
             
+            %{
+            remultiplier = length(obj.leaders) + 1; 
+            
+            weight = 3;
+            rescaler = (remultiplier / (remultiplier + weight));
+            z(1) = z(1)*rescaler + weight*(obj.x(1) - -2)/(remultiplier + weight);
+            
+            weight = 1;
+            rescaler = (remultiplier / (remultiplier + weight));
+            z(3) = z(3)*rescaler + weight*(obj.x(3) - +2)/(remultiplier + weight);
+            %z(4) = z(4)*rescaler + (obj.x(4) - -3.88)/(remultiplier + 1);
+            %}
             %{
             obj.integrator = obj.integrator + obj.x(6)*obj.CLK;
             
@@ -402,15 +413,17 @@ classdef Agent < ConsensusMAS.RefClass
                 z = obj.ConsensusTarget();
                 
                 % SMC control input jitter, need a better representation
-                if (obj.controller_enum == ControllersEnum.Smc) && (obj.sliding)
+                if (obj.controller_enum == ControllersEnum.Smc) && (obj.sliding(10))
+                    x_in = mean(obj.X(:,max(length(obj.X)-3,1):end), 2);
                     u_in = obj.u_eq;
                 else
+                    x_in = obj.x;
                     u_in = obj.u;
                 end
                 
                 % Input
                 obj.goal = z;
-                obj.u = obj.controller(obj.x, u_in, z);
+                obj.u = obj.controller(x_in, u_in, z);
             end
             
             obj.update_req = 0;
@@ -425,11 +438,7 @@ classdef Agent < ConsensusMAS.RefClass
             
             % exogenous disturbanece
             obj.d = obj.wind.forces(obj);
-            
-            
-            if ~(obj.id == 1)
-                obj.x = obj.x - obj.d*obj.CLK;
-            end
+            obj.x = obj.x - obj.d*obj.CLK;
             
            
             % Add measurement noise

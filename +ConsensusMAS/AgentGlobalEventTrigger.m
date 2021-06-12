@@ -68,6 +68,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             % Consensus
             error_threshold = obj.k * norm(abs(z(obj.trigger_states)));
             error_threshold = error_threshold * ones(size(obj.x));
+            %error_threshold = max(error_threshold, 0.025);
         end
      
         function triggers = triggers(obj)

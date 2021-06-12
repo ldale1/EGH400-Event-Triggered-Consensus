@@ -16,6 +16,11 @@ function PlotStates(obj,varargin)
     figure(), sgtitle("Agent States");
     time = obj.T;
     for i = 1:obj.agentstates
+        
+        ymin = Inf;
+        ymax = -Inf;
+        
+        
         subplot(obj.agentstates, 1, i), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
@@ -33,7 +38,12 @@ function PlotStates(obj,varargin)
             else
                 error("Plot type not recognised");
             end
+            
+            states = agent.X(i,:);
+            ymin = min(ymin, min(states));
+            ymax = max(ymax, max(states));
         end
+        ylim([ymin ymax]);
         xlim([time(1) time(end)]);
         
         if (length(obj.agents) < 20)
