@@ -48,7 +48,7 @@ sim_struct.wind_states = [2 4];
 clear controller_struct
 
 % Q_6 is important
-Q = 100*eye(model_struct.numstates) .* [1; 5; 1; 5; 1; 5];
+Q = 100*eye(model_struct.numstates) .* [1; 1; 1; 1; 5; 5];
 
 
 % Lower R causes theta to adjust faster, as inputs aren't penalised
@@ -57,19 +57,19 @@ R = 1;
 
 % pole place
 controller_struct.x_op = [0 0 0 0 pi/4 0];
-controller_struct.u_op = [0 0 0]';
+controller_struct.u_op = [1 1]';
 controller_struct.Q = Q;
 controller_struct.R = R;
 
 % sliding
-Qsmc = 2; %eye(4).*[8; 1; 1; 1];
+Qsmc = 1; %eye(4).*[8; 1; 1; 1];
 Rsmc = 1;
 
 % 2 6 is good
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 6;
+controller_struct.k = 5;
 controller_struct.tau = 1;
 
 %{
@@ -91,7 +91,7 @@ controller_struct.target_u = @(target) [0; 0; 0];
 ref = @(id) zeros(model_struct.numstates, 1);
 set = @(id) [zeros(model_struct.numstates-1, 1); 0];
 set = @(id) [0; 0; 0; 0; 0; 0];
-set = @(id) [NaN*zeros(model_struct.numstates-1, 1); 0];
+set = @(id) NaN*zeros(model_struct.numstates, 1);
 
 % Random generator
 %{
