@@ -55,8 +55,8 @@ Rsmc = 1;
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 1;
-controller_struct.tau = 1;
+controller_struct.k = 5;
+controller_struct.tau = 3;
 
 
 %% Starting
@@ -64,27 +64,82 @@ controller_struct.tau = 1;
 % Interagent delta, and also setpoint
 ref = @(id) zeros(model_struct.numstates, 1);
 set = @(id) NaN*zeros(model_struct.numstates, 1);
-global x_generator;
 
-if ~dynamic
-    x_generator = @() [ ...
-        1*(rand()-1/2); 
-        1*(rand()-1/2); 
-        1*(rand()-1/2); 
-        1*(rand()-1/2); ];
-else
-    x_generator = @() [ ...
-        50*rand(); 
-        3 + rand()*4; 
-        20*round(randi(4)); 
-        0];
-end
+% Random generator
+scale_x1 = 10;
+scale_x2 = 10;
+x_generator = @() [ ...
+    scale_x1*(rand()-1/2); 
+    scale_x2*(rand()-1/2);
+    scale_x1*(rand()-1/2)
+    scale_x2*(rand()-1/2)];
 X_generator = @(num_agents) cell2mat(arrayfun(@(x) {x_generator()}, 1:num_agents));
 
 
-X0 = X_generator(35)
-x_generator = @() [ ...
-        0; 
-        1 + rand()*4; 
-        10 + 5*20*rand(); 
-        2*(rand()-0.5)];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%{
+%% https://ieeexplore-ieee-org.ezp01.library.qut.edu.au/document/1384698
+
+import ConsensusMAS.*;
+
+model_struct.linear = 1;
+
+%{
+A = [-1 2;  
+      2 1];
+B = [2; 
+     1];
+ %}
+A = [0 1; 0 0];
+
+B = [0; 1];
+[G, H] = c2d(A, B, ts);
+
+wind_states = [2];
+
+% The agent dynamics
+numstates = 2;
+numinputs = 1;
+states = @(x, u) A*x + B*u;
+
+% State-dependent gain
+%K_fix = place(A, B, -3:-1:-4)
+%K_fix = place(G, H, -0.3:-0.1:-0.4)
+K_fixed = dlqr(G, H, 1, 1);
+K = @(id) (@(x, u) K_fixed);
+  
+% Interagent delta, and also setpoint
+ref = @(id) zeros(size(numstates, 1), 1);
+set = @(id) NaN * zeros(size(numstates, 1), 1);
+
+% Simulation variables
+SIZE = 3;
+
+%X0 = randi(5*SIZE, size(A, 2), SIZE) - 5*SIZE/2;
+x0_1 = [+1 +2];
+x0_2 = [+5.00 +0.20];
+
+X0 = [x0_1' x0_2'];
+
+%x0_3 = [-2.00 -0.20];stick
+%X0 = [x0_1', x0_2', x0_3'];
+
+%}

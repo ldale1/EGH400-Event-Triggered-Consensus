@@ -62,16 +62,9 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             step@ConsensusMAS.Agent(obj);
             
             
-            if any(isnan(obj.xhat))
-                a = 1;
-            end
             
             % Project forwards, without input
             obj.xhat = obj.xhat + obj.fx(obj.xhat, zeros(obj.numinputs, 1))*obj.CLK;
-            
-            if any(isnan(obj.xhat))
-                a = 1;
-            end
             
             % Estimate other agents
             for i = 1:length(obj.transmissions_rx)
@@ -99,9 +92,9 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             error_threshold = obj.k * norm(abs(z(obj.trigger_states)));
             error_threshold = error_threshold * ones(size(obj.x));
             
-            if (obj.sliding)
-                A = obj.ms.Af(obj.x_eq, obj.u_eq);
-                B = obj.ms.Bf(obj.x_eq, obj.u_eq);
+            if (obj.sliding(2))
+                A = obj.ms.Af(obj.x, obj.u_eq);
+                B = obj.ms.Bf(obj.x, obj.u_eq);
             else
                 A = obj.ms.Af(obj.x, obj.u);
                 B = obj.ms.Bf(obj.x, obj.u);
@@ -109,10 +102,8 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             
             [~, H] = c2d(A, B, obj.CLK);
             %mins = (abs(sum(H,2)) + sum(abs(H),2) * 0.25 ) * obj.cs.k * obj.sliding_gain;
-            %mins = (sum(abs(H),2) * 2.1 ) * obj.cs.k * obj.sliding_gain;
-            mins = 2*abs(H)*abs(obj.sliding_gain)*obj.cs.k*obj.CLK*ones(obj.numinputs, 1);
-            global eta;
-            error_threshold = max(error_threshold, eta*mins);
+            mins = (sum(abs(H),2) * 10 ) * obj.cs.k * obj.sliding_gain;
+            error_threshold = max(error_threshold, mins);
         end
      
         function triggers = triggers(obj)

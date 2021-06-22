@@ -5,8 +5,6 @@ import ConsensusMAS.Scenarios.*;
 
 scenario = "Report_VConsensusAlgorithmExploration";
 scenario = "current";
-scenario = "smc_aug";
-scenario = "smc_ex";
 scenario = "random";
 
 dynamic = 0;
@@ -34,12 +32,6 @@ switch scenario
         X0(1,1) = 0;
         X0(2,1) = 2;
         
-        X0(:,2) = [-2.63 1.78]';
-        X0(:,3) = [4.63 2.94]';
-        X0(:,4) = [0.21 -3.37]';
-        
-        
-        
         
         ts = 1/1e2;
         runtime = 20;
@@ -51,7 +43,7 @@ switch scenario
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
         
-        %runtime = runtime*2;
+        runtime = runtime*2;
         ts = ts * 10;
         %runtime = runtime + 20;
         %{
@@ -76,8 +68,8 @@ import ConsensusMAS.WindModelEnum;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
 trigger_type = ImplementationsEnum.FixedTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
 
 % Controller
 controller_type = ControllersEnum.PolePlacement;
@@ -119,9 +111,6 @@ network = Network( ...
 
 % Simulate with switching toplogies
 network.ADJ = ADJ;   
-
-global eta
-eta = 1.0;
 
 %{
 vl_states = @(x, u) [1; 0; 1; 0; 0; 0];

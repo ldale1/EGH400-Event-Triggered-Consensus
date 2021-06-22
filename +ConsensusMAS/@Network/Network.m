@@ -281,10 +281,6 @@ classdef Network < ConsensusMAS.RefClass
             end 
             %}
             
-            
-            if obj.t > 6.3
-                a =1;
-            end
             % Broadcast agents if needed
             for agent = obj.agents
                 agent.check_trigger();
@@ -365,7 +361,7 @@ classdef Network < ConsensusMAS.RefClass
                 end
 
                 % Sqrt the sum squares
-                actual = smoothdata(sqrt(sum(Xs).^2));
+                actual = sqrt(sum(Xs));
 
                 % Save for normalisation
                 plots(ind) = {[network.T', actual']};
@@ -384,14 +380,7 @@ classdef Network < ConsensusMAS.RefClass
                     time, vals ...
                 );
             end
-            
-            keys = strrep(network_map.keys,'_','');
-            keys = strrep(keys,'GlobalEventTrigger-','GlobalEventTrigger-Modelbased-');
-            keys = strrep(keys,'-PolePlacement','');
-            keys = strrep(keys,'rBase','r');
-            legend(keys)
-            
-            
+            legend(strrep(network_map.keys,'_',''))
             %legend(network_map.keys);
             grid on;
 
@@ -476,16 +465,12 @@ classdef Network < ConsensusMAS.RefClass
                 );
             end
             
-            keys = strrep(network_map.keys,'_','');
-            keys = strrep(keys,'GlobalEventTrigger-','GlobalEventTrigger-Modelbased-');
-            keys = strrep(keys,'-PolePlacement','');
-            keys = strrep(keys,'rBase','r');
-            legend(keys + legend_extra);
+            %legend(strrep(network_map.keys,'_','') + legend_extra);
             grid on;
 
-            title("Average Consensus Deviation")
+            title("Consensus Norm Comparison")
             xlabel("Time (s)")
-            ylabel("Value")
+            ylabel("Consensus L2 Norm")
         end
     end
 end
