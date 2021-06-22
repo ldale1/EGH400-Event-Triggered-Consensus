@@ -11,6 +11,7 @@ function Animate(obj, varargin)
     % Parse Args
     fixedaxes = NaN;
     historyticks = time(end)*fs;
+    historyticks = fs;
     title_mov = "consensus_animation";
     state1 = 1;
     state2 = 2;
@@ -52,9 +53,7 @@ function Animate(obj, varargin)
        
     for k = 1:length(time)
         % Set the labels for each frame of the animation
-        figmovie; clf, hold on;
-        xlabel('x [m]', 'FontSize', 18)
-        ylabel('y [m]', 'FontSize', 18)
+        f = figmovie; clf, hold on;
 
         % Draw the states
         %history = max(k - ceil(length(time)/5), 1);
@@ -65,6 +64,13 @@ function Animate(obj, varargin)
             % States 
             x_vals = agent.X(state1, startindex:k);
             y_vals = agent.X(state2, startindex:k);
+            if ~isnan(fixedaxes)
+                if ~(any(fixedaxes(1) < x_vals) || any(x_vals < fixedaxes(2))) || ...
+                        all(isnan(x_vals))
+                    continue
+                end
+            end
+            
             plot(x_vals, y_vals, 'color', colors(agent.id,:));
             
             % Transmissions
@@ -92,11 +98,13 @@ function Animate(obj, varargin)
         if ~isnan(fixedaxes)
             axis(fixedaxes)
             
+            %{
             % background
             I = imread('cityview.jpg'); 
             h = image(fixedaxes(1:2), fixedaxes(3:4), I); 
             h.AlphaData = 0.1;
             uistack(h,'bottom')
+            %}
         end
         
         ax = gca;
@@ -106,13 +114,21 @@ function Animate(obj, varargin)
             'HorizontalAlignment', 'right')
         
         grid on;
+        
         % Record frame data
+        xlabel('x [m]', 'FontSize', 18)
+        ylabel('lane', 'FontSize', 18)
+        yticklabels({'', '1', '2', '3', '4', '5', ''})
+        f.Position(3) = floor(1536 * 1);
+        f.Position(4) = floor(864 * 1);
         mov(k) = getframe(gcf);
     end
+    
+    
 
     % Make video
     vidObj = VideoWriter(sprintf('%s.avi', title_mov));
-    vidObj.FrameRate = 3*fs;
+    vidObj.FrameRate = 1*fs;
     open(vidObj);
     writeVideo(vidObj, mov);
     close(vidObj)

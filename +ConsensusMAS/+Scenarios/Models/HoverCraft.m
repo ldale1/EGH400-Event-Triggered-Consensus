@@ -62,18 +62,18 @@ R = 1;
 
 % pole place
 controller_struct.x_op = [0; 0; 0; 0; pi/4; 0];
-controller_struct.u_op = [0; 0; 0];
+controller_struct.u_op = [1; 1; 1];
 controller_struct.Q = Q;
 controller_struct.R = R;
 
 % sliding
-Qsmc = 1;
+Qsmc = 10;
 Rsmc = 1;
 
 controller_struct.Qsmc = Qsmc;
 controller_struct.Rsmc = Rsmc;
-controller_struct.k = 15;
-controller_struct.tau = 1;
+controller_struct.k = 20;
+controller_struct.tau = 2;
 %{
 %controller_struct.n = numstates;
 %controller_struct.m = numinputs;

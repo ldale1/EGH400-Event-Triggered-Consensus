@@ -5,6 +5,8 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         k;
         ERROR_THRESHOLD;
         trigger_states;
+        
+        delta_et = 0.025;%25;
     end
     
     properties (Dependent)
@@ -22,6 +24,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             obj.k = 0;
             
             obj.trigger_states = model_struct.trigger_states;
+            
         end
         
         function set.L(obj, L)
@@ -68,7 +71,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             % Consensus
             error_threshold = obj.k * norm(abs(z(obj.trigger_states)));
             error_threshold = error_threshold * ones(size(obj.x));
-            %error_threshold = max(error_threshold, 0.025);
+            error_threshold = max(error_threshold, obj.delta_et);
         end
      
         function triggers = triggers(obj)
@@ -77,7 +80,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
             %triggers = (obj.error > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
-            end  
+            end
         end
         
         %{

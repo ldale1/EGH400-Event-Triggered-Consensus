@@ -3,36 +3,35 @@ clc;
 import ConsensusMAS.Scenarios.*;
 
 
-scenario = "Report_VConsensusAlgorithmExploration";
 scenario = "quadplot";
+scenario = "Report_VConsensusAlgorithmExploration";
+scenario = "quad_gog";
+scenario = "hover_ex";
 scenario = "current";
 scenario = "random";
-scenario = "quad_gog";
 
-dynamic = 0;
+dynamic = 1;
 
 switch scenario
     case "random"
         % Fresh Scenario+
         model = "HoverCraft_8";
         model= "LinearTest";
-        model= "Linear2D";
-        model= "Linear1D";
         model= "NonlinearTest";
-        model = "HoverCraft";
         model = "QuadrotorTest";
+        model = "HoverCraft_8";
+        model= "Linear1D";
+        model= "Linear2D";
         
         run(path_model(model)); 
         
         % Get the vars
-        SIZE = 3;
-        X0 = X_generator(SIZE);
+        SIZE = 35;
+        X01 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
-        
-        %ADJ = [0 1 1 1; 1 0 1 1; 1 1 0 1; 0 0 0 0];
-           
-        ts = 1/1e2;
-        runtime = 15  * 1;
+
+        ts = 5/1e2;
+        runtime = 60 - ts;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -40,7 +39,7 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        ts = 1/1e3;
+        %ts = 1/1e3;
         %runtime = 10;
         %ts = ts;
         %runtime = runtime + 20;
@@ -70,8 +69,8 @@ trigger_type = ImplementationsEnum.GlobalEventTrigger;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
 
 % Controller
-controller_type = ControllersEnum.PolePlacement;
 controller_type = ControllersEnum.GainScheduled;
+controller_type = ControllersEnum.PolePlacement;
 controller_type = ControllersEnum.Smc;
 
 % Wind
@@ -82,7 +81,6 @@ wind_type = WindModelEnum.None;
 
 %% Run the simulation
 clc; import ConsensusMAS.*;
-key = sprintf("%s-%s", string(trigger_type), string(controller_type));
 if ~exist('network_map', 'var')
     network_map = containers.Map;
 end
@@ -95,18 +93,27 @@ wind = Wind( ...
     0, ts ...                   % Start time and step
 );
 
+
+% seta 5 eta 2 k 5 tau 2
+
+global seta
+global eta
+seta = 2;
+eta = 2;
+        
 % Run the simulation;
+key = sprintf("%s-%s", string(trigger_type), string(controller_type));
 network = Network( ...
-            trigger_type,  ...      % Trigger type struct
-            model_struct, ...       % Model data
-            controller_type, ...    % Controller type enum
-            controller_struct, ...  % Controller data
-            sim_struct, ...         % simulation
-            X0,  ...                % Matrix of initial states (len(x) * N)
-            ref,  ...               % Relative setpoint funtion
-            set,  ...               % Fixed setpoint function
-            ts ...                  % Time step
-        );
+    trigger_type,  ...      % Trigger type struct
+    model_struct, ...       % Model data
+    controller_type, ...    % Controller type enum
+    controller_struct, ...  % Controller data
+    sim_struct, ...         % simulation
+    X0,  ...                % Matrix of initial states (len(x) * N)
+    ref,  ...               % Relative setpoint funtion
+    set,  ...               % Fixed setpoint function
+    ts ...                  % Time step
+);
 
 % Simulate with switching toplogies
 network.ADJ = ADJ;   
@@ -115,7 +122,7 @@ network.ADJ = ADJ;
 vl_states = @(x, u) [1; 0; 1; 0; 0; 0];
 vl_numstates = 6;
 vl_x0 = [1; 0; 0; 0; 0; 0];
-    
+
 RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1)
 network.ADJ = [0 0 0 0 0 1;
                0 0 0 0 0 1;
@@ -139,7 +146,7 @@ end
 % Save fo later
 network_map(key) = network;
 
-    
+
 %figure, hold on, grid on;
 %plot(network.virtual_agents.X(1,:))
 %plot(network.virtual_agents.X(3,:))
@@ -161,10 +168,10 @@ network_map(key) = network;
 %network.TOPS = network.TOPS(max(1, tops-9):end);
 %network.PlotGraph
 
-network.PlotInputs;
-network.PlotTriggers;
+%network.PlotInputs;
+%network.PlotTriggers;
 %network.PlotTriggersStates;
-network.PlotStates('disturbance', 1);
+%network.PlotStates('disturbance', 1);
 
 
 %network.PlotErrors;
@@ -176,15 +183,17 @@ network.PlotStates('disturbance', 1);
 %
 %network.PlotErrorsNorm("subplots", "none");
 %network.PlotErrorsNorm("subplots", "states");
-%network.Animate("title", "tester", "states", [1, 3]);
+network.Animate("title", "tester", "states", [1, 3], "fixedaxes", [0 50 0 120]);
 
 %figure
 %plot(network.T(1:end-1), network.agents(1).SLIDE)
 
-
+%{
 band = ts*controller_struct.k/(1-ts*controller_struct.tau);
 band * 1e3
 
 figure
 plot(network.T(1:end-1), network.agents(1).SLIDE)
 grid on;
+%}
+
