@@ -35,7 +35,7 @@ function PlotTriggersStates(obj, varargin)
             if agent.id == 1
                 plotstyle = "-";
                 lw = 1.5;
-                legend_add = " (virtual)";
+                legend_add = "";
             end
             
             

@@ -28,7 +28,7 @@ function PlotStates(obj,varargin)
      
     time = obj.T;
     for i = 1:obj.agentstates
-        subplot(2, 2, 1), hold on;
+        subplot(2, 1, 1), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
                 plot(time, agent.X(i,:), 'DisplayName', sprintf("x_%d", i))
@@ -59,7 +59,7 @@ function PlotStates(obj,varargin)
     end  
     
     for i = 1:obj.agentinputs
-        subplot(2, 2, 3), hold on;
+        subplot(2, 1, 2), hold on;
         for agent = obj.agents
             if strcmp(plottype, "plot")
                 plot(time, agent.U(i,:), 'DisplayName', sprintf("%s", agent.name))

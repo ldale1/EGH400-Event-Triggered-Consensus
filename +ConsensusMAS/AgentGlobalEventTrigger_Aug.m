@@ -5,6 +5,8 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
         k;
         ERROR_THRESHOLD;
         trigger_states;
+        
+        et_min = 0.05;
     end
     
     properties (Dependent)
@@ -110,15 +112,20 @@ classdef AgentGlobalEventTrigger_Aug < ConsensusMAS.Agent
             [~, H] = c2d(A, B, obj.CLK);
             %mins = (abs(sum(H,2)) + sum(abs(H),2) * 0.25 ) * obj.cs.k * obj.sliding_gain;
             %mins = (sum(abs(H),2) * 2.1 ) * obj.cs.k * obj.sliding_gain;
+            
+            try
             mins = 2*abs(H)*abs(obj.sliding_gain)*obj.cs.k*obj.CLK*ones(obj.numinputs, 1);
+            catch
+                a = 1
+            end
             global eta;
-            error_threshold = max(error_threshold, eta*mins);
+            error_threshold = max(error_threshold, (1 + eta)*mins + obj.et_min);
         end
      
         function triggers = triggers(obj)
             % Return vector where states cross the error threshold
             %triggers = (norm(obj.error(obj.trigger_states)) * ones(size(obj.x)) > obj.error_threshold);
-            triggers = (obj.error > obj.error_threshold);
+            triggers = (norm(obj.error(obj.trigger_states)) * ones(size(obj.x)) > obj.error_threshold);
             if any(triggers)
                 triggers = ones(size(obj.x));
             end  

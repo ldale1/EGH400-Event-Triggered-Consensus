@@ -65,7 +65,7 @@ classdef Wind < ConsensusMAS.RefClass
                     
                     
                 case WindModelEnum.Sinusoid
-                    forces = [0.5*sin(obj.time/2); 0.5*cos(obj.time)];
+                    forces = [0.5*sin(obj.time); 0.5*cos(obj.time)];
                 
                 otherwise
                     forces = [0; 0];     

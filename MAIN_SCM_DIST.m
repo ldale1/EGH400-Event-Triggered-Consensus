@@ -32,7 +32,7 @@ switch scenario
         
         ADJ = [0 0 0 0; 1 0 1 1; 1 1 0 1; 1 1 1 0];
         X0(1,1) = 0;
-        X0(2,1) = 2;
+        X0(2,1) = 1;
         
         X0(:,2) = [-2.63 1.78]';
         X0(:,3) = [4.63 2.94]';
@@ -41,7 +41,7 @@ switch scenario
         
         
         
-        ts = 1/1e2;
+        ts = 1/1e1;
         runtime = 20;
         
         % Save for later
@@ -76,18 +76,29 @@ import ConsensusMAS.WindModelEnum;
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
 trigger_type = ImplementationsEnum.FixedTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
 
 % Controller
 controller_type = ControllersEnum.PolePlacement;
-controller_type = ControllersEnum.GainScheduled;
-controller_type = ControllersEnum.Smc;
+
 
 % Wind
 wind_type = WindModelEnum.Constant;
 wind_type = WindModelEnum.None;
 wind_type = WindModelEnum.Sinusoid;
+
+
+
+
+
+
+
+
+trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
+controller_type = ControllersEnum.Smc;
+
+
+trigger_type = ImplementationsEnum.GlobalEventTrigger;
+controller_type = ControllersEnum.GainScheduled;
 
 %% Run the simulation
 clc; import ConsensusMAS.*;
@@ -118,8 +129,10 @@ network = Network( ...
         );
 
 % Simulate with switching toplogies
-network.ADJ = ADJ;   
+network.ADJ = ADJ;
 
+
+network.agents(1).broadcast
 global eta
 eta = 1.0;
 
@@ -174,7 +187,7 @@ network_map(key) = network;
 %network.PlotGraph
 
 network.PlotTriggersStates('disturbance', 1);
-network.PlotErrors;
+%network.PlotErrors;
 
 
 %network.PlotTriggersInputs;
@@ -182,12 +195,12 @@ network.PlotErrors;
 %
 %network.PlotErrorsNorm("subplots", "none");
 %network.PlotErrorsNorm("subplots", "states");
-%network.Animate("title", "tester", "states", [1, 3]);
+%network.Animate("title", "tester", "states", [1, 2]);%, "fixedaxes", [min(X0(1,2:end)), max(X0(1,2:end)), min(X0(2,2:end)), max(X0(2,2:end))]);
 
 %figure
 %plot(network.T(1:end-1), network.agents(1).SLIDE)
 
 
-figure
-plot(network.T(1:end-1), network.agents(2).SLIDE)
-grid on;
+%figure
+%plot(network.T(1:end-1), network.agents(2).SLIDE)
+%grid on;

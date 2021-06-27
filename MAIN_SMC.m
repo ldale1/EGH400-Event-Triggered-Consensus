@@ -4,9 +4,9 @@ import ConsensusMAS.Scenarios.*;
 
 
 scenario = "Report_VConsensusAlgorithmExploration";
+scenario = "smc_ex";
 scenario = "random";
 scenario = "current";
-scenario = "smc_ex";
 
 dynamic = 0;
 
@@ -23,11 +23,11 @@ switch scenario
         run(path_model(model)); 
         
         % Get the vars
-        SIZE = 1;
+        SIZE = 3;
         X0 = X_generator(SIZE);
         ADJ = RandAdjacency(SIZE, 'directed', 0, 'weighted', 0, 'strong', 1);
         ts = 1/1e2;
-        runtime = 2*pi;
+        runtime = 10;
         
         % Save for later
         scenario_save("current", model, X0, ADJ, ts, runtime);
@@ -35,7 +35,8 @@ switch scenario
     otherwise
         % Load preserved
         load(path_save(scenario + ".mat"), '*')
-        runtime = runtime;
+        ts = 0.001;
+        runtime = 4*pi;
         %ts = ts/10;
         %runtime = runtime + 20;
         %{
@@ -59,15 +60,17 @@ import ConsensusMAS.WindModelEnum;
 % Trigger Type
 trigger_type = ImplementationsEnum.GlobalEventTrigger_Base;
 trigger_type = ImplementationsEnum.LocalEventTrigger;
-trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
-trigger_type = ImplementationsEnum.GlobalEventTrigger;
+
 trigger_type = ImplementationsEnum.FixedTrigger;
 
 % Wind
 wind_type = WindModelEnum.Constant;
-
-wind_type = WindModelEnum.Sinusoid;
 wind_type = WindModelEnum.None;
+wind_type = WindModelEnum.Sinusoid;
+
+
+
+
 
 
 
@@ -75,7 +78,24 @@ wind_type = WindModelEnum.None;
 clc; 
 import ConsensusMAS.*;
 
-for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
+global eta;
+eta = 0;
+
+global seta;
+seta = 2;
+
+for controller_type = [ControllersEnum.Smc] % ControllersEnum.GainScheduled,  
+    
+    
+    switch (controller_type)
+        case ControllersEnum.Smc
+            trigger_type = ImplementationsEnum.GlobalEventTrigger_Aug;
+
+
+        otherwise
+            trigger_type = ImplementationsEnum.GlobalEventTrigger;
+        
+    end
 
     key = sprintf("%s-%s", string(trigger_type), string(controller_type));
     if ~exist('network_map', 'var')
@@ -105,6 +125,9 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
 
     % Simulate with switching toplogies
     network.ADJ = ADJ;   
+   
+    
+    
     if ~dynamic
         % Simulate with switching toplogies
         for i = 1:1
@@ -118,9 +141,14 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
     % Save fo   r later
     network_map(key) = network;
 
+    
+    network.PlotTriggersStates('disturbance', 1);
+    
     network.PlotCompact('disturbance', 1);
     
     
+     
+    %{
     subplot(2,2,[2,4])
     
     
@@ -134,15 +162,6 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
                 'LineWidth', 2, 'DisplayName', 'State Trajectories'); 
             legend('AutoUpdate','off')
 
-            plot(2.0, -2.0, 'o', ...
-                'MarkerSize', 16, 'LineWidth', 2)
-            text(1.8, -2.05, 'Sliding', ...
-                'HorizontalAlignment', 'right', 'VerticalAlignment', 'Top')
-
-            plot(4.97, -2.75, 'o', ...
-                'MarkerSize', 16, 'LineWidth', 2)
-            text(4.87, -2.65, 'Reaching', ...
-                'HorizontalAlignment', 'right', 'VerticalAlignment', 'Bottom')
             grid on;
 
             title('Phase Portrait')
@@ -165,14 +184,6 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
             plot(network.agents(1).X(1,:), network.agents(1).X(2,:),...
                 'LineWidth', 2, 'DisplayName', 'State Trajectories'); 
 
-            lims = xlim();
-            lims(1) = -1;
-            xlim(lims);
-
-            lims = ylim;
-            lims(2) = 1;
-            ylim(lims);
-
             grid on;
 
             title('Phase Portrait')
@@ -181,5 +192,16 @@ for controller_type = [ControllersEnum.GainScheduled, ControllersEnum.Smc]
             ax = gca;
             ax.XAxisLocation = 'origin';
             ax.YAxisLocation = 'origin';  
+    
+        
     end
+    %}
+    
+    for agent = network.agents
+        agent.ERROR(:,1) = zeros(2,1);
+    end
+    
+    network.PlotErrors
+    network.PlotTriggersStates
+    
 end

@@ -6,7 +6,7 @@ classdef AgentGlobalEventTrigger < ConsensusMAS.Agent
         ERROR_THRESHOLD;
         trigger_states;
         
-        delta_et = 0.025;%25;
+        delta_et = 0.0;%25;
     end
     
     properties (Dependent)

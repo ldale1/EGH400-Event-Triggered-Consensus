@@ -11,11 +11,11 @@ function PlotErrors(obj)
         for agent = obj.agents
             subplot(cols, rows, agent.id), hold on;
 
-            error = agent.ERROR(i,:);
+            error = sqrt(sum(agent.ERROR.^2, 1));
             threshold = agent.ERROR_THRESHOLD(i,:);
 
-            stairs(time, threshold, 'DisplayName', 'c\alpha^t')
-            stairs(time, error, 'DisplayName', '||e||')
+            stairs(time, threshold, 'DisplayName', 'threshold')
+            stairs(time, error, 'DisplayName', 'error')
             
             legend()
             

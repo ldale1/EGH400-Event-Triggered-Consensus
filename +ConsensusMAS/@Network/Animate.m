@@ -11,7 +11,7 @@ function Animate(obj, varargin)
     % Parse Args
     fixedaxes = NaN;
     historyticks = time(end)*fs;
-    historyticks = fs;
+    %historyticks = fs;
     title_mov = "consensus_animation";
     state1 = 1;
     state2 = 2;

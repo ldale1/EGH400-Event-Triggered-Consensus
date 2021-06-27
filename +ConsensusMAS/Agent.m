@@ -91,7 +91,7 @@ classdef Agent < ConsensusMAS.RefClass
             obj.sliding_gain = eye(ms.numinputs);
             
             function reg = smc_regime(A, B, Q, R)
-                %{
+                
                 % Transformation matrix
                 [n,m] = size(B);
                 [Tr, ~] = qr(B);
@@ -117,20 +117,9 @@ classdef Agent < ConsensusMAS.RefClass
                 reg.Az = Az;
                 reg.Bz = Bz;
                 reg.C = C*Tr;
-                %}
                 
-                reg.Az =[1.0000, 0.0100, 0, 0;
-                             0, 1.0000, 0, 0;
-                             0, 0, 1.0000, 0.0100;
-                             0, 0, 0, 1.0000];
-                reg.Bz = [0.0001,0;
-                          0.0100,0;
-                          0,0.0001;
-                          0,0.0100];
-                reg.C = [-0.9950, -1.0000, 0, 0;
-                         0, 0, -0.9950, -1.0000];
-                %obj.sliding_gain = ((C*Tr)*Bz)^-1;
-                obj.sliding_gain = [-99.0148, 0; 0, -99.0148];%((reg.C)*reg.Bz)^-1;
+                obj.sliding_gain = ((C*Tr)*Bz)^-1;
+                %obj.sliding_gain = [-99.0148, 0; 0, -99.0148];%((reg.C)*reg.Bz)^-1;
             end
             
             switch (controller_enum)                
@@ -160,7 +149,7 @@ classdef Agent < ConsensusMAS.RefClass
                     
                     % Controller closure
                     obj.controller = @(x, u, z) get_u(...
-                        smc_regime(1, 1, cs.Qsmc, cs.Rsmc), ... %smc_regime(ms.Af(x, u), ms.Bf(x, u), cs.Qsmc, cs.Rsmc), ...
+                        smc_regime(ms.Af(x, u), ms.Bf(x, u), cs.Qsmc, cs.Rsmc), ...
                         z);
                     
                 otherwise
@@ -227,11 +216,12 @@ classdef Agent < ConsensusMAS.RefClass
             end
             %}
             sld = mean(abs(obj.s)) < obj.band*seta;
+
         end
         
         function u = get.u_eq(obj)
-            backtrack = 6 * 1/(100*obj.CLK) + 1;
-            u_s = obj.U(:,max(length(obj.U)-backtrack, 1):end);
+            backtrack = 3;
+            u_s = obj.U(:, max(length(obj.U)-backtrack, 1):end);
             
             u = zeros(obj.numinputs, 1);
             for i = 1:obj.numinputs
@@ -250,7 +240,7 @@ classdef Agent < ConsensusMAS.RefClass
         
         function x = get.x_eq(obj)
             %x = obj.x;
-            backtrack = 5;
+            backtrack = 9;
             x_s = obj.X(:,max(length(obj.X)-backtrack, 1):end);
             x = mean(x_s, 2);
             
@@ -298,7 +288,7 @@ classdef Agent < ConsensusMAS.RefClass
             error = obj.xhat - obj.x;
             
             % Quantise
-            error = floor(abs(error)*1e7)/1e7;
+            error = floor(abs(error)*1e5)/1e5;
         end
     end
     
@@ -422,7 +412,7 @@ classdef Agent < ConsensusMAS.RefClass
             z(~sp_nans) = obj.x(~sp_nans) - obj.setpoint(~sp_nans);
             
             
-            
+            %{
             vxs = obj.ss.vx_state;
             remultiplier = length(obj.leaders) + 1; 
                 rescaler = (remultiplier / (remultiplier + 1));
@@ -433,7 +423,7 @@ classdef Agent < ConsensusMAS.RefClass
                z(vxs) = ...
                     z(vxs)*rescaler + 1*(obj.x(vxs) - 0.5)/(remultiplier + 1); 
             end
-            
+            %}
             
             %
             
@@ -493,6 +483,8 @@ classdef Agent < ConsensusMAS.RefClass
             z(6) = obj.x(6) + obj.integrator/3;% - z(6)*rescaler;
             %z(6) = obj.x(6);    
             %}
+            
+           
         end
         
         function set_controller(obj)
@@ -526,12 +518,19 @@ classdef Agent < ConsensusMAS.RefClass
         function step(obj)
             obj.t = obj.t + obj.CLK;
 
-            % Move, with input          
+            % Move, with input
             obj.x = obj.x + obj.fx(obj.x, obj.u)*obj.CLK;
             
+            
+            
             % exogenous disturbanece
-            obj.d = obj.wind.forces(obj);
+            snr = 100;
+            obj.d = awgn(obj.wind.forces(obj), snr);
+            
             obj.x = obj.x - obj.d*obj.CLK;
+            
+            
+            %obj.x(2) = obj.x(2), snr);
         end
         
         function save(obj)     
